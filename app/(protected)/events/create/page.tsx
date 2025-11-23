@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useEventForm } from "@/app/(protected)/events/create/hooks/useEventForm";
 import { Button } from "@/components/ui/button";
 import { BasicSettings } from "@/app/(protected)/events/create/components/BasicSettings";
 import { ImageUpload } from "@/app/(protected)/events/create/components/ImageUpload";
@@ -10,7 +11,7 @@ import { DocumentUpload } from "@/app/(protected)/events/create/components/Docum
 import { StatusControl } from "@/app/(protected)/events/create/components/StatusControl";
 import { StepControl } from "@/app/(protected)/events/create/components/StepControl";
 import { CheckpointModal } from "@/app/(protected)/events/create/components/CheckpointModal";
-import { ProgressIndicator } from "@/app/(protected)/events/create/components/ProgressIndicator";
+import { Stepper } from "@/app/(protected)/events/create/components/Stepper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, CalendarDays, FileText, Settings } from "lucide-react";
 import { toast } from "sonner";
@@ -27,25 +28,27 @@ interface Checkpoint {
 }
 
 export default function CreateEvent() {
+  const { formData, handleFormChange } = useEventForm();
+  const {
+    eventName,
+    description,
+    venue,
+    format,
+    participationType,
+    usersCount,
+    category,
+    startDate,
+    endDate,
+    eventImage,
+  } = formData;
+
   const [currentStep, setCurrentStep] = useState(1);
   const [currentStatus, setCurrentStatus] = useState("Черновик");
   const [isCheckpointModalOpen, setIsCheckpointModalOpen] = useState(false);
   const [editingCheckpoint, setEditingCheckpoint] = useState<number | null>(null);
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
-  const [eventName, setEventName] = useState('');
-  const [description, setDescription] = useState('');
-  const [venue, setVenue] = useState('');
-  const [format, setFormat] = useState<'online' | 'offline' | 'hybrid'>('offline');
-  const [participationType, setParticipationType] = useState<'solo' | 'team'>('team');
-  const [usersCount, setUsersCount] = useState(0);
-  const [category, setCategory] = useState(1);
-  const [eventImage, setEventImage] = useState<File | null>(null);
 
-  const totalSteps = 4;
-  const progressPercentage = (currentStep / totalSteps) * 100;
 
   const steps = [
     { number: 1, title: "Базовые настройки", icon: Settings },
@@ -56,14 +59,18 @@ export default function CreateEvent() {
 
   const handleNext = () => {
     if (currentStep === 1 && (!startDate || !endDate)) {
-      toast.error("Пожалуйста, выберите даты начала и окончания мероприятия");
+      toast.error("Ошибка валидации", {
+        description: "Пожалуйста, выберите даты начала и окончания мероприятия.",
+      });
       return;
     }
     if (currentStep === 2 && checkpoints.length === 0) {
-      toast.error("Добавьте хотя бы один чекпоинт");
+      toast.error("Ошибка валидации", {
+        description: "Добавьте хотя бы один этап.",
+      });
       return;
     }
-    if (currentStep < totalSteps) {
+    if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -76,7 +83,9 @@ export default function CreateEvent() {
 
   const handleAddCheckpoint = () => {
     if (!selectedDate) {
-      toast.error("Пожалуйста, выберите день для добавления чекпоинта");
+      toast.warning("Не выбран день", {
+        description: "Пожалуйста, выберите день для добавления нового этапа.",
+      });
       return;
     }
     setEditingCheckpoint(null);
@@ -129,12 +138,16 @@ export default function CreateEvent() {
 
   const handleFileUpload = (file: File, type: 'regulation' | 'task') => {
     console.log('Загрузка файла:', file.name, type);
-    toast.success(`Файл "${file.name}" успешно загружен`);
+    toast.success("Файл успешно загружен", {
+      description: `Файл "${file.name}" был успешно загружен.`,
+    });
   };
 
   const handleSave = async () => {
     if (!eventName || !description || !venue || !startDate || !endDate || checkpoints.length === 0) {
-      toast.error('Пожалуйста, заполните все обязательные поля и добавьте хотя бы один этап');
+      toast.error("Ошибка сохранения", {
+        description: "Пожалуйста, заполните все обязательные поля и добавьте хотя бы один этап.",
+      });
       return;
     }
 
@@ -177,15 +190,21 @@ export default function CreateEvent() {
       if (response.ok) {
         const result = await response.json();
         console.log('Мероприятие успешно создано:', result);
-        toast.success('Мероприятие успешно создано');
+        toast.success("Мероприятие создано", {
+          description: "Ваше мероприятие было успешно создано и сохранено.",
+        });
       } else {
         const errorData = await response.json();
         console.error('Ошибка при создании мероприятия:', errorData);
-        toast.error(`Ошибка при создании мероприятия: ${errorData.detail || response.statusText}`);
+        toast.error("Ошибка сервера", {
+          description: `Не удалось создать мероприятие: ${errorData.detail || response.statusText}`,
+        });
       }
     } catch (error) {
       console.error('Ошибка при создании мероприятия:', error);
-      toast.error('Ошибка при создании мероприятия');
+      toast.error("Сетевая ошибка", {
+        description: "Не удалось подключиться к серверу. Проверьте ваше интернет-соединение.",
+      });
     }
   };
 
@@ -199,26 +218,10 @@ export default function CreateEvent() {
         return (
           <div className="space-y-6 animate-in fade-in-50 duration-500">
             <BasicSettings
-              startDate={startDate}
-              endDate={endDate}
-              onStartDateChange={setStartDate}
-              onEndDateChange={setEndDate}
-              eventName={eventName}
-              onEventNameChange={setEventName}
-              description={description}
-              onDescriptionChange={setDescription}
-              venue={venue}
-              onVenueChange={setVenue}
-              format={format}
-              onFormatChange={setFormat}
-              participationType={participationType}
-              onParticipationTypeChange={setParticipationType}
-              usersCount={usersCount}
-              onUsersCountChange={setUsersCount}
-              category={category}
-              onCategoryChange={setCategory}
+              formData={formData}
+              onFormChange={handleFormChange}
             />
-            <ImageUpload onImageChange={setEventImage} />
+            <ImageUpload onImageChange={(file) => handleFormChange('eventImage', file)} />
           </div>
         );
       case 2:
@@ -272,7 +275,7 @@ export default function CreateEvent() {
             </p>
           </div>
           <div className="space-y-4"></div>
-            <ProgressIndicator currentStep={currentStep} totalSteps={4} />
+            <Stepper currentStep={currentStep} steps={steps} />
           </div>
 
           {/* Content */}
@@ -290,10 +293,10 @@ export default function CreateEvent() {
           {/* Navigation */}
           <StepControl
             currentStep={currentStep}
-            totalSteps={totalSteps}
+            totalSteps={steps.length}
             onNext={handleNext}
             onBack={handleBack}
-            isLastStep={currentStep === totalSteps}
+            isLastStep={currentStep === steps.length}
             onSave={handleSave}
           />
         </div>

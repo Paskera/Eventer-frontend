@@ -1,10 +1,11 @@
-'use client'
+'use client';
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface ImageUploadProps {
   onImageChange: (file: File | null) => void;
@@ -14,16 +15,20 @@ export function ImageUpload({ onImageChange }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileChange = (files: File[]) => {
+    const file = files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error("Файл слишком большой. Максимальный размер: 5 МБ");
+        toast.error("Файл слишком большой", {
+          description: "Максимальный размер изображения: 5 МБ."
+        });
         return;
       }
       
       if (!file.type.startsWith('image/')) {
-        toast.error("Пожалуйста, выберите изображение");
+        toast.error("Неверный тип файла", {
+          description: "Пожалуйста, выберите изображение (PNG, JPG)."
+        });
         return;
       }
 
@@ -33,9 +38,21 @@ export function ImageUpload({ onImageChange }: ImageUploadProps) {
       };
       reader.readAsDataURL(file);
       onImageChange(file);
-      toast.success("Изображение загружено");
+      toast.success("Изображение загружено", {
+        description: `Файл ${file.name} готов к загрузке.`
+      });
     }
   };
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    handleFileChange(acceptedFiles);
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'image/jpeg': [], 'image/png': [] },
+    maxFiles: 1,
+  });
 
   const handleRemove = () => {
     setPreview(null);
@@ -43,10 +60,7 @@ export function ImageUpload({ onImageChange }: ImageUploadProps) {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
-
-  const handleClick = () => {
-    fileInputRef.current?.click();
+    toast.info("Изображение удалено");
   };
 
   return (
@@ -56,65 +70,62 @@ export function ImageUpload({ onImageChange }: ImageUploadProps) {
       </label>
       
       {preview ? (
-        <Card className="relative overflow-hidden group">
-          <div className="aspect-video relative">
-            <img
-              src={preview}
-              alt="Preview"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleClick}
-                className="gap-2"
-              >
-                <Upload className="h-4 w-4" />
-                Заменить
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleRemove}
-                className="gap-2"
-              >
-                <X className="h-4 w-4" />
-                Удалить
-              </Button>
-            </div>
+        <div className="relative group">
+          <img
+            src={preview}
+            alt="Превью обложки"
+            className="w-full h-auto aspect-video object-cover rounded-lg border border-border"
+          />
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 rounded-lg">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Заменить
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleRemove}
+              className="gap-2"
+            >
+              <X className="h-4 w-4" />
+              Удалить
+            </Button>
           </div>
-        </Card>
+        </div>
       ) : (
-        <Card
-          className="border-2 border-dashed border-border hover:border-primary/50 transition-all duration-200 cursor-pointer group"
-          onClick={handleClick}
+        <div
+          {...getRootProps()}
+          className={cn(
+            "border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer transition-all duration-200 hover:border-primary/70 hover:bg-primary/5",
+            isDragActive && "border-primary bg-primary/10"
+          )}
         >
-          <div className="aspect-video flex flex-col items-center justify-center gap-3 p-6">
-            <div className="rounded-full bg-primary/10 p-4 group-hover:bg-primary/20 transition-colors duration-200">
-              <ImageIcon className="h-8 w-8 text-primary" />
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="rounded-full bg-muted p-4">
+              <ImageIcon className="h-8 w-8 text-muted-foreground" />
             </div>
             <div className="text-center space-y-1">
               <p className="text-sm font-medium text-foreground">
-                Загрузите обложку мероприятия
+                Перетащите обложку сюда или нажмите для выбора
               </p>
               <p className="text-xs text-muted-foreground">
-                PNG, JPG до 5 МБ
+                PNG, JPG, до 5 МБ
               </p>
             </div>
-            <Button variant="secondary" size="sm" className="gap-2">
-              <Upload className="h-4 w-4" />
-              Выбрать файл
-            </Button>
           </div>
-        </Card>
+        </div>
       )}
       
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        onChange={handleFileChange}
+        onChange={(e) => handleFileChange(Array.from(e.target.files || []))}
         className="hidden"
       />
     </div>
