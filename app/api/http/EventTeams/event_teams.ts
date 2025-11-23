@@ -1,0 +1,76 @@
+import { restAxios } from '../api';
+
+export interface JoinTeam {
+  event_id: number;
+  invite_token: string;
+}
+
+export interface CreateTeam {
+  event_id: number;
+  name: string;
+}
+
+interface TeamMember {
+  firstname: string;
+  lastname: string;
+  is_event_leader: boolean;
+}
+
+interface Team {
+  name: string;
+  status: 'pending' | 'approved' | 'rejected'; 
+  created_at: string; 
+  members: TeamMember[];
+}
+
+interface TeamsResponse {
+  teams: Team[];
+}
+
+interface MyTeam {
+  name: string;
+  invite_token: string;
+}
+
+interface MyMember {
+  firstname: string;
+  lastname: string;
+  is_event_leader: boolean;
+}
+
+interface MyTeamWithMembers {
+  team: MyTeam;
+  members: MyMember[];
+}
+
+export const apiEventTeams = {
+  getEventTeam: async (event_id: number): Promise<MyTeamWithMembers> => {
+    return (await restAxios.get(`api/events/${event_id}/event-teams/my`)).data
+  },
+  createTeam: async (event_id: number,  file: File, name: string) => {
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("file", file);
+    return (await restAxios.post(`/api/events/${event_id}/event-teams`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    })).data;
+  },
+  joinTeam: async (event_id: number, invite_token: string) => {
+    return (await restAxios.post(`/api/events/${event_id}/event-teams/join/${invite_token}`)).data;
+  },
+  getEventTeams: async (event_id: number, page?: number, page_size?: number): Promise<TeamsResponse> => {
+    return (await restAxios.get(`/api/events/${event_id}/event-teams`)).data;
+  },
+
+  // getEventsTeams: async (params?: {
+  //   event_id: number
+  //   page?: number
+  //   page_size?: number
+  // }): Promise<TeamsResponse> => {
+  //   return (await restAxios.get(`/api/events/${params?.event_id}/event-teams`, {params })).data
+  // },
+
+}
+
