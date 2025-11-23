@@ -52,15 +52,17 @@ export function CheckpointModal({
     const [format, setFormat] = useState<'online' | 'offline' | 'hybrid'>('offline')
 
     useEffect(() => {
+        if (!isOpen) return;
+
         if (checkpointId) {
-            const checkpoint = checkpoints.find(cp => cp.id === checkpointId)
-            if (checkpoint) {
-                setTitle(checkpoint.title)
-                setSubtitle(checkpoint.subtitle)
-                setStartTime(checkpoint.startTime)
-                setEndTime(checkpoint.endTime)
-                setDescription(checkpoint.description)
-                setFormat(checkpoint.format)
+        const checkpoint = checkpoints.find(cp => cp.id === checkpointId);
+        if (checkpoint) {
+            setTitle(checkpoint.title);
+            setSubtitle(checkpoint.subtitle);
+            setStartTime(checkpoint.startTime);
+            setEndTime(checkpoint.endTime);
+            setDescription(checkpoint.description);
+            setFormat(checkpoint.format);
             }
         } else {
             setTitle('')
@@ -70,7 +72,7 @@ export function CheckpointModal({
             setDescription('')
             setFormat('offline')
         }
-    }, [checkpointId, isOpen, checkpoints])
+    }, [checkpointId, checkpoints, isOpen])
 
     const handleSave = () => {
         onSave({
