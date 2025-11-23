@@ -16,10 +16,7 @@ import { apiEventTeams, JoinTeamResponse } from '@/app/api/http/EventTeams/event
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Label } from '@radix-ui/react-dropdown-menu';
-import { BackButton } from '../../eventdetails/components/BackButton';
-import { Textarea } from '@/components/ui/textarea';
 import { useSession } from 'next-auth/react';
-import { Router } from 'next/router';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { apiStages } from '@/app/api/http/stages/stages';
 

@@ -10,7 +10,7 @@ export function BackButton() {
     return (
         <Button
             variant="outline"
-            onClick={() => router.push('/myevents')}
+            onClick={() => router.push('/events/my')}
             className="flex items-center gap-2 mb-6 mx-auto w-auto text-xs sm:text-base px-2 sm:px-4 py-2 sm:py-3"
         >
             <ChevronLeft className="h-4 w-4" />

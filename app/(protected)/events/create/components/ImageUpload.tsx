@@ -1,136 +1,122 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Upload, X } from 'lucide-react'
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { toast } from "sonner";
 
 interface ImageUploadProps {
-    onImageChange: (file: File | null) => void
+  onImageChange: (file: File | null) => void;
 }
 
 export function ImageUpload({ onImageChange }: ImageUploadProps) {
-    const [selectedImage, setSelectedImage] = useState<string | null>(null)
-    const [fileName, setFileName] = useState<string | null>(null)
-    const fileInputRef = useRef<HTMLInputElement>(null)
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (file) {
-            // Проверяем тип файла
-            if (!file.type.match('image/jpeg|image/png|image/webp')) {
-                alert('Пожалуйста, выберите файл в формате JPEG, PNG или WebP')
-                return
-            }
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Файл слишком большой. Максимальный размер: 5 МБ");
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        toast.error("Пожалуйста, выберите изображение");
+        return;
+      }
 
-            // Проверяем размер файла (максимум 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                alert('Размер файла не должен превышать 5MB')
-                return
-            }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      onImageChange(file);
+      toast.success("Изображение загружено");
+    }
+  };
 
-            const reader = new FileReader()
-            reader.onload = (e) => {
-                setSelectedImage(e.target?.result as string)
-                setFileName(file.name)
-                onImageChange(file)
-            }
-            reader.readAsDataURL(file)
-        }
-    }, [onImageChange])
+  const handleRemove = () => {
+    setPreview(null);
+    onImageChange(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
-    const handleRemoveImage = useCallback(() => {
-        setSelectedImage(null)
-        setFileName(null)
-        if (fileInputRef.current) {
-            fileInputRef.current.value = ''
-        }
-        onImageChange(null)
-    }, [onImageChange])
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
 
-    const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault()
-        const file = e.dataTransfer.files?.[0]
-        if (file) {
-            // Проверяем тип файла
-            if (!file.type.match('image/jpeg|image/png|image/webp')) {
-                alert('Пожалуйста, выберите файл в формате JPEG, PNG или WebP')
-                return
-            }
-
-            // Проверяем размер файла (максимум 5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                alert('Размер файла не должен превышать 5MB')
-                return
-            }
-
-            const reader = new FileReader()
-            reader.onload = (e) => {
-                setSelectedImage(e.target?.result as string)
-                setFileName(file.name)
-                onImageChange(file)
-            }
-            reader.readAsDataURL(file)
-        }
-    }, [onImageChange])
-
-    const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault()
-    }, [])
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-xl">Изображение мероприятия</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div 
-                    className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer transition-colors hover:bg-muted/50"
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    {selectedImage ? (
-                        <div className="relative">
-                            <img 
-                                src={selectedImage} 
-                                alt="Предварительный просмотр" 
-                                className="max-h-64 mx-auto rounded-lg object-contain"
-                            />
-                            <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="absolute top-2 right-2 rounded-full"
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleRemoveImage()
-                                }}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
-                            <p className="text-sm text-muted-foreground mt-2">{fileName}</p>
-                        </div>
-                    ) : (
-                        <div>
-                            <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                            <p className="text-base text-muted-foreground mb-2">
-                                Перетащите изображение сюда или нажмите для выбора
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Поддерживаемые форматы: JPEG, PNG, WebP (до 5 МБ)
-                            </p>
-                        </div>
-                    )}
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/jpeg,image/png,image/webp"
-                        onChange={handleImageChange}
-                    />
-                </div>
-            </CardContent>
+  return (
+    <div className="space-y-3">
+      <label className="text-sm font-medium">
+        Обложка мероприятия
+      </label>
+      
+      {preview ? (
+        <Card className="relative overflow-hidden group">
+          <div className="aspect-video relative">
+            <img
+              src={preview}
+              alt="Preview"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleClick}
+                className="gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Заменить
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleRemove}
+                className="gap-2"
+              >
+                <X className="h-4 w-4" />
+                Удалить
+              </Button>
+            </div>
+          </div>
         </Card>
-    )
+      ) : (
+        <Card
+          className="border-2 border-dashed border-border hover:border-primary/50 transition-all duration-200 cursor-pointer group"
+          onClick={handleClick}
+        >
+          <div className="aspect-video flex flex-col items-center justify-center gap-3 p-6">
+            <div className="rounded-full bg-primary/10 p-4 group-hover:bg-primary/20 transition-colors duration-200">
+              <ImageIcon className="h-8 w-8 text-primary" />
+            </div>
+            <div className="text-center space-y-1">
+              <p className="text-sm font-medium text-foreground">
+                Загрузите обложку мероприятия
+              </p>
+              <p className="text-xs text-muted-foreground">
+                PNG, JPG до 5 МБ
+              </p>
+            </div>
+            <Button variant="secondary" size="sm" className="gap-2">
+              <Upload className="h-4 w-4" />
+              Выбрать файл
+            </Button>
+          </div>
+        </Card>
+      )}
+      
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+    </div>
+  );
 }
