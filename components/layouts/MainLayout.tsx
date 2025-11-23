@@ -8,6 +8,7 @@ import { AuthGuard } from "@/components/auth-guard"
 import { usePathname } from "next/navigation"
 import { CircleUserRound } from "lucide-react";
 import { useSession } from "next-auth/react"
+import { Toaster } from "@/components/ui/sonner";
 
 export default function MainLayout({
     children,
@@ -40,16 +41,17 @@ export default function MainLayout({
                             <Separator orientation="vertical" className="mr-2 h-4" />
                         </div>
                         <div className="ml-auto flex items-center gap-2 px-4">
-                            {status === "unauthenticated" ? <CircleUserRound size={35} color="Gray"/> : <CircleUserRound size={35} color="Green"/>} 
+                            {status === "unauthenticated" ? <CircleUserRound size={35} color="Gray"/> : <CircleUserRound size={35} color="Green"/>}
                             <span className="font-bold text-xl">{session?.user?.name}</span>
                             <ThemeToggle />
                         </div>
                     </header>
                     <main className="flex-1 transition-all duration-200 ease-linear">
                         {children}
+                        <Toaster />
                     </main>
                 </SidebarInset>
             </SidebarProvider>
         // </AuthGuard>
     )
-} 
+}

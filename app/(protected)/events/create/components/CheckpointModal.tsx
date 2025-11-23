@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -63,7 +63,6 @@ export function CheckpointModal({
                 setFormat(checkpoint.format)
             }
         } else {
-            // Сброс формы при создании нового чекпоинта
             setTitle('')
             setSubtitle('')
             setStartTime('')

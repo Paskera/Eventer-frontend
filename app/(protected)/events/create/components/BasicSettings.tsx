@@ -34,8 +34,8 @@ export function BasicSettings({ formData, onFormChange }: BasicSettingsProps) {
 
     const formatOptions = [
         { value: 'offline', label: 'Оффлайн', icon: Home, color: 'text-primary' },
-        { value: 'online', label: 'Онлайн', icon: Laptop, color: 'text-info' },
-        { value: 'hybrid', label: 'Гибрид', icon: Blend, color: 'text-accent' }
+        { value: 'online', label: 'Онлайн', icon: Laptop, color: 'text-primary' },
+        { value: 'hybrid', label: 'Гибрид', icon: Blend, color: 'text-primary' }
     ];
 
     return (
@@ -71,62 +71,62 @@ export function BasicSettings({ formData, onFormChange }: BasicSettingsProps) {
             {/* Dates */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                        Дата начала <span className="text-destructive">*</span>
-                    </Label>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className={cn(
-                                    "w-full justify-start text-left font-normal transition-all duration-200 hover:shadow-sm",
-                                    !startDate && "text-muted-foreground"
-                                )}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {startDate ? formatDate(startDate, "PPP", { locale: ru }) : "Выберите дату"}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={startDate}
-                                onSelect={(date) => onFormChange('startDate', date)}
-                                autoFocus
-                                className="pointer-events-auto"
-                            />
-                        </PopoverContent>
-                    </Popover>
+                <Label className="text-sm font-medium">
+                    Дата начала <span className="text-destructive">*</span>
+                </Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        className={cn(
+                        "w-full justify-start text-left font-normal transition-all duration-200 hover:shadow-sm",
+                        !startDate && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate ? formatDate(startDate, "PPP", { locale: ru }) : "Выберите дату"}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        mode="single"
+                        selected={startDate}
+                        locale={ ru }
+                        onSelect={(date) => onFormChange("startDate", date)}
+                        className="pointer-events-auto"
+                    />
+                    </PopoverContent>
+                </Popover>
                 </div>
 
                 <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                        Дата окончания <span className="text-destructive">*</span>
-                    </Label>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className={cn(
-                                    "w-full justify-start text-left font-normal transition-all duration-200 hover:shadow-sm",
-                                    !endDate && "text-muted-foreground"
-                                )}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {endDate ? formatDate(endDate, "PPP", { locale: ru }) : "Выберите дату"}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={endDate}
-                                onSelect={(date) => onFormChange('endDate', date)}
-                                autoFocus
-                                disabled={(date) => startDate ? date < startDate : false}
-                                className="pointer-events-auto"
-                            />
-                        </PopoverContent>
-                    </Popover>
+                <Label className="text-sm font-medium">
+                    Дата окончания <span className="text-destructive">*</span>
+                </Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        className={cn(
+                        "w-full justify-start text-left font-normal transition-all duration-200 hover:shadow-sm",
+                        !endDate && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {endDate ? formatDate(endDate, "PPP", { locale: ru }) : "Выберите дату"}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        mode="single"
+                        selected={endDate}
+                        locale={ ru }
+                        onSelect={(date) => onFormChange("endDate", date)}
+                        disabled={(date) => startDate ? date < startDate : false}
+                        className="pointer-events-auto"
+                    />
+                    </PopoverContent>
+                </Popover>
                 </div>
             </div>
 
@@ -160,8 +160,8 @@ export function BasicSettings({ formData, onFormChange }: BasicSettingsProps) {
                                     className={cn(
                                         "relative flex flex-col items-center justify-center rounded-lg border-2 p-4 cursor-pointer transition-all duration-200",
                                         format === option.value
-                                            ? "border-primary bg-primary/5 shadow-sm"
-                                            : "border-border hover:border-primary/50 hover:bg-muted/50"
+                                            ? "border-primary bg-primary/5"
+                                            : "border-border hover:border-primary/50"
                                     )}
                                 >
                                     <RadioGroupItem
@@ -236,15 +236,15 @@ export function BasicSettings({ formData, onFormChange }: BasicSettingsProps) {
                         Категория
                     </Label>
                     <Select value={category.toString()} onValueChange={(value) => onFormChange('category', parseInt(value))}>
-                        <SelectTrigger className="transition-all duration-200 hover:shadow-sm">
+                        <SelectTrigger className="w-full transition-all duration-200 hover:shadow-sm h-10">
                             <SelectValue placeholder="Выберите категорию" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="1">Хакатон</SelectItem>
-                            <SelectItem value="2">Конференция</SelectItem>
-                            <SelectItem value="3">Воркшоп</SelectItem>
-                            <SelectItem value="4">Семинар</SelectItem>
-                            <SelectItem value="5">Другое</SelectItem>
+                            <SelectItem value="1" className="py-2">Хакатон</SelectItem>
+                            <SelectItem value="2" className="py-2">Конференция</SelectItem>
+                            <SelectItem value="3" className="py-2">Воркшоп</SelectItem>
+                            <SelectItem value="4" className="py-2">Семинар</SelectItem>
+                            <SelectItem value="5" className="py-2">Другое</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useEventForm } from "@/app/(protected)/events/create/hooks/useEventForm";
-import { Button } from "@/components/ui/button";
 import { BasicSettings } from "@/app/(protected)/events/create/components/BasicSettings";
 import { ImageUpload } from "@/app/(protected)/events/create/components/ImageUpload";
 import { DaySelector } from "@/app/(protected)/events/create/components/DaySelector";
@@ -150,7 +149,7 @@ export default function CreateEvent() {
       });
       return;
     }
-
+    
     const eventData = {
       event_name: eventName,
       description: description,
@@ -221,7 +220,9 @@ export default function CreateEvent() {
               formData={formData}
               onFormChange={handleFormChange}
             />
-            <ImageUpload onImageChange={(file) => handleFormChange('eventImage', file)} />
+           <ImageUpload
+              onImageChange={(file) => handleFormChange('eventImage', file)}
+            />
           </div>
         );
       case 2:
@@ -274,9 +275,9 @@ export default function CreateEvent() {
               Заполните информацию о мероприятии и настройте этапы проведения
             </p>
           </div>
-          <div className="space-y-4"></div>
-            <Stepper currentStep={currentStep} steps={steps} />
-          </div>
+
+          {/* Progress Bar */}
+          <Stepper currentStep={currentStep} steps={steps}/>
 
           {/* Content */}
           <Card className="border-border/50 shadow-sm">
@@ -310,5 +311,6 @@ export default function CreateEvent() {
           checkpoints={checkpoints}
         />
       </div>
+    </div>
   );
 }
