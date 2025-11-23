@@ -31,17 +31,6 @@ export interface EventStage {
   end_date: string
 }
 
-// Slavik // переделать
-// export interface Event {
-//   id: number
-//   event_name: string
-//   description: string
-//   image_url: string
-//   users_count: number
-//   format: string
-//   venue: string
-//   stages: EventStage[]
-// }
 
 export interface Event {
   event_name: string;
