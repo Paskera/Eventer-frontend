@@ -26,12 +26,11 @@ interface CheckpointModalProps {
     onOpenChange: (open: boolean) => void
     checkpointId?: number
     onSave: (checkpoint: {
-        title: string
-        subtitle: string
+        name: string
+        description: string
         startTime: string
         endTime: string
-        description: string
-        format: 'online' | 'offline' | 'hybrid'
+        stage_type: 'online' | 'offline'
     }) => void
     selectedDate?: Date
     checkpoints?: Checkpoint[]
@@ -76,12 +75,11 @@ export function CheckpointModal({
 
     const handleSave = () => {
         onSave({
-            title,
-            subtitle,
+            name: title,
+            description,
             startTime,
             endTime,
-            description,
-            format
+            stage_type: format === 'online' ? 'online' : 'offline'
         })
     }
 

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import Image from "next/image"
 import Link from "next/link"
@@ -51,17 +51,17 @@ const data = {
     },
     {
       name: "Дашборд",
-      url: "/eventdashboard",
+      url: "/events/dashboard",
       icon: ClipboardList,
     },
     {
       name: "Все мероприятия",
-      url: "/allevents",
+      url: "/events/all",
       icon: GalleryVerticalEnd,
     },
     {
       name: "Мои мероприятия",
-      url: "/myevents",
+      url: "/events/my",
       icon: GraduationCap,
     },
     // {
@@ -87,13 +87,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   let filteredProjects = data.projects;
   if (session?.role && session.role.toUpperCase() === ROLES.USER) {
     filteredProjects = data.projects.filter(
-      (item) => item.url !== "/eventdashboard/1" 
+      (item) => item.url !== "/events/dashboard/1" 
     );
   } 
   // else if (session?.role && session.role.toUpperCase() === ROLES.ORGANAIZER) {
   //   filteredProjects = data.projects.filter(
   //     (item) =>
-  //       item.url !== "/myevents" &&
+  //       item.url !== "/events/my" &&
   //       item.url !== "/allevents" &&
   //       item.url !== "/certificates"
   //   );

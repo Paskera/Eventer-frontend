@@ -7,25 +7,25 @@ export const ROLES = {
 export const ROLE_ACCESS = {
     [ROLES.USER]: [
         '/profile',
-        '/allevents',
-        '/myevents',
+        '/events/all',
+        '/events/my',
         '/certificates',
-        '/eventdashboard', // del
-        'createevent' // del
+        '/events/dashboard', // del
+        '/events/create' // del
     ],
     [ROLES.ADMIN]: [
         '/profile',
-        '/allevents',
-        '/myevents',
+        '/events/all',
+        '/events/my',
         '/certificates',
         '/dashboard',
-        '/createevent',
-        '/eventdashboard',
+        '/events/create',
+        '/events/dashboard',
         '/admin'
     ],
     [ROLES.ORGANAIZER]: [
         '/profile',
         '/dashboard',
-        '/createevent'
+        '/events/create'
     ]
 } as const; 

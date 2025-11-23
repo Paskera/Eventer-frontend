@@ -18,13 +18,13 @@ export default function MainLayout({
     const pathname = usePathname()
     const routeTitles: Record<string, string> = {
         "/profile": "Профиль",
-        "/eventdashboard": "Дашборд",
-        "/allevents": "Все мероприятия",
-        "/myevents": "Мои мероприятия",
+        "/events/dashboard": "Дашборд",
+        "/events/all": "Все мероприятия",
+        "/events/my": "Мои мероприятия",
         "/certificates": "Сертификаты",
         "/teams": "Команды",
-        "/createevent": "Создать мероприятие",
-        "/eventdetails": "Детали мероприятия",
+        "/events/create": "Создать мероприятие",
+        "/events": "Детали мероприятия",
     }
     const matchKey = Object.keys(routeTitles).find((key) => pathname === key || pathname.startsWith(key + "/"))
     const pageTitle = matchKey ? routeTitles[matchKey] : "Страница"

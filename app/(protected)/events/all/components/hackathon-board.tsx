@@ -454,7 +454,7 @@ export default function HackathonBoard() {
 
                                         <div className="mt-auto pt-4 flex justify-end">
                                             <Button asChild>
-                                                <Link href={`/eventdetails/${event.id}`}>
+                                                <Link href={`/events/${event.id}`}>
                                                     Подробнее
                                                 </Link>
                                             </Button>

@@ -1,0 +1,792 @@
+openapi: 3.0.0
+info:
+  title: Event Management API
+  description: API for managing events and their stages
+ version: 1.0.0
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Development server
+  - url: https://api.eventer.com/api/v1
+    description: Production server
+
+paths:
+  /events:
+    get:
+      summary: Get all events
+      description: Retrieve a list of all events with optional filtering
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: A list of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                  total:
+                    type: integer
+        '400':
+          description: Invalid request parameters
+    post:
+      summary: Create a new event
+      description: Create a new event with the provided details
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - event_payload
+                - file
+              properties:
+                event_payload:
+                  $ref: '#/components/schemas/EventCreateWithStages'
+                file:
+                  type: string
+                  format: binary
+                  description: Event image file
+            encoding:
+              event_payload:
+                contentType: application/json
+      responses:
+        '201':
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: Invalid input data
+        '401':
+          description: Unauthorized
+
+  /events/{event_id}:
+    get:
+      summary: Get event by ID
+      description: Retrieve a specific event by its ID
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '404':
+          description: Event not found
+    put:
+      summary: Update an event
+      description: Update an existing event with the provided details
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventUpdate'
+      responses:
+        '200':
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: Invalid input data
+        '404':
+          description: Event not found
+    delete:
+      summary: Delete an event
+      description: Delete an event by its ID
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Event deleted successfully
+        '404':
+          description: Event not found
+
+  /events/{event_id}/stages:
+    get:
+      summary: Get all stages for an event
+      description: Retrieve all stages associated with a specific event
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of stages for the event
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stage'
+        '404':
+          description: Event not found
+    post:
+      summary: Create a new stage for an event
+      description: Create a new stage associated with a specific event
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StageCreate'
+      responses:
+        '201':
+          description: Stage created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stage'
+        '400':
+          description: Invalid input data
+        '404':
+          description: Event not found
+
+  /events/{event_id}/stages/{stage_id}:
+    get:
+      summary: Get a specific stage
+      description: Retrieve a specific stage by its ID within an event
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: stage_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Stage details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stage'
+        '404':
+          description: Event or stage not found
+    put:
+      summary: Update a stage
+      description: Update an existing stage with the provided details
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: stage_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StageUpdate'
+      responses:
+        '200':
+          description: Stage updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stage'
+        '400':
+          description: Invalid input data
+        '404':
+          description: Event or stage not found
+    delete:
+      summary: Delete a stage
+      description: Delete a stage by its ID within an event
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: stage_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Stage deleted successfully
+        '404':
+          description: Event or stage not found
+
+components:
+  schemas:
+    Event:
+      type: object
+      required:
+        - id
+        - event_name
+        - description
+        - image_url
+        - users_count
+        - participation_type
+        - format
+        - venue
+        - start_date
+        - end_date
+        - event_status
+        - organizer_id
+        - category_id
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the event
+        event_name:
+          type: string
+          maxLength: 255
+          description: Name of the event
+        description:
+          type: string
+          description: Description of the event
+        image_url:
+          type: string
+          format: uri
+          description: URL of the event image
+        users_count:
+          type: integer
+          minimum: 0
+          description: Expected number of users participating in the event
+        participation_type:
+          type: string
+          enum: [solo, team]
+          description: Type of participation (solo or team)
+        format:
+          type: string
+          enum: [online, offline, hybrid]
+          description: Format of the event (online, offline, or hybrid)
+        venue:
+          type: string
+          description: Location of the event
+        start_date:
+          type: string
+          format: date-time
+          description: Start date and time of the event
+        end_date:
+          type: string
+          format: date-time
+          description: End date and time of the event
+        event_status:
+          type: string
+          enum: [validated, rejected, active, waiting, closed]
+          description: Current status of the event
+        organizer_id:
+          type: integer
+          description: ID of the user organizing the event
+        category_id:
+          type: integer
+          description: ID of the event category
+
+    EventCreate:
+      type: object
+      required:
+        - event_name
+        - description
+        - users_count
+        - participation_type
+        - format
+        - venue
+        - start_date
+        - end_date
+        - organizer_id
+        - category_id
+      properties:
+        event_name:
+          type: string
+          maxLength: 255
+          description: Name of the event
+          example: "Турнир по киберспорту 2024"
+        description:
+          type: string
+          description: Description of the event
+          example: "Ежегодный турнир по киберспорту среди студентов университетов"
+        users_count:
+          type: integer
+          minimum: 0
+          description: Expected number of users participating in the event
+          example: 100
+        participation_type:
+          type: string
+          enum: [solo, team]
+          description: Type of participation (solo or team)
+          example: "team"
+        format:
+          type: string
+          enum: [online, offline, hybrid]
+          description: Format of the event (online, offline, or hybrid)
+          example: "online"
+        venue:
+          type: string
+          description: Location of the event
+          example: "Москва, ул. Тверская, д. 1"
+        start_date:
+          type: string
+          format: date-time
+          description: Start date and time of the event
+          example: "2024-12-01T10:00:00Z"
+        end_date:
+          type: string
+          format: date-time
+          description: End date and time of the event
+          example: "2024-12-03T18:00:00Z"
+        event_status:
+          type: string
+          enum: [validated, rejected, active, waiting, closed]
+          description: Current status of the event
+          default: active
+          example: "active"
+        organizer_id:
+          type: integer
+          description: ID of the user organizing the event
+          example: 1
+        category_id:
+          type: integer
+          description: ID of the event category
+          example: 1
+
+    EventUpdate:
+      type: object
+      properties:
+        event_name:
+          type: string
+          maxLength: 255
+          description: Name of the event
+        description:
+          type: string
+          description: Description of the event
+        users_count:
+          type: integer
+          minimum: 0
+          description: Expected number of users participating in the event
+        format:
+          type: string
+          enum: [online, offline, hybrid]
+          description: Format of the event (online, offline, or hybrid)
+        venue:
+          type: string
+          description: Location of the event
+        start_date:
+          type: string
+          format: date-time
+          description: Start date and time of the event
+        end_date:
+          type: string
+          format: date-time
+          description: End date and time of the event
+        event_status:
+          type: string
+          enum: [validated, rejected, active, waiting, closed]
+          description: Current status of the event
+
+    Stage:
+      type: object
+      required:
+        - id
+        - name
+        - start_time
+        - end_time
+        - order
+        - event_id
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the stage
+        name:
+          type: string
+          maxLength: 255
+          description: Name of the stage
+        description:
+          type: string
+          description: Description of the stage
+        stage_type:
+          type: string
+          enum: [online, offline]
+          description: Type of the stage (online or offline)
+        start_time:
+          type: string
+          format: date-time
+          description: Start time of the stage
+        end_time:
+          type: string
+          format: date-time
+          description: End time of the stage
+        order:
+          type: integer
+          description: Order of the stage in the event
+        event_id:
+          type: integer
+          description: ID of the event this stage belongs to
+        bracket_config:
+          type: object
+          description: Configuration for bracket structures
+
+    StageCreate:
+      type: object
+      required:
+        - name
+        - start_time
+        - end_time
+        - order
+        - event_id
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Name of the stage
+          example: "Отборочный этап"
+        description:
+          type: string
+          description: Description of the stage
+          example: "Первый этап турнира, отборочный"
+        stage_type:
+          type: string
+          enum: [online, offline]
+          description: Type of the stage (online or offline)
+          example: "online"
+        start_time:
+          type: string
+          format: date-time
+          description: Start time of the stage
+          example: "2024-12-01T10:00:00Z"
+        end_time:
+          type: string
+          format: date-time
+          description: End time of the stage
+          example: "2024-12-01T14:00:00Z"
+        order:
+          type: integer
+          description: Order of the stage in the event
+          example: 1
+        event_id:
+          type: integer
+          description: ID of the event this stage belongs to
+          example: 1
+        bracket_config:
+          type: object
+          description: Configuration for bracket structures
+          example:
+            type: "single_elimination"
+            participants: 16
+            rounds: 4
+
+    EventCreateWithStages:
+      type: object
+      required:
+        - event_name
+        - description
+        - users_count
+        - participation_type
+        - format
+        - venue
+        - start_date
+        - end_date
+        - organizer_id
+        - category_id
+      properties:
+        event_name:
+          type: string
+          maxLength: 255
+          description: Name of the event
+          example: "Турнир по киберспорту 2024"
+        description:
+          type: string
+          description: Description of the event
+          example: "Ежегодный турнир по киберспорту среди студентов университетов"
+        image_url:
+          type: string
+          format: uri
+          description: URL of the event image
+          example: "https://api.eventer.com/media/events/1/image.jpg"
+        users_count:
+          type: integer
+          minimum: 0
+          description: Expected number of users participating in the event
+          example: 100
+        participation_type:
+          type: string
+          enum: [solo, team]
+          description: Type of participation (solo or team)
+          example: "team"
+        format:
+          type: string
+          enum: [online, offline, hybrid]
+          description: Format of the event (online, offline, or hybrid)
+          example: "online"
+        venue:
+          type: string
+          description: Location of the event
+          example: "Москва, ул. Тверская, д. 1"
+        start_date:
+          type: string
+          format: date-time
+          description: Start date and time of the event
+          example: "2024-12-01T10:00:00Z"
+        end_date:
+          type: string
+          format: date-time
+          description: End date and time of the event
+          example: "2024-12-03T18:00:00Z"
+        event_status:
+          type: string
+          enum: [validated, rejected, active, waiting, closed]
+          description: Current status of the event
+          default: active
+          example: "active"
+        organizer_id:
+          type: integer
+          description: ID of the user organizing the event
+          example: 1
+        category_id:
+          type: integer
+          description: ID of the event category
+          example: 1
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/StageCreate'
+          description: List of stages to create with the event
+          default: []
+          example:
+            - name: "Отборочный этап"
+              description: "Первый этап турнира, отборочный"
+              stage_type: "online"
+              start_time: "2024-12-01T10:00:00Z"
+              end_time: "2024-12-01T14:00:00Z"
+              order: 1
+              event_id: 1
+            - name: "Финальный этап"
+              description: "Финальный этап турнира"
+              stage_type: "online"
+              start_time: "2024-12-03T14:00:00Z"
+              end_time: "2024-12-03T18:00:00Z"
+              order: 2
+              event_id: 1
+
+    StageUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Name of the stage
+        description:
+          type: string
+          description: Description of the stage
+        stage_type:
+          type: string
+          enum: [online, offline]
+          description: Type of the stage (online or offline)
+        start_time:
+          type: string
+          format: date-time
+          description: Start time of the stage
+        end_time:
+          type: string
+          format: date-time
+          description: End time of the stage
+        order:
+          type: integer
+          description: Order of the stage in the event
+        bracket_config:
+          type: object
+          description: Configuration for bracket structures
+
+# Frontend Implementation Guide
+
+## Event Creation Form Fields
+
+### Required Fields
+- **event_name**: String, max length 255 - название мероприятия
+- **description**: String - описание мероприятия
+- **users_count**: Integer, minimum 0 - ожидаемое количество участников
+- **participation_type**: Enum (solo, team) - тип участия
+- **format**: Enum (online, offline, hybrid) - формат мероприятия
+- **venue**: String - место проведения
+- **start_date**: DateTime - дата и время начала
+- **end_date**: DateTime - дата и время окончания
+- **organizer_id**: Integer - ID организатора
+- **category_id**: Integer - ID категории
+
+### Optional Fields
+- **event_status**: Enum (validated, rejected, active, waiting, closed), default: active - статус мероприятия
+- **image_url**: String (URI) - URL изображения мероприятия
+
+### File Upload
+- **file**: Binary - изображение мероприятия (форматы: jpeg, jpg, png, webp)
+
+## Stage Creation Fields (for events with multiple stages)
+
+### Required Fields
+- **name**: String, max length 255 - название этапа
+- **start_time**: DateTime - дата и время начала этапа
+- **end_time**: DateTime - дата и время окончания этапа
+- **order**: Integer - порядковый номер этапа в мероприятии
+- **event_id**: Integer - ID мероприятия, к которому относится этап
+
+### Optional Fields
+- **description**: String - описание этапа
+- **stage_type**: Enum (online, offline) - тип этапа
+- **bracket_config**: Object - конфигурация сетки соревнований (для турниров)
+
+## Form Validation Rules
+
+### Event Name
+- Обязательное поле
+- Максимальная длина: 255 символов
+- Может содержать любые символы
+
+### Description
+- Обязательное поле
+- Рекомендуется не более 100 символов для лучшего отображения
+
+### Users Count
+- Обязательное поле
+- Целое число
+- Минимальное значение: 0
+
+### Participation Type
+- Обязательное поле
+- Возможные значения: "solo" (для индивидуальных участников), "team" (для команд)
+
+### Format
+- Обязательное поле
+- Возможные значения: "online", "offline", "hybrid"
+
+### Venue
+- Обязательное поле
+- Для online мероприятий можно указать "Онлайн" или название платформы
+
+### Dates
+- Оба поля обязательны
+- start_date должен быть раньше end_date
+- Формат: ISO 8601 (например, "2024-12-01T10:00:00Z")
+
+### Organizer ID
+- Обязательное поле
+- Целое число
+- Должно соответствовать существующему пользователю с ролью организатора
+
+### Category ID
+- Обязательное поле
+- Целое число
+- Должно соответствовать существующей категории мероприятий
+
+## File Upload Requirements
+- Изображение обязательно для загрузки
+- Поддерживаемые форматы: JPEG, JPG, PNG, WebP
+- Рекомендуемое соотношение сторон: 16:9
+- Максимальный размер файла: 5MB (настраивается в конфигурации)
+
+## API Request Example
+```javascript
+// Example of creating an event with stages using FormData
+const formData = new FormData();
+const eventPayload = {
+  event_name: "Турнир по киберспорту 2024",
+  description: "Ежегодный турнир по киберспорту среди студентов университетов",
+  users_count: 10,
+  participation_type: "team",
+  format: "online",
+  venue: "Онлайн",
+  start_date: "2024-12-01T10:00:00Z",
+  end_date: "2024-12-03T18:00:00Z",
+  organizer_id: 1,
+  category_id: 1,
+  stages: [
+    {
+      name: "Отборочный этап",
+      description: "Первый этап турнира, отборочный",
+      stage_type: "online",
+      start_time: "2024-12-01T10:00:00Z",
+      end_time: "2024-12-01T14:00:00Z",
+      order: 1,
+      event_id: 1
+    },
+    {
+      name: "Финальный этап",
+      description: "Финальный этап турнира",
+      stage_type: "online",
+      start_time: "2024-12-03T14:00:00Z",
+      end_time: "2024-12-03T18:00:00Z",
+      order: 2,
+      event_id: 1
+    }
+  ]
+};
+
+formData.append('event_payload', JSON.stringify(eventPayload));
+formData.append('file', imageFile);
+
+fetch('http://localhost:8000/api/v1/events/', {
+  method: 'POST',
+  body: formData,
+  headers: {
+    // Авторизационный заголовок при необходимости
+    'Authorization': 'Bearer your_token_here'
+  }
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+```
