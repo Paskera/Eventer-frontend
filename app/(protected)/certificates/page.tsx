@@ -32,7 +32,12 @@ export default function CertificatesPage() {
             <div className="min-h-screen bg-background p-4 sm:p-6">
                 <div className="max-w-[1200px] mx-auto flex flex-col gap-8">
                     <div className="flex flex-col gap-4">
-                        <h1 className="text-3xl font-extrabold">Сертификаты</h1>
+                        <div className="flex items-center justify-between">
+                            <h1 className="text-3xl font-extrabold">Сертификаты</h1>
+                            <a href="/certificates/create">
+                                <Button>Создать сертификат</Button>
+                            </a>
+                        </div>
                         <div className="flex flex-col md:flex-row md:items-center gap-3 md:justify-between">
                             <div className="flex flex-wrap gap-2">
                                 {TABS.map(tab => (
