@@ -29,8 +29,8 @@ export default function Toolbox({
     <div className="w-64 border-r border-border bg-card p-4 overflow-y-auto">
       <Tabs defaultValue="templates" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-background">
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="variables">Variables</TabsTrigger>
+          <TabsTrigger value="templates">Шаблоны</TabsTrigger>
+          <TabsTrigger value="variables">Переменные</TabsTrigger>
         </TabsList>
 
         <TabsContent value="templates" className="mt-4 space-y-2">
@@ -58,7 +58,7 @@ export default function Toolbox({
               <Badge variant="secondary" className="mr-2">
                 {variable.label}
               </Badge>
-              Add
+              Добавить
             </Button>
           ))}
         </TabsContent>
@@ -66,14 +66,14 @@ export default function Toolbox({
 
       <div className="mt-6 pt-6 border-t border-border">
         <h3 className="mb-3 text-sm font-semibold text-foreground">
-          Document Settings
+          Настройки документа
         </h3>
         <div className="space-y-2">
           <Label
             htmlFor="background-upload"
             className="text-xs font-medium text-foreground"
           >
-            Background Image
+            Фоновое изображение
           </Label>
           <input
             id="background-upload"
@@ -90,7 +90,7 @@ export default function Toolbox({
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload className="h-4 w-4" />
-            Upload Background
+            Загрузить фон
           </Button>
           {backgroundImage && (
             <Button
@@ -99,7 +99,7 @@ export default function Toolbox({
               className="w-full text-xs"
               onClick={onRemoveBackground}
             >
-              Remove Background
+              Удалить фон
             </Button>
           )}
         </div>
