@@ -8,14 +8,14 @@ export interface TextLayer {
   color: string
   alignment: "left" | "center" | "right"
   width: number
-  fontWeight?: string;
-  fontStyle?: string;
-  textDecoration?: string;
-  lineHeight?: number;
-  letterSpacing?: number;
-  borderWidth?: number;
-  borderColor?: string;
-  opacity?: number;
+  fontWeight?: string
+  fontStyle?: string
+  textDecoration?: string
+  lineHeight?: number
+  letterSpacing?: number
+  borderWidth?: number
+  borderColor?: string
+  opacity?: number
 }
 
 export const VARIABLES = [
@@ -38,68 +38,68 @@ export const TEMPLATES = [
       {
         id: "1",
         text: "Certificate of Achievement",
-        x: 105, // центрировано по ширине A4 (210/2)
-        y: 30, // смещение сверху
+        x: 105,
+        y: 30,
         fontSize: 24,
         fontFamily: "serif",
         color: "#1a365d",
         alignment: "center" as const,
-        width: 100, // ширина в миллиметрах
+        width: 100,
       },
       {
         id: "2",
         text: "This certifies that",
-        x: 105, // центрировано по ширине A4 (210/2)
-        y: 90, // смещение сверху
+        x: 105,
+        y: 90,
         fontSize: 12,
         fontFamily: "serif",
         color: "#2d3748",
         alignment: "center" as const,
-        width: 100, // ширина в миллиметрах
+        width: 100,
       },
       {
         id: "3",
         text: "{{NAME}}",
-        x: 105, // центрировано по ширине A4 (210/2)
-        y: 125, // смещение сверху
+        x: 105,
+        y: 125,
         fontSize: 16,
         fontFamily: "serif",
         color: "#1a365d",
         alignment: "center" as const,
-        width: 100, // ширина в миллиметрах
+        width: 100,
       },
       {
         id: "4",
         text: "has successfully completed",
-        x: 105, // центрировано по ширине A4 (210/2)
-        y: 175, // смещение сверху
+        x: 105,
+        y: 175,
         fontSize: 10,
         fontFamily: "serif",
         color: "#2d3748",
         alignment: "center" as const,
-        width: 100, // ширина в миллиметрах
+        width: 100,
       },
       {
         id: "5",
         text: "{{COURSE}}",
-        x: 105, // центрировано по ширине A4 (210/2)
-        y: 210, // смещение сверху
+        x: 105,
+        y: 210,
         fontSize: 14,
         fontFamily: "serif",
         color: "#1a365d",
         alignment: "center" as const,
-        width: 100, // ширина в миллиметрах
+        width: 100,
       },
       {
         id: "6",
         text: "Date: {{DATE}}",
-        x: 105, // центрировано по ширине A4 (210/2)
-        y: 260, // смещение сверху
+        x: 105,
+        y: 260,
         fontSize: 8,
         fontFamily: "sans-serif",
         color: "#4a5568",
         alignment: "center" as const,
-        width: 100, // ширина в миллиметрах
+        width: 100,
       },
     ],
   },
@@ -109,57 +109,57 @@ export const TEMPLATES = [
       {
         id: "1",
         text: "CERTIFICATE",
-        x: 105, // центрировано по ширине A4 (210/2)
-        y: 35, // смещение сверху
+        x: 105,
+        y: 35,
         fontSize: 28,
         fontFamily: "sans-serif",
         color: "#0066cc",
         alignment: "center" as const,
-        width: 100, // ширина в миллиметрах
+        width: 100,
       },
       {
         id: "2",
         text: "Awarded to",
-        x: 105, // центрировано по ширине A4 (210/2)
-        y: 100, // смещение сверху
+        x: 105,
+        y: 100,
         fontSize: 10,
         fontFamily: "sans-serif",
-        color: "#6666",
+        color: "#666666",
         alignment: "center" as const,
-        width: 100, // ширина в миллиметрах
+        width: 100,
       },
       {
         id: "3",
         text: "{{NAME}}",
-        x: 105, // центрировано по ширине A4 (210/2)
-        y: 140, // смещение сверху
+        x: 105,
+        y: 140,
         fontSize: 18,
         fontFamily: "sans-serif",
         color: "#0066cc",
         alignment: "center" as const,
-        width: 100, // ширина в миллиметрах
+        width: 100,
       },
       {
         id: "4",
         text: "For {{ACHIEVEMENT}}",
-        x: 105, // центрировано по ширине A4 (210/2)
-        y: 190, // смещение сверху
+        x: 105,
+        y: 190,
         fontSize: 12,
         fontFamily: "sans-serif",
-        color: "#33333",
+        color: "#333333",
         alignment: "center" as const,
-        width: 180, // близко к ширине A4 с отступами
+        width: 180,
       },
       {
         id: "5",
         text: "{{DATE}}",
-        x: 105, // центрировано по ширине A4 (210/2)
-        y: 250, // смещение сверху
+        x: 105,
+        y: 250,
         fontSize: 7,
         fontFamily: "sans-serif",
         color: "#999999",
         alignment: "center" as const,
-        width: 180, // близко к ширине A4 с отступами
+        width: 180,
       },
     ],
   },

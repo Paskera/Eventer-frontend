@@ -1,36 +1,24 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface PageSizeModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (settings: PageSizeSettings) => void;
-  initialSettings?: PageSizeSettings;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSave: (settings: PageSizeSettings) => void
+  initialSettings?: PageSizeSettings
 }
 
 export interface PageSizeSettings {
-  format: string;
-  width: number;
- height: number;
-  orientation: "portrait" | "landscape";
+  format: string
+  width: number
+  height: number
+  orientation: "portrait" | "landscape"
 }
 
 const PAGE_FORMATS = [
@@ -40,49 +28,40 @@ const PAGE_FORMATS = [
   { id: "letter", width: 216, height: 279 },
   { id: "legal", width: 216, height: 356 },
   { id: "tabloid", width: 279, height: 432 },
-];
+]
 
-export default function PageSizeModal({
-  open,
-  onOpenChange,
-  onSave,
-  initialSettings,
-}: PageSizeModalProps) {
-  const [format, setFormat] = useState<string>(initialSettings?.format || "A4");
-  const [width, setWidth] = useState<number>(initialSettings?.width || 210);
-  const [height, setHeight] = useState<number>(initialSettings?.height || 297);
-  const [orientation, setOrientation] = useState<"portrait" | "landscape">(
-    initialSettings?.orientation || "portrait"
-  );
-  const [isManualInput, setIsManualInput] = useState(false);
+export default function PageSizeModal({ open, onOpenChange, onSave, initialSettings }: PageSizeModalProps) {
+  const [format, setFormat] = useState<string>(initialSettings?.format || "A4")
+  const [width, setWidth] = useState<number>(initialSettings?.width || 210)
+  const [height, setHeight] = useState<number>(initialSettings?.height || 297)
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">(initialSettings?.orientation || "portrait")
+  const [isManualInput, setIsManualInput] = useState(false)
 
-  // Обновляем размеры при изменении формата, но не при ручном вводе
   useEffect(() => {
     if (!isManualInput) {
-      const selectedFormat = PAGE_FORMATS.find(f => f.id === format);
+      const selectedFormat = PAGE_FORMATS.find((f) => f.id === format)
       if (selectedFormat) {
         if (orientation === "portrait") {
-          setWidth(selectedFormat.width);
-          setHeight(selectedFormat.height);
+          setWidth(selectedFormat.width)
+          setHeight(selectedFormat.height)
         } else {
-          setWidth(selectedFormat.height);
-          setHeight(selectedFormat.width);
+          setWidth(selectedFormat.height)
+          setHeight(selectedFormat.width)
         }
       }
     }
-  }, [format, orientation, isManualInput]);
+  }, [format, orientation, isManualInput])
 
   const handleSave = () => {
-    onSave({ format, width, height, orientation });
-    onOpenChange(false);
-  };
+    onSave({ format, width, height, orientation })
+    onOpenChange(false)
+  }
 
   const handleOrientationChange = (value: "portrait" | "landscape") => {
-    setOrientation(value);
-    // При смене ориентации меняем местами ширину и высоту
-    setWidth(height);
-    setHeight(width);
-  };
+    setOrientation(value)
+    setWidth(height)
+    setHeight(width)
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -95,10 +74,13 @@ export default function PageSizeModal({
             <Label htmlFor="format" className="text-right">
               Формат
             </Label>
-            <Select value={format} onValueChange={(value) => {
-              setFormat(value);
-              setIsManualInput(false); // при выборе формата сбрасываем флаг ручного ввода
-            }}>
+            <Select
+              value={format}
+              onValueChange={(value) => {
+                setFormat(value)
+                setIsManualInput(false)
+              }}
+            >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Выберите формат" />
               </SelectTrigger>
@@ -112,7 +94,7 @@ export default function PageSizeModal({
             </Select>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-4 items-center gap-4">
           <Label className="text-right">Ширина</Label>
           <div className="col-span-3 flex items-center gap-2">
@@ -121,15 +103,15 @@ export default function PageSizeModal({
               type="number"
               value={width}
               onChange={(e) => {
-                setWidth(Number(e.target.value));
-                setIsManualInput(true);
+                setWidth(Number(e.target.value))
+                setIsManualInput(true)
               }}
               className="w-full"
             />
             <span className="text-sm text-muted-foreground">мм</span>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-4 items-center gap-4">
           <Label className="text-right">Высота</Label>
           <div className="col-span-3 flex items-center gap-2">
@@ -138,15 +120,15 @@ export default function PageSizeModal({
               type="number"
               value={height}
               onChange={(e) => {
-                setHeight(Number(e.target.value));
-                setIsManualInput(true);
+                setHeight(Number(e.target.value))
+                setIsManualInput(true)
               }}
               className="w-full"
             />
             <span className="text-sm text-muted-foreground">мм</span>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-4 items-center gap-4">
           <Label className="text-right">Ориентация</Label>
           <div className="col-span-3 flex gap-4">
@@ -157,7 +139,7 @@ export default function PageSizeModal({
                 name="orientation"
                 checked={orientation === "portrait"}
                 onChange={() => {
-                  handleOrientationChange("portrait");
+                  handleOrientationChange("portrait")
                 }}
                 className="h-4 w-4"
               />
@@ -170,7 +152,7 @@ export default function PageSizeModal({
                 name="orientation"
                 checked={orientation === "landscape"}
                 onChange={() => {
-                  handleOrientationChange("landscape");
+                  handleOrientationChange("landscape")
                 }}
                 className="h-4 w-4"
               />
@@ -185,5 +167,5 @@ export default function PageSizeModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

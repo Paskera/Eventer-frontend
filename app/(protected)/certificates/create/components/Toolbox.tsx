@@ -1,9 +1,10 @@
 "use client"
 
+import type React from "react"
+
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, Copy } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { TEMPLATES, VARIABLES } from "../data"
 import { useRef } from "react"
@@ -41,7 +42,7 @@ export default function Toolbox({
               className="w-full justify-start bg-transparent"
               onClick={() => onLoadTemplate(idx)}
             >
-              <Copy className="h-4 w-4 mr-2" />
+              <span className="mr-2">📋</span>
               {template.name}
             </Button>
           ))}
@@ -49,30 +50,28 @@ export default function Toolbox({
 
         <TabsContent value="variables" className="mt-4 space-y-2">
           {VARIABLES.map((variable) => (
-            <Button
+            <button
               key={variable.id}
-              variant="outline"
-              className="w-full justify-start bg-transparent"
               onClick={() => onAddVariable(variable.label)}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = "copy"
+                e.dataTransfer.setData("text/plain", variable.label)
+              }}
+              className="w-full"
             >
-              <Badge variant="secondary" className="mr-2">
+              <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80 w-full justify-center">
                 {variable.label}
               </Badge>
-              Добавить
-            </Button>
+            </button>
           ))}
         </TabsContent>
       </Tabs>
 
       <div className="mt-6 pt-6 border-t border-border">
-        <h3 className="mb-3 text-sm font-semibold text-foreground">
-          Настройки документа
-        </h3>
+        <h3 className="mb-3 text-sm font-semibold text-foreground">Настройки документа</h3>
         <div className="space-y-2">
-          <Label
-            htmlFor="background-upload"
-            className="text-xs font-medium text-foreground"
-          >
+          <Label htmlFor="background-upload" className="text-xs font-medium text-foreground">
             Фоновое изображение
           </Label>
           <input
@@ -89,16 +88,20 @@ export default function Toolbox({
             className="w-full gap-2 bg-transparent"
             onClick={() => fileInputRef.current?.click()}
           >
-            <Upload className="h-4 w-4" />
+            <span>📤</span>
             Загрузить фон
           </Button>
           {backgroundImage && (
             <Button
               variant="ghost"
               size="sm"
-              className="w-full text-xs"
-              onClick={onRemoveBackground}
+              className="w-full text-xs gap-2"
+              onClick={() => {
+                onRemoveBackground()
+                fileInputRef.current!.value = ""
+              }}
             >
+              <span>🗑️</span>
               Удалить фон
             </Button>
           )}
