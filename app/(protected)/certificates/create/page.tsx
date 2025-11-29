@@ -19,6 +19,7 @@ import type { PageSizeSettings } from "./components/PageSizeModal"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import PageSizeModal from "./components/PageSizeModal"
+import { Eye, Settings, Save, Minus, Plus, RotateCw } from "lucide-react"
 
 export default function CertificateDesigner() {
   const [layers, setLayers] = useState<TextLayer[]>(TEMPLATES[0].layers)
@@ -155,14 +156,24 @@ export default function CertificateDesigner() {
       const reader = new FileReader()
       reader.onload = (event) => {
         setBackgroundImage(event.target?.result as string)
+
+        const img = new Image()
+        img.onload = () => {
+          // Calculate aspect ratio and set page size based on image
+          const width = Math.round(img.width / 3.78) // Convert pixels to mm
+          const height = Math.round(img.height / 3.78) // Convert pixels to mm
+
+          setPageSizeSettings({
+            format: "Custom",
+            width: width,
+            height: height,
+            orientation: width >= height ? "landscape" : "portrait",
+          })
+        }
+        img.src = event.target?.result as string
       }
       reader.readAsDataURL(file)
     }
-  }
-
-  const handleCanvasDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = "copy"
   }
 
   const handleCanvasDrop = (e: React.DragEvent) => {
@@ -174,6 +185,20 @@ export default function CertificateDesigner() {
         const reader = new FileReader()
         reader.onload = (event) => {
           setBackgroundImage(event.target?.result as string)
+
+          const img = new Image()
+          img.onload = () => {
+            const width = Math.round(img.width / 3.78)
+            const height = Math.round(img.height / 3.78)
+
+            setPageSizeSettings({
+              format: "Custom",
+              width: width,
+              height: height,
+              orientation: width >= height ? "landscape" : "portrait",
+            })
+          }
+          img.src = event.target?.result as string
         }
         reader.readAsDataURL(file)
       }
@@ -234,6 +259,10 @@ export default function CertificateDesigner() {
     setShowFloatingPanel(true)
   }
 
+  const handleCanvasDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
   return (
     <>
       <div className="flex flex-col min-h-screen bg-background">
@@ -242,13 +271,16 @@ export default function CertificateDesigner() {
             <h1 className="text-2xl font-semibold text-foreground">Конструктор сертификатов</h1>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm" className="gap-2 bg-transparent" onClick={() => setShowPreview(true)}>
-                👁️ Предпросмотр
+                <Eye className="w-4 h-4" />
+                Предпросмотр
               </Button>
               <Button size="sm" className="gap-2" onClick={() => setShowPageSizeModal(true)}>
-                ⚙️ Размер страницы
+                <Settings className="w-4 h-4" />
+                Размер страницы
               </Button>
               <Button size="sm" className="gap-2">
-                💾 Сохранить шаблон
+                <Save className="w-4 h-4" />
+                Сохранить шаблон
               </Button>
             </div>
           </div>
@@ -273,15 +305,18 @@ export default function CertificateDesigner() {
           </Breadcrumb>
           <div className="border-t border-border px-6 py-2 flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleZoomOut} className="gap-1 bg-transparent">
-              − Уменьшить
+              <Minus className="w-4 h-4" />
+              Уменьшить
             </Button>
             <span className="text-sm text-muted-foreground px-2 min-w-16">{Math.round(zoomLevel * 100)}%</span>
             <Button variant="outline" size="sm" onClick={handleZoomIn} className="gap-1 bg-transparent">
-              + Увеличить
+              <Plus className="w-4 h-4" />
+              Увеличить
             </Button>
             <div className="border-l border-border mx-2 h-6"></div>
             <Button variant="outline" size="sm" onClick={handleRotate} className="gap-1 bg-transparent">
-              ↻ {rotation}°
+              <RotateCw className="w-4 h-4" />
+              {rotation}°
             </Button>
           </div>
         </div>
@@ -422,7 +457,6 @@ export default function CertificateDesigner() {
         initialSettings={pageSizeSettings}
       />
 
-      {/* Removed the floating panel rendering condition as per the update */}
     </>
   )
 }
