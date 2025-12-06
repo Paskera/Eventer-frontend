@@ -15,6 +15,7 @@ interface ToolboxProps {
   onBackgroundUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
   onRemoveBackground: () => void
   backgroundImage: string | null
+  onFitTemplateToPage?: () => void
 }
 
 export default function Toolbox({
@@ -23,6 +24,7 @@ export default function Toolbox({
   onBackgroundUpload,
   onRemoveBackground,
   backgroundImage,
+  onFitTemplateToPage,
 }: ToolboxProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -46,6 +48,17 @@ export default function Toolbox({
               {template.name}
             </Button>
           ))}
+
+          {onFitTemplateToPage && (
+            <Button
+              variant="outline"
+              className="w-full justify-start bg-transparent mt-4 border-primary/50 hover:bg-primary/10"
+              onClick={onFitTemplateToPage}
+            >
+              <span className="mr-2">📐</span>
+              Подогнать размер
+            </Button>
+          )}
         </TabsContent>
 
         <TabsContent value="variables" className="mt-4 space-y-2">

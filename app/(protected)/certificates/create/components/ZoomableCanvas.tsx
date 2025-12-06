@@ -46,11 +46,14 @@ export default function ZoomableCanvas({
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null)
   const [editingText, setEditingText] = useState<string>("")
 
+  const actualPageWidth = width || pageWidth
+  const actualPageHeight = height || pageHeight
+
   const getLayerPositionPercent = (layer: TextLayer) => {
     return {
-      x: layer.xPercent !== undefined ? layer.xPercent : (layer.x / pageWidth) * 100,
-      y: layer.yPercent !== undefined ? layer.yPercent : (layer.y / pageHeight) * 100,
-      width: layer.widthPercent !== undefined ? layer.widthPercent : (layer.width / pageWidth) * 100,
+      x: layer.xPercent !== undefined ? layer.xPercent : (layer.x / actualPageWidth) * 100,
+      y: layer.yPercent !== undefined ? layer.yPercent : (layer.y / actualPageHeight) * 100,
+      width: layer.widthPercent !== undefined ? layer.widthPercent : (layer.width / actualPageWidth) * 100,
     }
   }
 
@@ -93,13 +96,16 @@ export default function ZoomableCanvas({
             key={layer.id}
             onMouseDown={(e) => {
               e.stopPropagation()
+              if (editingLayerId === layer.id) return
               if (e.button === 0) {
                 onLayerMouseDown(e, layer.id)
               }
             }}
             onClick={(e) => {
               e.stopPropagation()
-              onSelectLayer(layer.id)
+              if (editingLayerId !== layer.id) {
+                onSelectLayer(layer.id)
+              }
             }}
             onDoubleClick={(e) => {
               e.stopPropagation()

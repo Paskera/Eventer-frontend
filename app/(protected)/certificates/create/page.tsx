@@ -48,6 +48,48 @@ export default function CertificateDesigner() {
     setLayers((prevLayers) => prevLayers.map((l) => (l.id === id ? { ...l, ...updates } : l)))
   }, [])
 
+  const scaleLayersToPageSize = useCallback(
+    (oldWidth: number, oldHeight: number, newWidth: number, newHeight: number) => {
+      setLayers((prevLayers) =>
+        prevLayers.map((layer) => {
+          // Calculate current position as percentage of old page size
+          const xPercent = layer.xPercent !== undefined ? layer.xPercent : (layer.x / oldWidth) * 100
+          const yPercent = layer.yPercent !== undefined ? layer.yPercent : (layer.y / oldHeight) * 100
+          const widthPercent = layer.widthPercent !== undefined ? layer.widthPercent : (layer.width / oldWidth) * 100
+
+          // Convert percentages to new absolute values
+          const newX = (xPercent * newWidth) / 100
+          const newY = (yPercent * newHeight) / 100
+          const newWidth_abs = (widthPercent * newWidth) / 100
+
+          // Clamp values to keep text within bounds
+          const clampedXPercent = Math.max(0, Math.min(100, xPercent))
+          const clampedYPercent = Math.max(0, Math.min(100, yPercent))
+          const clampedWidthPercent = Math.max(5, Math.min(100 - clampedXPercent, widthPercent))
+
+          return {
+            ...layer,
+            x: Math.max(0, Math.min(newWidth, newX)),
+            y: Math.max(0, Math.min(newHeight, newY)),
+            width: Math.max(5, Math.min(newWidth, newWidth_abs)),
+            xPercent: clampedXPercent,
+            yPercent: clampedYPercent,
+            widthPercent: clampedWidthPercent,
+          }
+        }),
+      )
+    },
+    [],
+  )
+
+  const handleFitTemplateToPage = useCallback(() => {
+    // Use the default A4 size as the original template size
+    const templateWidth = 210 // A4 width in mm
+    const templateHeight = 297 // A4 height in mm
+
+    scaleLayersToPageSize(templateWidth, templateHeight, pageSizeSettings.width, pageSizeSettings.height)
+  }, [pageSizeSettings.width, pageSizeSettings.height, scaleLayersToPageSize])
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!draggedLayerId) return
@@ -59,13 +101,43 @@ export default function CertificateDesigner() {
       if (!canvasEl) return
 
       const canvasRect = canvasEl.getBoundingClientRect()
-      const newPixelX = Math.max(0, e.pageX - (canvasRect.left + window.scrollX) - dragOffset.x)
-      const newPixelY = Math.max(0, e.pageY - (canvasRect.top + window.scrollY) - dragOffset.y)
 
-      const newX = Math.max(0, newPixelX / 3.78)
-      const newY = Math.max(0, newPixelY / 3.78)
+      const scale = zoomLevel
+      const rawX = (e.clientX - canvasRect.left - dragOffset.x) / scale
+      const rawY = (e.clientY - canvasRect.top - dragOffset.y) / scale
 
-      handleUpdateLayer(draggedLayerId, { x: newX, y: newY })
+      // Convert pixels to percentage based on current canvas size
+      const canvasWidthPx = canvasRect.width / scale
+      const canvasHeightPx = canvasRect.height / scale
+
+      let xPercent = (rawX / canvasWidthPx) * 100
+      let yPercent = (rawY / canvasHeightPx) * 100
+
+      // Get layer width percentage
+      const widthPercent =
+        layer.widthPercent !== undefined ? layer.widthPercent : (layer.width / pageSizeSettings.width) * 100
+
+      // Adjust boundaries based on alignment
+      if (layer.alignment === "center") {
+        xPercent = Math.max(widthPercent / 2, Math.min(100 - widthPercent / 2, xPercent))
+      } else if (layer.alignment === "right") {
+        xPercent = Math.max(0, Math.min(100 - widthPercent, xPercent))
+      } else {
+        xPercent = Math.max(0, Math.min(100 - widthPercent, xPercent))
+      }
+
+      yPercent = Math.max(0, Math.min(100, yPercent))
+
+      // Convert percentage back to mm for storage
+      const newX = (xPercent / 100) * pageSizeSettings.width
+      const newY = (yPercent / 100) * pageSizeSettings.height
+
+      handleUpdateLayer(draggedLayerId, {
+        x: newX,
+        y: newY,
+        xPercent,
+        yPercent,
+      })
     }
 
     const handleMouseUp = () => {
@@ -81,13 +153,19 @@ export default function CertificateDesigner() {
         window.removeEventListener("mouseup", handleMouseUp)
       }
     }
-  }, [draggedLayerId, dragOffset, layers, handleUpdateLayer])
+  }, [
+    draggedLayerId,
+    dragOffset,
+    layers,
+    handleUpdateLayer,
+    zoomLevel,
+    pageSizeSettings.width,
+    pageSizeSettings.height,
+  ])
 
   const handleLayerMouseDown = (e: React.MouseEvent, layerId: string) => {
     e.preventDefault()
     setSelectedLayerId(layerId)
-
-    // Only start dragging, don't open floating panel
     setDraggedLayerId(layerId)
 
     const canvasEl = e.currentTarget.parentElement
@@ -97,17 +175,29 @@ export default function CertificateDesigner() {
     const layer = layers.find((l) => l.id === layerId)
     if (!layer) return
 
-    let pixelX = layer.x * 3.78
+    const scale = zoomLevel
+    const canvasWidthPx = canvasRect.width / scale
+    const canvasHeightPx = canvasRect.height / scale
+
+    const xPercent = layer.xPercent !== undefined ? layer.xPercent : (layer.x / pageSizeSettings.width) * 100
+    const yPercent = layer.yPercent !== undefined ? layer.yPercent : (layer.y / pageSizeSettings.height) * 100
+
+    let layerPixelX = (xPercent / 100) * canvasWidthPx
+    const layerPixelY = (yPercent / 100) * canvasHeightPx
+
+    // Adjust for alignment
+    const widthPercent =
+      layer.widthPercent !== undefined ? layer.widthPercent : (layer.width / pageSizeSettings.width) * 100
+    const layerWidthPx = (widthPercent / 100) * canvasWidthPx
 
     if (layer.alignment === "center") {
-      pixelX = layer.x * 3.78
+      layerPixelX -= layerWidthPx / 2
     } else if (layer.alignment === "right") {
-      pixelX = layer.x * 3.78
+      layerPixelX -= layerWidthPx
     }
 
-    const pixelY = layer.y * 3.78
-    const offsetX = e.pageX - (canvasRect.left + window.scrollX) - pixelX
-    const offsetY = e.pageY - (canvasRect.top + window.scrollY) - pixelY
+    const offsetX = (e.clientX - canvasRect.left) / scale - layerPixelX
+    const offsetY = (e.clientY - canvasRect.top) / scale - layerPixelY
 
     setDragOffset({ x: offsetX, y: offsetY })
   }
@@ -128,6 +218,10 @@ export default function CertificateDesigner() {
 
   const handleAddVariable = (varLabel: string) => {
     const newId = Date.now().toString()
+    const xPercent = (105 / pageSizeSettings.width) * 100 // center of page
+    const yPercent = (20 / pageSizeSettings.height) * 100
+    const widthPercent = (80 / pageSizeSettings.width) * 100
+
     const newLayer: TextLayer = {
       id: newId,
       text: varLabel,
@@ -137,7 +231,10 @@ export default function CertificateDesigner() {
       fontFamily: "sans-serif",
       color: "#000000",
       alignment: "center",
-      width: 80, // reduced from 300 to 80mm for better proportions
+      width: 80,
+      xPercent,
+      yPercent,
+      widthPercent,
     }
     setLayers([...layers, newLayer])
     setSelectedLayerId(newId)
@@ -163,12 +260,19 @@ export default function CertificateDesigner() {
           const width = Math.round(img.width / 3.78) // Convert pixels to mm
           const height = Math.round(img.height / 3.78) // Convert pixels to mm
 
-          setPageSizeSettings({
-            format: "Custom",
+          const oldWidth = pageSizeSettings.width
+          const oldHeight = pageSizeSettings.height
+
+          const newPageSize = {
+            format: "Custom" as const,
             width: width,
             height: height,
-            orientation: width >= height ? "landscape" : "portrait",
-          })
+            orientation: (width >= height ? "landscape" : "portrait") as const,
+          }
+
+          setPageSizeSettings(newPageSize)
+
+          scaleLayersToPageSize(oldWidth, oldHeight, width, height)
         }
         img.src = event.target?.result as string
       }
@@ -191,12 +295,19 @@ export default function CertificateDesigner() {
             const width = Math.round(img.width / 3.78)
             const height = Math.round(img.height / 3.78)
 
-            setPageSizeSettings({
-              format: "Custom",
+            const oldWidth = pageSizeSettings.width
+            const oldHeight = pageSizeSettings.height
+
+            const newPageSize = {
+              format: "Custom" as const,
               width: width,
               height: height,
-              orientation: width >= height ? "landscape" : "portrait",
-            })
+              orientation: (width >= height ? "landscape" : "portrait") as const,
+            }
+
+            setPageSizeSettings(newPageSize)
+
+            scaleLayersToPageSize(oldWidth, oldHeight, width, height)
           }
           img.src = event.target?.result as string
         }
@@ -215,6 +326,10 @@ export default function CertificateDesigner() {
         const x = Math.max(0, pixelX / 3.78)
         const y = Math.max(0, pixelY / 3.78)
 
+        const xPercent = (x / pageSizeSettings.width) * 100
+        const yPercent = (y / pageSizeSettings.height) * 100
+        const widthPercent = (80 / pageSizeSettings.width) * 100
+
         const newId = Date.now().toString()
         const newLayer: TextLayer = {
           id: newId,
@@ -225,7 +340,10 @@ export default function CertificateDesigner() {
           fontFamily: "sans-serif",
           color: "#000000",
           alignment: "center",
-          width: 80, // reduced from 300 to 80mm for better proportions
+          width: 80,
+          xPercent,
+          yPercent,
+          widthPercent,
         }
         setLayers([...layers, newLayer])
         setSelectedLayerId(newId)
@@ -234,7 +352,33 @@ export default function CertificateDesigner() {
   }
 
   const handleLoadTemplate = (templateIndex: number) => {
-    setLayers(TEMPLATES[templateIndex].layers.map((l) => ({ ...l })))
+    // Base size for templates (A4 in mm)
+    const BASE_WIDTH = 210
+    const BASE_HEIGHT = 297
+
+    const templateLayers = TEMPLATES[templateIndex].layers.map((layer) => {
+      // Convert from base A4 size to percentages
+      const xPercent = (layer.x / BASE_WIDTH) * 100
+      const yPercent = (layer.y / BASE_HEIGHT) * 100
+      const widthPercent = (layer.width / BASE_WIDTH) * 100
+
+      // Convert percentages to current page absolute positions
+      const x = (xPercent * pageSizeSettings.width) / 100
+      const y = (yPercent * pageSizeSettings.height) / 100
+      const width = (widthPercent * pageSizeSettings.width) / 100
+
+      return {
+        ...layer,
+        x,
+        y,
+        width,
+        xPercent,
+        yPercent,
+        widthPercent,
+      }
+    })
+
+    setLayers(templateLayers)
     setSelectedLayerId(null)
   }
 
@@ -329,6 +473,7 @@ export default function CertificateDesigner() {
               setBackgroundImage(null)
             }}
             backgroundImage={backgroundImage}
+            onFitTemplateToPage={handleFitTemplateToPage}
           />
           <div className="flex-1 flex flex-col items-center justify-center bg-slate-100 p-4 overflow-auto">
             <ZoomableCanvas
@@ -366,47 +511,67 @@ export default function CertificateDesigner() {
                 backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
-                aspectRatio:
-                  pageSizeSettings.orientation === "portrait"
-                    ? `${pageSizeSettings.width} / ${pageSizeSettings.height}`
-                    : `${pageSizeSettings.height} / ${pageSizeSettings.width}`,
-                width: pageSizeSettings.width ? `${(pageSizeSettings.width * 3.78).toFixed(2)}px` : "auto",
+                aspectRatio: `${pageSizeSettings.width} / ${pageSizeSettings.height}`,
+                width: `${(pageSizeSettings.width * 3.78).toFixed(2)}px`,
                 height: "auto",
+                maxWidth: "100%",
               }}
             >
-              {layers.map((layer) => (
-                <div
-                  key={layer.id}
-                  className="absolute"
-                  style={{
-                    top: `${(layer.y * 3.78).toFixed(2)}px`,
-                    left:
-                      layer.alignment === "center"
-                        ? "50%"
-                        : layer.alignment === "left"
-                          ? `${(layer.x * 3.78).toFixed(2)}px`
-                          : undefined,
-                    right: layer.alignment === "right" ? `${(layer.x * 3.78).toFixed(2)}px` : undefined,
-                    width: `${(layer.width * 3.78).toFixed(2)}px`,
-                    fontFamily: layer.fontFamily,
-                    fontSize: `${layer.fontSize}px`,
-                    color: layer.color,
-                    fontWeight: layer.fontWeight || "normal",
-                    fontStyle: layer.fontStyle || "normal",
-                    textDecoration: layer.textDecoration || "none",
-                    lineHeight: layer.lineHeight || "normal",
-                    letterSpacing: layer.letterSpacing ? `${layer.letterSpacing}px` : "normal",
-                    WebkitTextStroke: layer.borderWidth
-                      ? `${layer.borderWidth}px ${layer.borderColor || "#000000"}`
-                      : undefined,
-                    opacity: layer.opacity !== undefined ? layer.opacity : 1,
-                    textAlign: layer.alignment,
-                    transform: layer.alignment === "center" ? "translateX(-50%)" : undefined,
-                  }}
-                >
-                  <span className="block whitespace-normal break-words">{layer.text}</span>
-                </div>
-              ))}
+              {layers.map((layer) => {
+                const position = {
+                  x: layer.xPercent !== undefined ? layer.xPercent : (layer.x / pageSizeSettings.width) * 100,
+                  y: layer.yPercent !== undefined ? layer.yPercent : (layer.y / pageSizeSettings.height) * 100,
+                  width:
+                    layer.widthPercent !== undefined
+                      ? layer.widthPercent
+                      : (layer.width / pageSizeSettings.width) * 100,
+                }
+
+                let leftStyle: string | number = `${position.x}%`
+                let transformStyle = "none"
+
+                if (layer.alignment === "center") {
+                  leftStyle = `${position.x}%`
+                  transformStyle = "translateX(-50%)"
+                } else if (layer.alignment === "right") {
+                  leftStyle = "auto"
+                }
+
+                return (
+                  <div
+                    key={layer.id}
+                    className="absolute"
+                    style={{
+                      top: `${position.y}%`,
+                      left: layer.alignment === "right" ? "auto" : leftStyle,
+                      right: layer.alignment === "right" ? `${position.x}%` : undefined,
+                      transform: transformStyle,
+                      width: `${position.width}%`,
+                      height: "auto",
+                      fontFamily: layer.fontFamily,
+                      fontSize: `${layer.fontSize}px`,
+                      color: layer.color,
+                      fontWeight: layer.fontWeight || "normal",
+                      fontStyle: layer.fontStyle || "normal",
+                      textDecoration: layer.textDecoration || "none",
+                      lineHeight: layer.lineHeight || "normal",
+                      letterSpacing: layer.letterSpacing ? `${layer.letterSpacing}px` : "normal",
+                      WebkitTextStroke: layer.borderWidth
+                        ? `${layer.borderWidth}px ${layer.borderColor || "#000000"}`
+                        : undefined,
+                      opacity: layer.opacity !== undefined ? layer.opacity : 1,
+                      textAlign: layer.alignment,
+                      boxSizing: "border-box",
+                      padding: "2px 4px",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    <span className="block whitespace-normal break-words" style={{ textAlign: layer.alignment }}>
+                      {layer.text}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
@@ -456,7 +621,6 @@ export default function CertificateDesigner() {
         onSave={handlePageSizeChange}
         initialSettings={pageSizeSettings}
       />
-
     </>
   )
 }
