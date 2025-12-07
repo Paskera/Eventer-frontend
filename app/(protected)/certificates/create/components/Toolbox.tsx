@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { TEMPLATES, VARIABLES } from "../data"
 import { useRef } from "react"
+import { Grid } from "lucide-react"
 
 interface ToolboxProps {
   onLoadTemplate: (index: number) => void
@@ -16,6 +17,7 @@ interface ToolboxProps {
   onRemoveBackground: () => void
   backgroundImage: string | null
   onFitTemplateToPage?: () => void
+  onOpenTemplateSelector: () => void
 }
 
 export default function Toolbox({
@@ -25,6 +27,7 @@ export default function Toolbox({
   onRemoveBackground,
   backgroundImage,
   onFitTemplateToPage,
+  onOpenTemplateSelector,
 }: ToolboxProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -37,17 +40,14 @@ export default function Toolbox({
         </TabsList>
 
         <TabsContent value="templates" className="mt-4 space-y-2">
-          {TEMPLATES.map((template, idx) => (
-            <Button
-              key={template.name}
-              variant="outline"
-              className="w-full justify-start bg-transparent"
-              onClick={() => onLoadTemplate(idx)}
-            >
-              <span className="mr-2">📋</span>
-              {template.name}
-            </Button>
-          ))}
+          <Button
+            variant="default"
+            className="w-full justify-center gap-2"
+            onClick={onOpenTemplateSelector}
+          >
+            <Grid className="w-4 h-4" />
+            Выбрать шаблон
+          </Button>
 
           {onFitTemplateToPage && (
             <Button

@@ -4,9 +4,10 @@ import type React from "react"
 
 import { useRef, useState } from "react"
 import type { TextLayer } from "../data"
+import { isTextLayer, isImageLayer } from "../data"
 
 interface ZoomableCanvasProps {
-  layers: TextLayer[]
+  layers: any[] // Relaxed type for now, or import Layer type
   backgroundImage: string | null
   selectedLayerId: string | null
   onSelectLayer: (id: string) => void
@@ -49,11 +50,12 @@ export default function ZoomableCanvas({
   const actualPageWidth = width || pageWidth
   const actualPageHeight = height || pageHeight
 
-  const getLayerPositionPercent = (layer: TextLayer) => {
+  const getLayerPositionPercent = (layer: any) => {
     return {
       x: layer.xPercent !== undefined ? layer.xPercent : (layer.x / actualPageWidth) * 100,
       y: layer.yPercent !== undefined ? layer.yPercent : (layer.y / actualPageHeight) * 100,
       width: layer.widthPercent !== undefined ? layer.widthPercent : (layer.width / actualPageWidth) * 100,
+      height: layer.height ? (layer.height / actualPageHeight) * 100 : undefined,
     }
   }
 
@@ -82,13 +84,15 @@ export default function ZoomableCanvas({
         const position = getLayerPositionPercent(layer)
 
         let leftStyle: string | number = `${position.x}%`
-        let transformStyle = "none"
+        let transformStyle = `rotate(${layer.rotation || 0}deg)`
 
-        if (layer.alignment === "center") {
-          leftStyle = `${position.x}%`
-          transformStyle = "translateX(-50%)"
-        } else if (layer.alignment === "right") {
-          leftStyle = "auto"
+        if (isTextLayer(layer)) {
+          if (layer.alignment === "center") {
+            leftStyle = `${position.x}%`
+            transformStyle = `translateX(-50%) rotate(${layer.rotation || 0}deg)`
+          } else if (layer.alignment === "right") {
+            leftStyle = "auto"
+          }
         }
 
         return (
@@ -109,8 +113,10 @@ export default function ZoomableCanvas({
             }}
             onDoubleClick={(e) => {
               e.stopPropagation()
-              setEditingLayerId(layer.id)
-              setEditingText(layer.text)
+              if (isTextLayer(layer)) {
+                setEditingLayerId(layer.id)
+                setEditingText(layer.text)
+              }
             }}
             onContextMenu={(e) => {
               e.preventDefault()
@@ -121,71 +127,105 @@ export default function ZoomableCanvas({
             }}
             className={`absolute cursor-move transition-all select-none ${
               selectedLayerId === layer.id
-                ? "ring-2 ring-blue-500 bg-blue-50 rounded"
+                ? "ring-2 ring-blue-500 bg-blue-50/10 rounded"
                 : "hover:ring-1 hover:ring-border rounded"
             }`}
             style={{
               top: `${position.y}%`,
-              left: layer.alignment === "right" ? "auto" : leftStyle,
-              right: layer.alignment === "right" ? `${position.x}%` : undefined,
+              left: isTextLayer(layer) && layer.alignment === "right" ? "auto" : leftStyle,
+              right: isTextLayer(layer) && layer.alignment === "right" ? `${position.x}%` : undefined,
               transform: transformStyle,
               width: `${position.width}%`,
-              height: "auto",
-              fontFamily: layer.fontFamily,
-              fontSize: `${layer.fontSize}px`,
-              color: layer.color,
-              fontWeight: layer.fontWeight || "normal",
-              fontStyle: layer.fontStyle || "normal",
-              textDecoration: layer.textDecoration || "none",
-              lineHeight: layer.lineHeight || "normal",
-              letterSpacing: layer.letterSpacing ? `${layer.letterSpacing}px` : "normal",
-              WebkitTextStroke: layer.borderWidth
-                ? `${layer.borderWidth}px ${layer.borderColor || "#000000"}`
-                : undefined,
+              height: position.height ? `${position.height}%` : "auto",
               opacity: layer.opacity !== undefined ? layer.opacity : 1,
-              textAlign: layer.alignment,
-              boxSizing: "border-box",
-              padding: "2px 4px",
-              whiteSpace: "pre-wrap",
+              
+              // Text specific styles
+              ...(isTextLayer(layer) ? {
+                fontFamily: layer.fontFamily,
+                fontSize: `${layer.fontSize}px`,
+                color: layer.color,
+                fontWeight: layer.fontWeight || "normal",
+                fontStyle: layer.fontStyle || "normal",
+                textDecoration: layer.textDecoration || "none",
+                lineHeight: layer.lineHeight || "normal",
+                letterSpacing: layer.letterSpacing ? `${layer.letterSpacing}px` : "normal",
+                WebkitTextStroke: layer.borderWidth
+                  ? `${layer.borderWidth}px ${layer.borderColor || "#000000"}`
+                  : undefined,
+                textAlign: layer.alignment,
+                boxSizing: "border-box",
+                padding: "2px 4px",
+                whiteSpace: "pre-wrap",
+              } : {}),
+
+              // Image specific styles
+              ...(isImageLayer(layer) ? {
+                backgroundImage: `url(${layer.src})`,
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+              } : {})
             }}
           >
-            {editingLayerId === layer.id ? (
-              <input
-                type="text"
-                value={editingText}
-                onChange={(e) => setEditingText(e.target.value)}
-                onBlur={() => {
-                  onLayerDoubleClick(layer.id, editingText)
-                  setEditingLayerId(null)
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+            {isTextLayer(layer) ? (
+              editingLayerId === layer.id ? (
+                <textarea
+                  value={editingText}
+                  onChange={(e) => setEditingText(e.target.value)}
+                  onBlur={() => {
                     onLayerDoubleClick(layer.id, editingText)
                     setEditingLayerId(null)
-                  } else if (e.key === "Escape") {
-                    setEditingText(layer.text)
-                    setEditingLayerId(null)
-                  }
-                }}
-                autoFocus
-                className="w-full bg-transparent border-b border-blue-500 focus:outline-none cursor-text"
-                style={{
-                  fontFamily: layer.fontFamily,
-                  fontSize: `${layer.fontSize}px`,
-                  color: layer.color,
-                  fontWeight: layer.fontWeight || "normal",
-                  fontStyle: layer.fontStyle || "normal",
-                  textDecoration: layer.textDecoration || "none",
-                  lineHeight: layer.lineHeight || "normal",
-                  letterSpacing: layer.letterSpacing ? `${layer.letterSpacing}px` : "normal",
-                  textAlign: layer.alignment,
-                }}
-              />
-            ) : (
-              <span className="block whitespace-normal break-words cursor-text" style={{ textAlign: layer.alignment }}>
-                {layer.text}
-              </span>
-            )}
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.ctrlKey) {
+                      onLayerDoubleClick(layer.id, editingText)
+                      setEditingLayerId(null)
+                    } else if (e.key === "Escape") {
+                      setEditingText(layer.text)
+                      setEditingLayerId(null)
+                    }
+                  }}
+                  autoFocus
+                  className="w-full bg-transparent border-b border-blue-500 focus:outline-none cursor-text resize-none overflow-hidden"
+                  style={{
+                    fontFamily: layer.fontFamily,
+                    fontSize: `${layer.fontSize}px`,
+                    color: layer.color,
+                    fontWeight: layer.fontWeight || "normal",
+                    fontStyle: layer.fontStyle || "normal",
+                    textDecoration: layer.textDecoration || "none",
+                    lineHeight: layer.lineHeight || "normal",
+                    letterSpacing: layer.letterSpacing ? `${layer.letterSpacing}px` : "normal",
+                    textAlign: layer.alignment,
+                    minHeight: "1.5em",
+                  }}
+                  rows={editingText.split("\n").length || 1}
+                />
+              ) : layer.listType === "bullet" || layer.listType === "number" ? (
+                <div
+                  className="block whitespace-normal break-words cursor-text"
+                  style={{ textAlign: layer.alignment }}
+                >
+                  {layer.listType === "bullet" ? (
+                    <ul className="list-disc list-inside">
+                      {layer.text.split("\n").map((line, i) => (
+                        <li key={i}>{line}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <ol className="list-decimal list-inside">
+                      {layer.text.split("\n").map((line, i) => (
+                        <li key={i}>{line}</li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              ) : (
+                <span className="block whitespace-normal break-words cursor-text" style={{ textAlign: layer.alignment }}>
+                  {layer.text}
+                </span>
+              )
+            ) : null}
           </div>
         )
       })}

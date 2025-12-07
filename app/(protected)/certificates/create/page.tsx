@@ -11,24 +11,39 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { type TextLayer, TEMPLATES } from "./data"
-import Toolbox from "./components/Toolbox"
-import ZoomableCanvas from "./components/ZoomableCanvas"
+import { type TextLayer, type Layer, TEMPLATES } from "./data"
 import FloatingPropertiesPanel from "./components/FloatingPropertiesPanel"
+import ZoomableCanvas from "./components/ZoomableCanvas"
 import type { PageSizeSettings } from "./components/PageSizeModal"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import PageSizeModal from "./components/PageSizeModal"
+import TemplateSelector from "./components/TemplateSelector"
 import { Eye, Settings, Save, Minus, Plus, RotateCw } from "lucide-react"
+import { useCertificatePersistence } from "./hooks/useCertificatePersistence"
+import { format } from "date-fns"
+import { ru } from "date-fns/locale"
+import { EditorToolbar } from "./components/EditorToolbar"
+
+import { useHistory } from "./hooks/useHistory"
 
 export default function CertificateDesigner() {
-  const [layers, setLayers] = useState<TextLayer[]>(TEMPLATES[0].layers)
-  const [selectedLayerId, setSelectedLayerId] = useState<string | null>("1")
+  const { 
+    state: layers, 
+    set: setLayers, 
+    undo, 
+    redo, 
+    canUndo, 
+    canRedo 
+  } = useHistory<Layer[]>([])
+  
+  const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null)
   const [draggedLayerId, setDraggedLayerId] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [showPreview, setShowPreview] = useState(false)
   const [showPageSizeModal, setShowPageSizeModal] = useState(false)
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false)
   const [pageSizeSettings, setPageSizeSettings] = useState<PageSizeSettings>({
     format: "A4",
     width: 210,
@@ -42,11 +57,22 @@ export default function CertificateDesigner() {
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null)
   const [editingText, setEditingText] = useState("")
 
+  const [showContextMenu, setShowContextMenu] = useState(false)
+
+  const { save, lastSaved } = useCertificatePersistence({
+    layers,
+    backgroundImage,
+    pageSizeSettings,
+    setLayers,
+    setBackgroundImage,
+    setPageSizeSettings,
+  })
+
   const selectedLayer = layers.find((l) => l.id === selectedLayerId)
 
-  const handleUpdateLayer = useCallback((id: string, updates: Partial<TextLayer>) => {
-    setLayers((prevLayers) => prevLayers.map((l) => (l.id === id ? { ...l, ...updates } : l)))
-  }, [])
+  const handleUpdateLayer = useCallback((id: string, updates: Partial<Layer>) => {
+    setLayers((prevLayers) => prevLayers.map((l) => (l.id === id ? { ...l, ...updates } as Layer : l)))
+  }, [setLayers])
 
   const scaleLayersToPageSize = useCallback(
     (oldWidth: number, oldHeight: number, newWidth: number, newHeight: number) => {
@@ -164,9 +190,13 @@ export default function CertificateDesigner() {
   ])
 
   const handleLayerMouseDown = (e: React.MouseEvent, layerId: string) => {
-    e.preventDefault()
-    setSelectedLayerId(layerId)
-    setDraggedLayerId(layerId)
+    // If it's a left click (button 0), select the layer but hide context menu
+    if (e.button === 0) {
+      e.preventDefault()
+      setSelectedLayerId(layerId)
+      setDraggedLayerId(layerId)
+      setShowContextMenu(false) // Hide context menu on left click
+    }
 
     const canvasEl = e.currentTarget.parentElement
     if (!canvasEl) return
@@ -216,6 +246,30 @@ export default function CertificateDesigner() {
     }
   }
 
+  const handleAddTextLayer = () => {
+    const newId = Date.now().toString()
+    const xPercent = (105 / pageSizeSettings.width) * 100
+    const yPercent = (148 / pageSizeSettings.height) * 100
+    const widthPercent = (80 / pageSizeSettings.width) * 100
+
+    const newLayer: TextLayer = {
+      id: newId,
+      text: "Новый текст",
+      x: 105,
+      y: 148,
+      fontSize: 24,
+      fontFamily: "sans-serif",
+      color: "#000000",
+      alignment: "center",
+      width: 80,
+      xPercent,
+      yPercent,
+      widthPercent,
+    }
+    setLayers([...layers, newLayer])
+    setSelectedLayerId(newId)
+  }
+
   const handleAddVariable = (varLabel: string) => {
     const newId = Date.now().toString()
     const xPercent = (105 / pageSizeSettings.width) * 100 // center of page
@@ -238,6 +292,43 @@ export default function CertificateDesigner() {
     }
     setLayers([...layers, newLayer])
     setSelectedLayerId(newId)
+  }
+
+  const handleAddImageLayer = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const img = new Image()
+        img.onload = () => {
+          const newId = Date.now().toString()
+          // Default size: 50mm width, height proportional
+          const defaultWidth = 50
+          const aspectRatio = img.width / img.height
+          const defaultHeight = defaultWidth / aspectRatio
+
+          // Center
+          const x = (pageSizeSettings.width - defaultWidth) / 2
+          const y = (pageSizeSettings.height - defaultHeight) / 2
+
+          const newLayer: Layer = {
+            id: newId,
+            type: "image",
+            src: event.target?.result as string,
+            x,
+            y,
+            width: defaultWidth,
+            height: defaultHeight,
+            opacity: 1,
+            rotation: 0
+          }
+          setLayers([...layers, newLayer])
+          setSelectedLayerId(newId)
+        }
+        img.src = event.target?.result as string
+      }
+      reader.readAsDataURL(file)
+    }
   }
 
   const handleDeleteLayer = (id: string) => {
@@ -400,7 +491,11 @@ export default function CertificateDesigner() {
 
   const handleLayerContextMenu = (layerId: string) => {
     setSelectedLayerId(layerId)
-    setShowFloatingPanel(true)
+    setShowContextMenu(true)
+    
+    // Position logic for context menu could be handled here if needed,
+    // but FloatingPropertiesPanel handles its own positioning or uses panelPosition
+    // We might need to update panelPosition to mouse coordinates if we want it to appear at cursor
   }
 
   const handleCanvasDragOver = (e: React.DragEvent) => {
@@ -413,69 +508,47 @@ export default function CertificateDesigner() {
         <div className="border-b border-border">
           <div className="mx-auto flex items-center justify-between px-6 py-4">
             <h1 className="text-2xl font-semibold text-foreground">Конструктор сертификатов</h1>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="gap-2 bg-transparent" onClick={() => setShowPreview(true)}>
-                <Eye className="w-4 h-4" />
-                Предпросмотр
-              </Button>
-              <Button size="sm" className="gap-2" onClick={() => setShowPageSizeModal(true)}>
-                <Settings className="w-4 h-4" />
-                Размер страницы
-              </Button>
-              <Button size="sm" className="gap-2">
-                <Save className="w-4 h-4" />
-                Сохранить шаблон
-              </Button>
-            </div>
           </div>
-          <Breadcrumb className="border-t border-border px-6 py-2 text-sm text-muted-foreground">
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/">Home</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/events">Events</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/events/1">Tech Summit 2024</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Certificates</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-          <div className="border-t border-border px-6 py-2 flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleZoomOut} className="gap-1 bg-transparent">
-              <Minus className="w-4 h-4" />
-              Уменьшить
-            </Button>
-            <span className="text-sm text-muted-foreground px-2 min-w-16">{Math.round(zoomLevel * 100)}%</span>
-            <Button variant="outline" size="sm" onClick={handleZoomIn} className="gap-1 bg-transparent">
-              <Plus className="w-4 h-4" />
-              Увеличить
-            </Button>
-            <div className="border-l border-border mx-2 h-6"></div>
-            <Button variant="outline" size="sm" onClick={handleRotate} className="gap-1 bg-transparent">
-              <RotateCw className="w-4 h-4" />
-              {rotation}°
-            </Button>
-          </div>
-        </div>
-        <div className="flex flex-1 min-w-0 overflow-hidden">
-          <Toolbox
-            onLoadTemplate={handleLoadTemplate}
+          <EditorToolbar
+            onOpenTemplateSelector={() => setShowTemplateSelector(true)}
             onAddVariable={handleAddVariable}
+            onAddTextLayer={handleAddTextLayer}
+            onAddImageLayer={handleAddImageLayer}
             onBackgroundUpload={handleBackgroundUpload}
             onRemoveBackground={() => {
               setBackgroundImage(null)
             }}
             backgroundImage={backgroundImage}
-            onFitTemplateToPage={handleFitTemplateToPage}
+            onOpenPageSize={() => setShowPageSizeModal(true)}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onRotate={handleRotate}
+            zoomLevel={zoomLevel}
+            rotation={rotation}
+            onSave={() => save(true)}
+            lastSaved={lastSaved}
+            onPreview={() => setShowPreview(true)}
+            selectedLayer={selectedLayer as TextLayer}
+            onUpdateLayer={handleUpdateLayer}
+            onDeleteLayer={handleDeleteLayer}
+            undo={undo}
+            redo={redo}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            layers={layers}
+            pageSizeSettings={pageSizeSettings}
           />
-          <div className="flex-1 flex flex-col items-center justify-center bg-slate-100 p-4 overflow-auto">
+        </div>
+        <div className="flex flex-1 min-w-0 overflow-hidden relative">
+          <div 
+            className="flex-1 flex flex-col items-center justify-center bg-slate-100 p-4 overflow-auto"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedLayerId(null)
+                setShowContextMenu(false)
+              }
+            }}
+          >
             <ZoomableCanvas
               layers={layers}
               backgroundImage={backgroundImage}
@@ -493,6 +566,18 @@ export default function CertificateDesigner() {
               rotation={rotation}
             />
           </div>
+
+          {selectedLayer && showContextMenu && (
+            <FloatingPropertiesPanel
+              selectedLayer={selectedLayer}
+              onUpdateLayer={handleUpdateLayer}
+              onDeleteLayer={handleDeleteLayer}
+              onClose={() => setShowContextMenu(false)}
+              position={panelPosition}
+              onPositionChange={setPanelPosition}
+              isSidebar={false}
+            />
+          )}
         </div>
       </div>
 
@@ -577,17 +662,6 @@ export default function CertificateDesigner() {
         </div>
       )}
 
-      {showFloatingPanel && selectedLayer && (
-        <FloatingPropertiesPanel
-          selectedLayer={selectedLayer}
-          onUpdateLayer={handleUpdateLayer}
-          onDeleteLayer={handleDeleteLayer}
-          onClose={() => setShowFloatingPanel(false)}
-          position={panelPosition}
-          onPositionChange={setPanelPosition}
-        />
-      )}
-
       <Dialog open={editingLayerId !== null} onOpenChange={(open) => !open && setEditingLayerId(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -621,6 +695,13 @@ export default function CertificateDesigner() {
         onSave={handlePageSizeChange}
         initialSettings={pageSizeSettings}
       />
+
+      {showTemplateSelector && (
+        <TemplateSelector
+          onSelectTemplate={handleLoadTemplate}
+          onClose={() => setShowTemplateSelector(false)}
+        />
+      )}
     </>
   )
 }

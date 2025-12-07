@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { type TextLayer, FONTS } from "../data"
+import { List, ListOrdered } from "lucide-react"
 
 interface FloatingPropertiesPanelProps {
   selectedLayer: TextLayer
@@ -15,12 +16,26 @@ interface FloatingPropertiesPanelProps {
   onClose: () => void
   position: { x: number; y: number }
   onPositionChange: (position: { x: number; y: number }) => void
+  isSidebar?: boolean
 }
 
 const FONT_SIZES = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72]
 const WIDTHS = [100, 150, 200, 250, 300, 400, 500]
 const BORDER_WIDTHS = [0, 1, 2, 3, 4, 5]
 const LETTER_SPACINGS = [-10, -5, 0, 5, 10, 15, 20]
+const LINE_HEIGHTS = [
+  { value: "1", label: "Одинарный" },
+  { value: "1.2", label: "1.2" },
+  { value: "1.5", label: "1.5" },
+  { value: "2", label: "Двойной" },
+]
+
+const HEADING_STYLES = [
+  { label: "Обычный текст", value: "normal", fontSize: 16, fontWeight: "normal" },
+  { label: "Заголовок 1", value: "h1", fontSize: 32, fontWeight: "bold" },
+  { label: "Заголовок 2", value: "h2", fontSize: 24, fontWeight: "bold" },
+  { label: "Заголовок 3", value: "h3", fontSize: 18, fontWeight: "bold" },
+]
 
 export default function FloatingPropertiesPanel({
   selectedLayer,
@@ -29,6 +44,7 @@ export default function FloatingPropertiesPanel({
   onClose,
   position,
   onPositionChange,
+  isSidebar = false,
 }: FloatingPropertiesPanelProps) {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
@@ -193,21 +209,117 @@ export default function FloatingPropertiesPanel({
 
   return (
     <div
-      className="fixed z-50 bg-card border border-border rounded-lg shadow-lg overflow-hidden flex flex-col max-h-[90vh]"
-      style={{ left: `${position.x}px`, top: `${position.y}px`, width: "320px" }}
-      onMouseDown={handleMouseDown}
+      className={
+        isSidebar 
+          ? "h-full flex flex-col" 
+          : "fixed z-50 bg-card border border-border rounded-lg shadow-lg overflow-hidden flex flex-col max-h-[90vh]"
+      }
+      style={!isSidebar ? { left: `${position.x}px`, top: `${position.y}px`, width: "320px" } : undefined}
+      onMouseDown={!isSidebar ? handleMouseDown : undefined}
     >
       <div
         ref={headerRef}
-        className="flex justify-between items-center p-3 cursor-move bg-muted border-b border-border hover:bg-muted/80 transition-colors flex-shrink-0"
+        className={`flex justify-between items-center p-3 border-b border-border transition-colors flex-shrink-0 ${
+          !isSidebar ? "cursor-move bg-muted hover:bg-muted/80" : "bg-transparent"
+        }`}
       >
-        <h3 className="text-sm font-semibold text-foreground">Свойства</h3>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-lg">
-          ✕
-        </button>
+        <h3 className="text-sm font-semibold text-foreground">Свойства элемента</h3>
+        {!isSidebar && (
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-lg">
+            ✕
+          </button>
+        )}
       </div>
 
       <div className="overflow-y-auto flex-1 p-4 space-y-4">
+        <div>
+          <Label className="text-xs font-medium text-foreground">Стиль абзаца</Label>
+          <Select
+            value="custom"
+            onValueChange={(value) => {
+              const style = HEADING_STYLES.find((s) => s.value === value)
+              if (style) {
+                onUpdateLayer(selectedLayer.id, {
+                  fontSize: style.fontSize,
+                  fontWeight: style.fontWeight,
+                })
+              }
+            }}
+          >
+            <SelectTrigger className="mt-1 text-sm">
+              <SelectValue placeholder="Выберите стиль" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="custom" disabled>
+                -- Выберите стиль --
+              </SelectItem>
+              {HEADING_STYLES.map((style) => (
+                <SelectItem key={style.value} value={style.value}>
+                  {style.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label className="text-xs font-medium text-foreground">Списки</Label>
+          <div className="mt-2 flex gap-1">
+            <Button
+              variant={selectedLayer.listType === "bullet" ? "default" : "outline"}
+              size="sm"
+              onClick={() =>
+                onUpdateLayer(selectedLayer.id, {
+                  listType: selectedLayer.listType === "bullet" ? "none" : "bullet",
+                })
+              }
+              className="flex-1 h-8 text-xs gap-2"
+            >
+              <List className="w-3 h-3" />
+              Маркеры
+            </Button>
+            <Button
+              variant={selectedLayer.listType === "number" ? "default" : "outline"}
+              size="sm"
+              onClick={() =>
+                onUpdateLayer(selectedLayer.id, {
+                  listType: selectedLayer.listType === "number" ? "none" : "number",
+                })
+              }
+              className="flex-1 h-8 text-xs gap-2"
+            >
+              <ListOrdered className="w-3 h-3" />
+              Нумерация
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-xs font-medium text-foreground">Межстрочный интервал</Label>
+          <Select
+            value={selectedLayer.lineHeight || "normal"}
+            onValueChange={(value) =>
+              onUpdateLayer(selectedLayer.id, {
+                lineHeight: value,
+              })
+            }
+          >
+            <SelectTrigger className="mt-1 text-sm">
+              <SelectValue placeholder="Нормальный" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">Нормальный</SelectItem>
+              {LINE_HEIGHTS.map((lh) => (
+                <SelectItem key={lh.value} value={lh.value}>
+                  {lh.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="h-px bg-border my-2" />
+
         <div>
           <Label className="text-xs font-medium text-foreground">Шрифт</Label>
           <Select
