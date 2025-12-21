@@ -40,34 +40,34 @@ function EventCard({ event }: { event: Hackathon }) {
         <Card className="w-full flex flex-col md:flex-row overflow-hidden bg-card border border-border">
             <div className="relative w-full h-48 md:w-[340px] md:min-h-[320px] flex-shrink-0">
                 <Image src={event.image} alt={event.title} fill className="object-cover" />
-                <div className="absolute left-0 bottom-0 w-full p-3 md:p-6 bg-gradient-to-t from-black/80 to-transparent flex flex-col gap-2">
-                    <span className="text-lg md:text-2xl font-bold text-white break-words">{event.title}</span>
-                    <span className="text-xs md:text-base text-white/80 break-words">
+                <div className="absolute left-0 bottom-0 w-full p-3 md:p-6 bg-gradient-to-t from-black/95 via-black/70 to-black/30 flex flex-col gap-2">
+                    <span className="text-lg md:text-2xl font-bold text-white break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{event.title}</span>
+                    <span className="text-xs md:text-base text-white font-medium break-words drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
                         по программированию
                     </span>
                     <div className="mt-2 md:mt-4">
-                        <span className="text-xl md:text-3xl font-extrabold text-white">{event.prizePool}</span>
-                        <span className="ml-2 text-white/70 text-xs md:text-sm">
+                        <span className="text-xl md:text-3xl font-extrabold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{event.prizePool}</span>
+                        <span className="ml-2 text-white font-medium text-xs md:text-sm drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
                             призовой фонд
                         </span>
                     </div>
-                    <span className="text-xs text-white/60 mt-2">от партнёров</span>
-                    <span className="text-xs text-white/60 mt-2">оргкомитет</span>
+                    <span className="text-xs text-white font-medium mt-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">от партнёров</span>
+                    <span className="text-xs text-white font-medium mt-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">оргкомитет</span>
                 </div>
             </div>
             <div className="flex flex-col flex-1 p-3 md:p-6 gap-2">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="text-lg md:text-2xl font-bold break-words">{event.title}</span>
+                    <span className="text-lg md:text-2xl font-bold break-words text-foreground">{event.title}</span>
                     {getStatusBadge(event.status)}
                     {getFormatBadge(event.format)}
                 </div>
-                <div className="flex flex-wrap items-center gap-2 md:gap-4 text-muted-foreground text-xs md:text-base mb-2">
+                <div className="flex flex-wrap items-center gap-2 md:gap-4 text-foreground/90 font-medium text-xs md:text-base mb-2">
                     <CalendarIcon className="w-4 h-4 md:w-5 md:h-5" /> {event.date}
                     <MapPinIcon className="w-4 h-4 md:w-5 md:h-5" /> {event.location}
                     <UsersIcon className="w-4 h-4 md:w-5 md:h-5" /> {event.participants} участников
                 </div>
-                <div className="font-semibold text-xs md:text-base mt-2">Описание</div>
-                <div className="text-xs md:text-base mb-4 break-words">{event.description}</div>
+                <div className="font-semibold text-xs md:text-base mt-2 text-foreground">Описание</div>
+                <div className="text-xs md:text-base mb-4 break-words text-foreground/90 leading-relaxed">{event.description}</div>
                 <div className="flex gap-2 md:gap-4 mt-auto">
                     <Button className="bg-green-600 hover:bg-green-700 text-white w-full md:w-auto text-xs md:text-base">
                         Подробнее

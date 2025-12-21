@@ -85,33 +85,33 @@ export default function EventsPage() {
                                     alt={event.event_name}
                                     className="w-full h-full object-cover opacity-70"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/20" />
                             </div>
                             <CardContent className="relative h-full p-5 flex flex-col justify-end gap-3">
                                 <div className="flex flex-wrap gap-2">
-                                    <Badge variant="secondary" className="bg-white/90 text-slate-900">
+                                    <Badge variant="secondary" className="bg-white/95 text-slate-900 font-semibold">
                                         {event.format}
                                     </Badge>
                                     {event.event_status && (
-                                        <Badge variant="secondary" className="bg-emerald-500 text-emerald-950">
+                                        <Badge variant="secondary" className="bg-emerald-500 text-white font-semibold">
                                             {event.event_status}
                                         </Badge>
                                     )}
                                 </div>
-                                <h3 className="text-xl font-bold leading-tight drop-shadow group-hover:text-emerald-200 transition-colors">
+                                <h3 className="text-xl font-bold leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] group-hover:text-emerald-200 transition-colors">
                                     {event.event_name}
                                 </h3>
-                                <div className="space-y-1 text-sm text-white/85">
-                                    <div className="flex items-center gap-2">
-                                        <MapPinIcon className="h-4 w-4 flex-shrink-0" />
+                                <div className="space-y-1.5 text-sm text-white font-medium">
+                                    <div className="flex items-center gap-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
+                                        <MapPinIcon className="h-4 w-4 flex-shrink-0 text-white" />
                                         <span className="truncate">{event.venue}</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <CalendarIcon className="h-4 w-4 flex-shrink-0" />
+                                    <div className="flex items-center gap-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
+                                        <CalendarIcon className="h-4 w-4 flex-shrink-0 text-white" />
                                         <span>{parseDate(event.start_date)} — {parseDate(event.end_date)}</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <UsersIcon className="h-4 w-4 flex-shrink-0" />
+                                    <div className="flex items-center gap-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
+                                        <UsersIcon className="h-4 w-4 flex-shrink-0 text-white" />
                                         <span>{event.users_count ?? 0} участников</span>
                                     </div>
                                 </div>
