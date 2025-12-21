@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, X } from "lucide-react"
+import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, X, Globe2Icon, TrendingUpIcon } from "lucide-react"
 import { parse, isValid } from "date-fns"
 import { ru } from "date-fns/locale"
 import { Hackathon, hackathons } from "../data"
@@ -399,60 +399,99 @@ export default function HackathonBoard() {
 
             {/* Main content */}
             <div className="flex-1 p-2 sm:p-4 md:p-6">
-                <div className="w-full max-w-[1100px] mx-auto">
-                    <div className="space-y-4 md:space-y-6">
+                <div className="w-full max-w-[1200px] mx-auto space-y-6">
+                    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-indigo-900/80 via-slate-900/70 to-emerald-800/70 p-5 sm:p-6 text-white shadow-[0_12px_40px_rgba(0,0,0,0.45)]">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.12),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(16,185,129,0.15),transparent_40%)] blur-2xl" />
+                        <div className="relative flex flex-col gap-2 sm:gap-3">
+                            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-white/70">
+                                <Globe2Icon className="h-4 w-4" />
+                                Все мероприятия
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <Badge className="bg-white/15 border-white/25 text-white">Всего: {events.length}</Badge>
+                                <Badge className="bg-white/15 border-white/25 text-white">Страница: {filters.page}</Badge>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-white/75">
+                                <TrendingUpIcon className="h-4 w-4" />
+                                Подборка актуальных событий по фильтрам
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-5 md:gap-6 grid-cols-1">
                         {events?.map((event) => (
-                            // {filteredHackathons.map((hackathon) => (
-                            <Card key={event.id} className="overflow-hidden w-full">
-                                <div className="flex flex-col md:flex-row h-auto md:h-[300px]">
-                                    {/* Event poster */}
-                                    <div className="w-full md:w-80 h-48 md:h-auto flex-shrink-0 relative">
+                            <Card
+                                key={event.id}
+                                className="group relative overflow-hidden border border-border bg-card text-foreground shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                            >
+                                <div className="pointer-events-none absolute inset-0 bg-black/25" />
+                                <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-30 bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.45),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(79,70,229,0.35),transparent_35%),radial-gradient(circle_at_50%_80%,rgba(56,189,248,0.35),transparent_35%)]" />
+                                <div className="flex flex-col md:flex-row">
+                                    <div className="relative w-full md:w-64 h-44 md:h-auto flex-shrink-0">
                                         <img
-                                            // src={event.image_url}
-                                            src={"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"}
-                                            alt={"https://images.unsplash.com/photo-1504384308090-c894fdcc538d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"}
+                                            src={event.image_url || "/placeholder.svg"}
+                                            alt={event.event_name}
                                             className="absolute inset-0 w-full h-full object-cover"
                                         />
-                                        <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/20"></div>
-                                        <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-between text-white">
-                                            <div>
-                                                <div className="text-xl md:text-3xl font-bold mb-2 tracking-wider">{event.event_name}</div>
-                                            </div>
-                                        </div>
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent" />
                                     </div>
-                                    {/* Event details */}
-                                    <CardContent className="flex-1 p-4 md:p-6 flex flex-col">
-                                        <div className="flex flex-col md:flex-row justify-between items-start mb-4 gap-2 md:gap-0">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
-                                                    <h3 className="text-lg md:text-2xl font-semibold">{event.event_name}</h3>
-                                                    {getStatusBadge(event.event_status)}
-                                                    {getFormatBadge(event.format)}
-                                                </div>
 
-                                                <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground mb-2 md:mb-4">
-                                                    <div className="flex items-center gap-1">
-                                                        <ClockIcon className="h-4 w-4" />
-                                                        {parseDate(event.start_date)}
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <MapPinIcon className="h-4 w-4" />
-                                                        {event.venue}
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <UsersIcon className="h-4 w-4" />
-                                                        {event.users_count} участников
-                                                    </div>
+                                    <CardContent className="relative flex-1 p-4 md:p-5 flex flex-col gap-4 z-10">
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex flex-wrap gap-2">
+                                                {getStatusBadge(event.event_status)}
+                                                {getFormatBadge(event.format)}
+                                            </div>
+                                            <h3 className="text-xl font-bold leading-tight">{event.event_name}</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm text-muted-foreground">
+                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center">
+                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                                                    <ClockIcon className="h-4 w-4" />
+                                                </div>
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90">Начало</span>
+                                                    <span className="font-semibold text-foreground">{parseDate(event.start_date)}</span>
+                                                </div>
+                                            </div>
+                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center">
+                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                                                    <CalendarIcon className="h-4 w-4" />
+                                                </div>
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90">Окончание</span>
+                                                    <span className="font-semibold text-foreground">{parseDate(event.end_date)}</span>
+                                                </div>
+                                            </div>
+                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center sm:col-span-2">
+                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                                                    <MapPinIcon className="h-4 w-4" />
+                                                </div>
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90">Место</span>
+                                                    <span className="font-semibold text-foreground truncate">{event.venue}</span>
+                                                </div>
+                                            </div>
+                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center sm:col-span-2">
+                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                                                    <UsersIcon className="h-4 w-4" />
+                                                </div>
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90">Участники</span>
+                                                    <span className="font-semibold text-foreground">{event.users_count} чел.</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="mb-4 md:mb-6">
-                                            <h4 className="text-xs md:text-sm font-medium mb-2 md:mb-3 text-muted-foreground">Описание</h4>
-                                            <p className="text-xs md:text-sm leading-relaxed">{event.description}</p>
+                                        <div className="space-y-1">
+                                            <h4 className="text-xs font-semibold text-muted-foreground">Описание</h4>
+                                            <p className="text-sm text-foreground/90 line-clamp-2">
+                                                {event.description}
+                                            </p>
                                         </div>
 
-                                        <div className="mt-auto pt-4 flex justify-end">
+                                        <div className="flex justify-end">
                                             <Button asChild>
                                                 <Link href={`/events/${event.id}`}>
                                                     Подробнее
