@@ -12,13 +12,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CalendarIcon, MapPinIcon, UsersIcon, ClockIcon, Share2Icon, CheckIcon, MailIcon, UserPlusIcon, TrophyIcon, ClipboardListIcon, MessageCircleQuestionIcon, UsersRoundIcon, LandmarkIcon, Contact, Bold } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { bg, ru } from 'date-fns/locale';
-import { apiEventTeams, JoinTeamResponse } from '@/app/api/http/EventTeams/event_teams';
+import { apiEventTeams } from '@/app/api/http/EventTeams/event_teams';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Label } from '@radix-ui/react-dropdown-menu';
 import { useSession } from 'next-auth/react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { apiStages } from '@/app/api/http/stages/stages';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function EventDetailsPage() {
     const params = useParams();
@@ -48,7 +55,7 @@ export default function EventDetailsPage() {
         }
       }, []);
 
-    const CreateTeamMutation = useMutation<JoinTeamResponse, Error, {event_id: number; agree: File, name: string}>({
+    const CreateTeamMutation = useMutation<unknown, Error, {event_id: number; agree: File, name: string}>({
         mutationFn: ({ event_id, agree, name }) => apiEventTeams.createTeam(event_id, agree, name),
         onSuccess: () => {
             setShowSuccess(true);
@@ -59,7 +66,7 @@ export default function EventDetailsPage() {
           }
     })
 
-    const JoinTeamMutation = useMutation<JoinTeamResponse, Error, {event_id: number; invite_token: string}>({
+    const JoinTeamMutation = useMutation<unknown, Error, {event_id: number; invite_token: string}>({
         mutationFn: ({ event_id, invite_token }) => apiEventTeams.joinTeam(event_id, invite_token),
         onSuccess: () => {
             setShowSuccess(true);
@@ -193,34 +200,94 @@ export default function EventDetailsPage() {
     return (
         <div className="container mx-auto px-4 py-4 md:py-8 pb-[160px]">
             {event && (
-            <div className="space-y-4 md:space-y-4">
-                <Card className="overflow-hidden">
-                    <CardHeader className="p-0 relative h-64 md:h-80">
+            <div className="space-y-6 md:space-y-8">
+                <Card className="overflow-hidden border-none shadow-none">
+                    <div className="relative h-[320px] md:h-[380px] rounded-2xl overflow-hidden">
                         <Image src={event.image_url} alt={event.event_name} fill className="object-cover" />
-                        <div className="absolute inset-0 bg-black/60 flex flex-col justify-end p-6 md:p-8">
-                            <CardTitle className="text-3xl md:text-5xl font-bold text-white leading-tight drop-shadow-lg mb-2">{event.event_name}</CardTitle>
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+                        <div className="absolute inset-0 flex flex-col justify-end gap-4 p-6 md:p-8">
+                            <div className="flex flex-wrap items-center gap-3">
                                 {getStatusBadge(event.event_status)}
                                 {getFormatBadge(event.format)}
                             </div>
+                            <CardTitle className="text-3xl md:text-5xl font-bold text-white leading-tight drop-shadow-lg">
+                                {event.event_name}
+                            </CardTitle>
+                            {event.description && (
+                                <p className="text-sm md:text-base text-white/85 max-w-3xl line-clamp-3">
+                                    {event.description}
+                                </p>
+                            )}
                         </div>
-                    </CardHeader>
+                    </div>
                 </Card>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <Card className="bg-gradient-to-br from-slate-900/50 via-slate-900/30 to-slate-800/40 border-border/60">
+                        <CardContent className="p-4 md:p-5 space-y-1">
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Старт</p>
+                            <p className="text-lg font-semibold text-foreground">{formatEventDate(event.start_date)}</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-indigo-600/20 via-indigo-500/10 to-cyan-500/10 border-border/60">
+                        <CardContent className="p-4 md:p-5 space-y-1">
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Формат</p>
+                            <p className="text-lg font-semibold text-foreground capitalize">{event.format}</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-emerald-600/20 via-emerald-500/10 to-lime-500/10 border-border/60">
+                        <CardContent className="p-4 md:p-5 space-y-1">
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Участники</p>
+                            <p className="text-lg font-semibold text-foreground">{event.users_count}</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-purple-600/20 via-purple-500/10 to-pink-500/10 border-border/60">
+                        <CardContent className="p-4 md:p-5 space-y-1">
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Локация</p>
+                            <p className="text-lg font-semibold text-foreground truncate">{event.venue}</p>
+                        </CardContent>
+                    </Card>
+                </div>
                 <Tabs defaultValue="details" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="details">Детали</TabsTrigger>
-                        <TabsTrigger value="stages">Этапы</TabsTrigger>
-                        <TabsTrigger value="rules">Регламент</TabsTrigger>
-                        <TabsTrigger value="results">Итоговая таблица</TabsTrigger>
+                    <TabsList className="relative grid w-full grid-cols-4 bg-gradient-to-r from-slate-900/70 via-indigo-900/60 to-emerald-900/60 text-white h-12 items-center rounded-2xl p-1 border border-white/15 shadow-[0_12px_40px_rgba(0,0,0,0.45)] overflow-hidden">
+                        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_40%,rgba(255,255,255,0.08),transparent_30%),radial-gradient(circle_at_80%_60%,rgba(45,212,191,0.12),transparent_30%)]" />
+                        <TabsTrigger
+                            value="details"
+                            className="relative z-10 data-[state=active]:bg-white data-[state=active]:text-emerald-800 text-sm font-semibold rounded-xl transition-all px-3 py-2 flex items-center justify-center gap-2 shadow-none data-[state=active]:shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+                        >
+                            <LandmarkIcon className="h-4 w-4" />
+                            Детали
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="stages"
+                            className="relative z-10 data-[state=active]:bg-white data-[state=active]:text-emerald-800 text-sm font-semibold rounded-xl transition-all px-3 py-2 flex items-center justify-center gap-2 shadow-none data-[state=active]:shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+                        >
+                            <ClipboardListIcon className="h-4 w-4" />
+                            Этапы
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="rules"
+                            className="relative z-10 data-[state=active]:bg-white data-[state=active]:text-emerald-800 text-sm font-semibold rounded-xl transition-all px-3 py-2 flex items-center justify-center gap-2 shadow-none data-[state=active]:shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+                        >
+                            <CheckIcon className="h-4 w-4" />
+                            Регламент
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="results"
+                            className="relative z-10 data-[state=active]:bg-white data-[state=active]:text-emerald-800 text-sm font-semibold rounded-xl transition-all px-3 py-2 flex items-center justify-center gap-2 shadow-none data-[state=active]:shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+                        >
+                            <TrophyIcon className="h-4 w-4" />
+                            Итоговая таблица
+                        </TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="details" className="space-y-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
-                            <div className="lg:col-span-2 space-y-4 md:space-y-8">
+                    <TabsContent value="details" className="space-y-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                            <div className="lg:col-span-2 space-y-6 md:space-y-8">
                                 {/* About Section */}
-                                <Card className='md:space-y-4'>
-                                    <CardHeader><CardTitle className="flex items-center gap-2"><LandmarkIcon className="w-6 h-6" /> О мероприятии</CardTitle></CardHeader>
-                                    <CardContent>
+                                <Card>
+                                    <CardHeader className="p-5 md:p-6 pb-3 md:pb-4"><CardTitle className="flex items-center gap-2"><LandmarkIcon className="w-6 h-6" /> О мероприятии</CardTitle></CardHeader>
+                                    <CardContent className="p-5 md:p-6 pt-0">
                                         <p className="text-muted-foreground whitespace-pre-line">
                                             {event.description}
                                         </p>
@@ -228,8 +295,8 @@ export default function EventDetailsPage() {
                                 </Card>
                                 {/* Theses Section */}
                                 <Card>
-                                    <CardHeader><CardTitle className="flex items-center gap-2"><TrophyIcon className="w-6 h-6" /> Основные цели</CardTitle></CardHeader>
-                                    <CardContent className="space-y-4">
+                                    <CardHeader className="p-5 md:p-6 pb-3 md:pb-4"><CardTitle className="flex items-center gap-2"><TrophyIcon className="w-6 h-6" /> Основные цели</CardTitle></CardHeader>
+                                    <CardContent className="p-5 md:p-6 pt-0 space-y-4">
                                         <ul className="list-none space-y-3">
                                                 {/* MOCK */}
                                                 <li className="flex items-start gap-3"><CheckIcon className="w-5 h-5 text-green-500 mt-1 flex-shrink-0" /><span className="text-muted-foreground">Дополнительная информация</span></li>                  
@@ -238,8 +305,8 @@ export default function EventDetailsPage() {
                                 </Card>
                                 {/* Stages Section */}
                                 <Card>
-                                    <CardHeader><CardTitle className="flex items-center gap-2"><ClipboardListIcon className="w-6 h-6" /> Этапы мероприятия</CardTitle></CardHeader>
-                                    <CardContent className="space-y-6">
+                                    <CardHeader className="p-5 md:p-6 pb-3 md:pb-4"><CardTitle className="flex items-center gap-2"><ClipboardListIcon className="w-6 h-6" /> Этапы мероприятия</CardTitle></CardHeader>
+                                    <CardContent className="p-5 md:p-6 pt-0 space-y-6">
                                         {event.stages.map((stage, index) => (
                                             <div key={stage.id} className="flex items-start gap-4">
                                                 <div className="flex flex-col items-center">
@@ -255,10 +322,102 @@ export default function EventDetailsPage() {
                                     </CardContent>
                                 </Card>
 
+                                {team && (
+                                    <Card className="border border-border rounded-xl overflow-hidden">
+                                        <CardHeader className="flex items-start justify-between gap-2">
+                                            <div className="flex flex-col">
+                                                <CardTitle className="text-xl">Команда {team?.team?.name}</CardTitle>
+                                                <p className="text-sm text-muted-foreground">Состав и приглашение</p>
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full border border-border/60">
+                                                        <span className="text-lg leading-none">⋮</span>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-48">
+                                                    <DropdownMenuItem disabled>
+                                                        Расформировать команду
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem>
+                                                        Скопировать ссылку
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </CardHeader>
+                                        <CardContent className="space-y-5">
+                                            <div className="space-y-2">
+                                                <span className="text-sm text-muted-foreground">Ссылка для приглашения</span>
+                                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                                                    <Badge variant="secondary" className="text-xs px-2 py-1 truncate max-w-[220px] bg-muted text-foreground">
+                                                        {`Приглашение: ${team?.team?.name || ''}`}
+                                                    </Badge>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="w-full sm:w-auto gap-2"
+                                                        onClick={() => {
+                                                            const link = `http://localhost:3000/eventdetails/${eventId}?openModal=true&team_name=${encodeURIComponent(team.team.name)}&token=${team.team.invite_token}`;
+                                                            navigator.clipboard.writeText(link)
+                                                                .then(() => console.log("Ссылка скопирована!"))
+                                                                .catch((err) => console.error("Ошибка при копировании:", err));
+                                                        }}
+                                                    >
+                                                        <Share2Icon className="h-4 w-4" />
+                                                        Скопировать
+                                                    </Button>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">Ссылка скопируется в буфер, её не нужно видеть целиком.</p>
+                                            </div>
+
+                                            <Separator />
+
+                                                <div className="space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <h4 className="text-sm font-semibold text-foreground">Участники</h4>
+                                                    <Badge variant="secondary" className="text-xs px-2 py-1 bg-muted text-foreground">
+                                                        {team?.members.length || 0} чел.
+                                                    </Badge>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {team?.members.map((member, idx) => (
+                                                        <div key={idx} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 bg-muted/50">
+                                                            <span className="text-lg">{member.is_event_leader ? "👑" : "👤"}</span>
+                                                            <div className="flex-1 flex flex-col gap-0.5">
+                                                                <span className="font-medium text-foreground leading-tight">{member.firstname} {member.lastname}</span>
+                                                                <div className="flex items-center gap-2 text-xs">
+                                                                    <Badge variant="secondary" className="px-2 py-0 h-5 text-[10px] bg-primary/10 text-foreground">
+                                                                        {member.is_event_leader ? "Лидер" : "Участник"}
+                                                                    </Badge>
+                                                                </div>
+                                                            </div>
+                                                            {!member.is_event_leader && (
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full border border-border/60">
+                                                                            <span className="text-lg leading-none">⋮</span>
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end" className="w-44">
+                                                                        <DropdownMenuItem disabled>
+                                                                            Удалить из команды
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
+
                                 {/* Contacts Section */}
                                 <Card>
-                                    <CardHeader><CardTitle className="flex items-center gap-2"><MessageCircleQuestionIcon className="w-6 h-6" /> Остались вопросы?</CardTitle></CardHeader>
-                                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <CardHeader className="p-5 md:p-6 pb-3 md:pb-4"><CardTitle className="flex items-center gap-2"><MessageCircleQuestionIcon className="w-6 h-6" /> Остались вопросы?</CardTitle></CardHeader>
+                                    <CardContent className="p-5 md:p-6 pt-0 grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="flex items-center gap-4 p-4 rounded-lg bg-background">
                                                 <Avatar className="h-12 w-12"><AvatarFallback><MailIcon /></AvatarFallback></Avatar>
                                                 <div>
@@ -270,40 +429,50 @@ export default function EventDetailsPage() {
                                     </CardContent>
                                 </Card>
                             </div>
-                            {/* Right Sidebar */}
                             <div className="lg:col-span-1 space-y-4 md:space-y-6">
-                                <Card className="bg-card border border-border hidden md:block">
-                                    <CardHeader><CardTitle className="text-white">Регистрация</CardTitle></CardHeader>
-                                    <CardContent className="space-y-3">
-                                        {team ? (<Button size="lg" className="w-full text-lg font-bold bg-green-600 hover:bg-green-700 text-white h-[64px] min-h-[56px] py-0 rounded-lg flex items-center justify-center">
-                                        <UserPlusIcon className="w-6 h-6 mr-2" />Вы уже участник</Button>) 
-                                        : (<Button onClick={() => setIsModalOpen(true)} size="lg" className="w-full text-lg font-bold bg-green-600 hover:bg-green-700 text-white h-[64px] min-h-[56px] py-0 rounded-lg flex items-center justify-center">
-                                        <UserPlusIcon className="w-6 h-6 mr-2" />Подать заявку</Button>)}
+                                <Card className="hidden md:block bg-gradient-to-br from-emerald-600 via-emerald-500 to-cyan-500 border border-white/15 text-white shadow-lg sticky top-20 z-20">
+                                    <CardHeader className="space-y-2">
+                                    <CardTitle className="text-lg font-semibold flex items-center gap-2 text-white">
+                                            <UserPlusIcon className="w-5 h-5" />
+                                            Регистрация
+                                        </CardTitle>
+                                        <p className="text-sm text-white/85">Присоединяйтесь или создайте команду</p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {team ? (
+                                            <Button size="lg" variant="secondary" className="w-full text-lg font-bold h-[56px] rounded-lg flex items-center justify-center bg-white text-emerald-700 hover:bg-white/90">
+                                                <UserPlusIcon className="w-6 h-6 mr-2" />
+                                                Вы уже участник
+                                            </Button>
+                                        ) : (
+                                            <Button onClick={() => setIsModalOpen(true)} size="lg" className="w-full text-lg font-bold bg-emerald-700 hover:bg-emerald-800 text-white h-[56px] rounded-lg flex items-center justify-center">
+                                                <UserPlusIcon className="w-6 h-6 mr-2" />
+                                                Подать заявку
+                                            </Button>
+                                        )}
 
-                                        <div className="bg-muted rounded-lg text-center p-3">
-                                            <p className="text-xs text-white">Регистрация закроется</p>
-                                            {/* <p className="text-lg font-bold text-white">{timeLeft}</p> */}
-                                        </div>
-                                        <Button size="lg" variant="ghost" className="w-full bg-muted text-white hover:bg-muted/80 rounded-lg"><Share2Icon className="w-5 h-5 mr-2" /> Поделиться</Button>
+                                        <Button size="lg" variant="outline" className="w-full rounded-lg border-white/40 text-white hover:bg-white/10">
+                                            <Share2Icon className="w-5 h-5 mr-2" /> Поделиться
+                                        </Button>
                                         
                                         {/* Модалка */}
                                         <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
                                                 {/* Create team */}
                                                 {showSuccess && (
-                                                    <div style={{
-                                                        position: 'fixed',
-                                                        top: 20,
-                                                        right: 20,
-                                                        background: '#4BB543',
-                                                        color: 'white',
-                                                        padding: '12px 20px',
-                                                        borderRadius: '8px',
-                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                                                        zIndex: 9999
-                                                    }}>
-                                                        ✅ Вы подали заявку на ивент!
-                                                    </div>
-                                                    )}
+                                                <div style={{
+                                                    position: 'fixed',
+                                                    top: 20,
+                                                    right: 20,
+                                                    background: '#4BB543',
+                                                    color: 'white',
+                                                    padding: '12px 20px',
+                                                    borderRadius: '8px',
+                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                                    zIndex: 9999
+                                                }}>
+                                                    ✅ Вы подали заявку на ивент!
+                                                </div>
+                                                )}
                                                 
                                                 {token == null ? 
                                                 ( <>
@@ -348,82 +517,6 @@ export default function EventDetailsPage() {
                                         </Modal>
                                     </CardContent>
                                 </Card>
-                                
-                                {/* 2-ой блок с информацией */}
-                                <Card className="bg-card border border-border rounded-xl overflow-hidden">
-                                    <CardContent className="p-6">
-                                        <ul className="space-y-5 text-white text-lg">
-                                            <li className="flex items-center gap-4"><CalendarIcon className="w-7 h-7 text-white" /><span className="text-lg md:text-xl font-semibold">{formatEventDate(event.start_date)}{event.end_date ? ` — ${formatEventDate(event.end_date)}` : ''}</span></li>
-                                            <li className="flex items-center gap-4"><MapPinIcon className="w-7 h-7 text-white" /><span className="text-lg md:text-xl font-semibold">{event.venue}</span></li>
-                                            <li className="flex items-center gap-4"><UsersIcon className="w-7 h-7 text-white" /><span className="text-lg md:text-xl font-semibold">Участников: {event.users_count}</span></li>
-                                        </ul>
-                                    </CardContent>
-                                </Card>
-
-                                
-                                {/* Test team block */}
-                                {team ? (
-                                    <>
-                                    {team && (
-                                        <Card className="bg-card border border-border rounded-xl overflow-hidden">
-                                            <CardHeader className="flex flex-row items-center space-x-3">
-                                                <CardTitle className="text-xl">Команда {team?.team?.name}</CardTitle>
-                                            </CardHeader>
-
-                                            <CardContent className="space-y-6">
-                                                <span className="truncate">Ссылка для приглашения</span>
-                                                <div className=" bg-[#2a2a2a] rounded-lg px-4 py-2 text-sm text-gray-300 flex justify-between items-center">
-                                                    <span className='truncate overflow-hidden whitespace-nowrap text-ellipsis'>http://localhost:3000/eventdetails/{eventId}?openModal=true&team_name={team?.team?.name}&token={team?.team?.invite_token}</span>
-                                                    
-                                                    {/* ПЕРЕДЕЛАТЬ */}
-                                                    <button
-                                                        onClick={() => {
-                                                        const link = `http://localhost:3000/eventdetails/${eventId}?openModal=true&team_name=${encodeURIComponent(team.team.name)}&token=${team.team.invite_token}`;
-                                                        navigator.clipboard.writeText(link)
-                                                            .then(() => {
-                                                            // Optional: show success message or toast
-                                                            console.log("Ссылка скопирована!");
-                                                            })
-                                                            .catch((err) => {
-                                                            console.error("Ошибка при копировании:", err);  
-                                                            });
-                                                        }}
-                                                        className="ml-2 text-gray-400 hover:text-white active:scale-90 transition-transform duration-100 rounded p-1"
-                                                        title="Скопировать ссылку"
-                                                    >
-                                                        📋
-                                                    </button>
-                                                </div>
-
-                                                {team?.members.map((name, idx) => (
-                                                    <div key={idx}>
-                                                        {name.is_event_leader ? 
-                                                        (<div className="flex items-center bg-[#2a2a2a] px-4 py-2 rounded-lg">
-                                                            <span className="text-yellow-400 text-xl">👑</span>
-                                                            <div>
-                                                                <div className="font-medium">{name.firstname} {name.lastname}</div>
-                                                                <div className="text-sm text-gray-400">Лидер</div>
-                                                            </div>
-                                                        </div>) 
-                                                        : (<div className="flex items-center bg-[#2a2a2a] px-4 py-2 rounded-lg">
-                                                            <span className="text-yellow-400 text-xl">👤</span>
-                                                            <div>
-                                                                <div className="font-medium">{name.firstname} {name.lastname}</div>
-                                                                <div className="text-sm text-gray-400">Участник</div>
-                                                            </div>
-                                                        </div>)}
-                                                    </div>
-                                                ))}
-                                            </CardContent>
-                                        </Card>)}
-                                    </>
-                                ) : (
-                                    <Card className="bg-card border border-border rounded-xl overflow-hidden">
-                                        <CardHeader className="flex flex-row items-center space-x-3">
-                                            <CardTitle className="text-xl">Вы не состоите в команде для этого ивента</CardTitle>
-                                        </CardHeader>
-                                    </Card>
-                                )}
                             </div>
                         </div>
                     </TabsContent>
@@ -558,66 +651,98 @@ export default function EventDetailsPage() {
                     </TabsContent>
                     
                     <TabsContent value="results" className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-2xl font-bold">Итоговая таблица</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-6">
-                                    {team ? (
-                                        <div className="text-center py-8">
-                                            <TrophyIcon className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-                                            <h3 className="text-xl font-semibold mb-2">Вы уже в команде!</h3>
-                                            <p className="text-muted-foreground mb-4">
-                                                Команда: <span className="font-medium">{team.team.name}</span>
-                                            </p>
-                                            <Badge className="bg-green-100 text-green-800 text-lg px-4 py-2">
-                                                Участник
-                                            </Badge>
+                        <Card className="overflow-hidden border-0 shadow-none bg-transparent p-0">
+                            <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-900 via-slate-900 to-emerald-900">
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.35),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(16,185,129,0.25),transparent_40%)] blur-3xl" />
+                                <div className="relative p-6 md:p-8 space-y-6 text-white">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="space-y-1">
+                                            <p className="text-sm uppercase tracking-wide text-white/70">Финал</p>
+                                            <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+                                                <TrophyIcon className="h-6 w-6 text-amber-300 drop-shadow" />
+                                                Итоговая таблица
+                                            </h2>
                                         </div>
-                                    ) : (
-                                        <div className="text-center py-8">
-                                            <UsersRoundIcon className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-                                            <h3 className="text-xl font-semibold mb-2">Присоединяйтесь к команде</h3>
-                                            <p className="text-muted-foreground mb-6">
-                                                Создайте свою команду или присоединитесь к существующей для участия в мероприятии
-                                            </p>
-                                            <Button 
-                                                size="lg" 
-                                                className="bg-green-600 hover:bg-green-700 text-white"
-                                                onClick={() => setIsModalOpen(true)}
-                                            >
-                                                <UserPlusIcon className="w-5 h-5 mr-2" />
-                                                Подать заявку
-                                            </Button>
+                                        <Badge className="bg-white/20 text-white border-white/30">Live</Badge>
+                                    </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-3">
+                                        <div className="rounded-xl border border-white/20 bg-white/10 p-4 shadow-inner">
+                                            <p className="text-xs uppercase tracking-wide text-white/70">Всего участников</p>
+                                            <p className="text-3xl font-bold">{event.users_count}</p>
                                         </div>
-                                    )}
-                                    
-                                    <Separator />
-                                    
-                                    <div className="space-y-4">
-                                        <h3 className="text-lg font-semibold">Статистика участников</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <div className="text-center p-4 bg-muted rounded-lg">
-                                                <div className="text-2xl font-bold text-blue-600">{event.users_count}</div>
-                                                <div className="text-sm text-muted-foreground">Всего участников</div>
-                                            </div>
-                                            <div className="text-center p-4 bg-muted rounded-lg">
-                                                <div className="text-2xl font-bold text-green-600">
-                                                    {Math.floor(event.users_count / 5)}
-                                                </div>
-                                                <div className="text-sm text-muted-foreground">Команд</div>
-                                            </div>
-                                            <div className="text-center p-4 bg-muted rounded-lg">
-                                                <div className="text-2xl font-bold text-purple-600">
-                                                    {event.format === 'online' ? '100%' : event.format === 'offline' ? 'Офлайн' : 'Гибрид'}
-                                                </div>
-                                                <div className="text-sm text-muted-foreground">Формат</div>
-                                            </div>
+                                        <div className="rounded-xl border border-white/20 bg-white/10 p-4 shadow-inner">
+                                            <p className="text-xs uppercase tracking-wide text-white/70">Команд</p>
+                                            <p className="text-3xl font-bold">{Math.max(Math.floor(event.users_count / 5), 1)}</p>
+                                        </div>
+                                        <div className="rounded-xl border border-white/20 bg-white/10 p-4 shadow-inner">
+                                            <p className="text-xs uppercase tracking-wide text-white/70">Формат</p>
+                                            <p className="text-xl font-semibold capitalize">{event.format}</p>
                                         </div>
                                     </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <Card className="border-white/15 bg-white/5 text-white">
+                                            <CardHeader className="pb-3">
+                                                <CardTitle className="text-lg flex items-center gap-2">
+                                                    <UsersRoundIcon className="h-5 w-5 text-emerald-300" />
+                                                    Ваш статус
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="space-y-3">
+                                                {team ? (
+                                                    <>
+                                                        <div className="flex items-center gap-3">
+                                                            <Badge className="bg-emerald-500 text-emerald-950">Участник</Badge>
+                                                            <span className="text-sm text-white/80">{team.team.name}</span>
+                                                        </div>
+                                                        <p className="text-sm text-white/70">Вы уже в команде. Ожидайте результатов.</p>
+                                                    </>
+                                                ) : (
+                                                    <div className="space-y-3">
+                                                        <p className="text-sm text-white/80">Присоединяйтесь к команде или создайте свою для участия.</p>
+                                                        <Button 
+                                                            size="sm" 
+                                                            className="bg-white text-emerald-700 hover:bg-white/90"
+                                                            onClick={() => setIsModalOpen(true)}
+                                                        >
+                                                            <UserPlusIcon className="h-4 w-4 mr-2" />
+                                                            Подать заявку
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </CardContent>
+                                        </Card>
+
+                                        <Card className="border-white/15 bg-white/5 text-white">
+                                            <CardHeader className="pb-3">
+                                                <CardTitle className="text-lg flex items-center gap-2">
+                                                    <ClipboardListIcon className="h-5 w-5 text-cyan-300" />
+                                                    Топ-метрики
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="grid grid-cols-2 gap-3">
+                                                <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                                                    <p className="text-xs text-white/70">Формат</p>
+                                                    <p className="text-sm font-semibold capitalize">{event.format}</p>
+                                                </div>
+                                                <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                                                    <p className="text-xs text-white/70">Участники</p>
+                                                    <p className="text-sm font-semibold">{event.users_count}</p>
+                                                </div>
+                                                <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                                                    <p className="text-xs text-white/70">Команд</p>
+                                                    <p className="text-sm font-semibold">{Math.max(Math.floor(event.users_count / 5), 1)}</p>
+                                                </div>
+                                                <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                                                    <p className="text-xs text-white/70">Статус</p>
+                                                    <p className="text-sm font-semibold">{event.event_status}</p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
                                 </div>
-                            </CardContent>
+                            </div>
                         </Card>
                     </TabsContent>
                 </Tabs>
