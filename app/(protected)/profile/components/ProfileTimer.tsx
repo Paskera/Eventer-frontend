@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useEffect, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -28,6 +28,9 @@ export function ProfileTimer() {
   useEffect(() => {
     if (!currentStage) return
 
+    // Initial render
+    setCountdown(formatTimeDifference(currentStage.start_date))
+
     const interval = setInterval(() => {
       setCountdown(formatTimeDifference(currentStage.start_date))
     }, 1000)
@@ -47,8 +50,8 @@ export function ProfileTimer() {
     const now = new Date()
     const diffMs = startDate.getTime() - now.getTime()
 
-    if (isNaN(diffMs)) return "Некорректная дата"
-    if (diffMs <= 0) return "Уже началось"
+    if (isNaN(diffMs)) return "Ошибка даты"
+    if (diffMs <= 0) return "Начато"
 
     const diffSeconds = Math.floor(diffMs / 1000)
     const days = Math.floor(diffSeconds / (60 * 60 * 24))
@@ -80,19 +83,19 @@ export function ProfileTimer() {
 
   if (isPending) {
     return (
-      <Card className="bg-card text-card-foreground border-border h-full">
-        <CardHeader>
-          <CardTitle className="text-2xl font-semibold flex items-center gap-2">
-            <Clock className="h-6 w-6" />
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader className="border-b border-border/30">
+          <CardTitle className="text-xl font-bold flex items-center gap-2">
+            <Clock className="h-5 w-5 text-rose-500" />
             Таймер
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-6 w-1/2" />
-          <Skeleton className="h-14 w-full" />
-          <div className="flex gap-3">
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-20" />
+        <CardContent className="p-6 space-y-4">
+          <Skeleton className="h-5 w-1/2" />
+          <Skeleton className="h-12 w-full rounded-lg" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 flex-1" />
+            <Skeleton className="h-8 flex-1" />
           </div>
         </CardContent>
       </Card>
@@ -101,70 +104,74 @@ export function ProfileTimer() {
 
   if (error || !currentStage) {
     return (
-      <Card className="bg-card text-card-foreground border-border h-full">
-        <CardHeader>
-          <CardTitle className="text-2xl font-semibold flex items-center gap-2">
-            <Clock className="h-6 w-6" />
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader className="border-b border-border/30">
+          <CardTitle className="text-xl font-bold flex items-center gap-2">
+            <Clock className="h-5 w-5 text-rose-500" />
             Таймер
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-          <AlertTriangle className="h-6 w-6 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            {error ? "Не удалось загрузить ближайшие этапы" : "Ближайшие этапы не найдены"}
-          </p>
+        <CardContent className="flex flex-col items-center justify-center gap-3 py-10 text-center p-6">
+          <AlertTriangle className="h-5 w-5 text-muted-foreground/60" />
+          <p className="text-sm text-muted-foreground">{error ? "Ошибка загрузки" : "Этапы не найдены"}</p>
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <Card className="bg-card text-card-foreground border-border h-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-semibold flex items-center gap-2">
-            <Clock className="h-6 w-6" />
+    <Card className="border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+      <CardHeader className="pb-4 border-b border-border/30">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-xl font-bold flex items-center gap-2">
+            <Clock className="h-5 w-5 text-rose-500" />
             Таймер
           </CardTitle>
-          <Badge variant="secondary">Этап {currentIndex + 1} / {stages?.stages.length}</Badge>
+          <Badge
+            variant="secondary"
+            className="text-xs bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-800/50 whitespace-nowrap"
+          >
+            Этап {currentIndex + 1} / {stages?.stages.length}
+          </Badge>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col justify-center items-center gap-4 py-6">
-        <div className="text-center space-y-1">
-          <p className="text-sm text-muted-foreground">Следующий этап</p>
-          <p className="text-lg font-semibold text-foreground">{currentStage.title}</p>
+
+      <CardContent className="p-6 space-y-5">
+        <div className="text-center space-y-1.5">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Следующий этап</p>
+          <p className="text-base font-bold text-foreground truncate px-2 text-balance">{currentStage.title}</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-full bg-muted px-4 py-3 shadow-inner">
-            <Timer className="h-5 w-5 text-indigo-500" />
-            <span className="text-2xl md:text-3xl font-mono font-bold">{countdown}</span>
+        <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center gap-3 rounded-lg bg-gradient-to-r from-rose-50 to-orange-50 dark:from-rose-950/30 dark:to-orange-950/20 px-4 py-3 border border-rose-200/40 dark:border-rose-800/40 shadow-sm">
+            <Timer className="h-4 w-4 text-rose-500 dark:text-rose-400 flex-shrink-0" />
+            <span className="text-xl sm:text-2xl font-mono font-bold text-foreground">{countdown}</span>
           </div>
-          <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]" />
+          <div className="h-2.5 w-2.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)] flex-shrink-0" />
         </div>
 
-        <p className="text-xs text-muted-foreground">Время до начала этапа</p>
+        <p className="text-xs text-center text-muted-foreground">Время до начала</p>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-center">
           <Button
             variant="outline"
             size="sm"
             onClick={handlePrev}
             disabled={currentIndex === 0}
-            className="gap-1"
+            className="gap-1.5 h-8 border-border/50 hover:bg-accent/50 flex-1 text-xs bg-transparent"
           >
-            <ChevronLeft className="h-4 w-4" />
-            Назад
+            <ChevronLeft className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Назад</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={handleNext}
             disabled={currentIndex === (stages?.stages.length ?? 0) - 1}
-            className="gap-1"
+            className="gap-1.5 h-8 border-border/50 hover:bg-accent/50 flex-1 text-xs bg-transparent"
           >
-            Далее
-            <ChevronRight className="h-4 w-4" />
+            <span className="hidden sm:inline">Далее</span>
+            <ChevronRight className="h-3.5 w-3.5" />
           </Button>
         </div>
       </CardContent>

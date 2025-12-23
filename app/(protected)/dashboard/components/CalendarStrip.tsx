@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -36,6 +37,8 @@ function getFormatBadge(format: string) {
 }
 
 function EventCard({ event }: { event: Hackathon }) {
+    const router = useRouter()
+    
     return (
         <Card className="w-full flex flex-col md:flex-row overflow-hidden bg-card border border-border">
             <div className="relative w-full h-48 md:w-[340px] md:min-h-[320px] flex-shrink-0">
@@ -69,7 +72,10 @@ function EventCard({ event }: { event: Hackathon }) {
                 <div className="font-semibold text-xs md:text-base mt-2 text-foreground">Описание</div>
                 <div className="text-xs md:text-base mb-4 break-words text-foreground/90 leading-relaxed">{event.description}</div>
                 <div className="flex gap-2 md:gap-4 mt-auto">
-                    <Button className="bg-green-600 hover:bg-green-700 text-white w-full md:w-auto text-xs md:text-base">
+                    <Button
+                        className="bg-green-600 hover:bg-green-700 text-white w-full md:w-auto text-xs md:text-base"
+                        onClick={() => router.push(`/events/dashboard/${event.id}`)}
+                    >
                         Подробнее
                     </Button>
                 </div>

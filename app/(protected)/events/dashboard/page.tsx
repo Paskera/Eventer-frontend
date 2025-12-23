@@ -74,7 +74,7 @@ export default function EventsPage() {
                 {events.map((event) => (
                     <Link
                         key={event.id}
-                        href={`/eventdashboard/${event.id}`}
+                        href={`/events/dashboard/${event.id}`}
                         className="block h-full group"
                         aria-label={`Перейти к событию ${event.event_name}`}
                     >

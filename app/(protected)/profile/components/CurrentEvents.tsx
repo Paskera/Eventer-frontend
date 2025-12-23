@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useQuery } from "@tanstack/react-query"
 import { CalendarClock, Layers } from "lucide-react"
@@ -19,86 +19,80 @@ export function CurrentEvents() {
     queryFn: () => apiUsers.getCurrentEventsUser(),
   })
 
-  const renderSkeleton = (
-    <TableBody>
-      {Array.from({ length: 3 }).map((_, i) => (
-        <TableRow key={i}>
-          <TableCell>
-            <Skeleton className="h-4 w-32" />
-          </TableCell>
-          <TableCell>
-            <Skeleton className="h-4 w-20" />
-          </TableCell>
-          <TableCell>
-            <Skeleton className="h-4 w-24" />
-          </TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  )
-
   const isEmpty = !events?.length
 
   return (
-    <Card className="bg-card text-card-foreground border-border h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-2xl font-semibold flex items-center gap-2">
-          <CalendarClock className="h-6 w-6" />
-          Текущие мероприятия
+    <Card className="border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+      <CardHeader className="pb-4 border-b border-border/30">
+        <CardTitle className="text-xl font-bold flex items-center gap-2">
+          <CalendarClock className="h-5 w-5 text-cyan-500" />
+          Мероприятия
         </CardTitle>
       </CardHeader>
-      <CardContent className="h-full overflow-x-auto">
+
+      <CardContent className="p-4 sm:p-6 overflow-x-auto">
         <Table className="min-w-[320px]">
           <TableHeader>
-            <TableRow className="border-border">
-              <TableHead className="text-xs md:text-sm text-muted-foreground font-medium w-1/3">
+            <TableRow className="border-border/30 hover:bg-transparent">
+              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Мероприятие
               </TableHead>
-              <TableHead className="text-xs md:text-sm text-muted-foreground font-medium w-1/3">
+              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Команда
               </TableHead>
-              <TableHead className="text-xs md:text-sm text-muted-foreground font-medium w-1/3">
+              <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Этап
               </TableHead>
             </TableRow>
           </TableHeader>
-          {isPending
-            ? renderSkeleton
-            : error || isEmpty
-              ? (
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
-                      <div className="flex items-center justify-center gap-2">
-                        <Layers className="h-4 w-4" />
-                        {error ? "Не удалось загрузить события" : "Нет активных событий"}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-                )
-              : (
-                <TableBody>
-                  {events?.map((event, index) => (
-                    <TableRow key={index} className="border-border hover:bg-accent/40">
-                      <TableCell className="text-sm md:text-base font-medium text-foreground truncate">
-                        {event.event}
-                      </TableCell>
-                      <TableCell className="text-sm md:text-base text-muted-foreground">
-                        <Badge
-                          variant="secondary"
-                          className="text-xs md:text-sm bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
-                        >
-                          {event.team}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm md:text-base text-muted-foreground truncate">
-                        {event.stage}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-                )}
+
+          <TableBody>
+            {isPending &&
+              Array.from({ length: 3 }).map((_, i) => (
+                <TableRow key={i} className="border-border/20">
+                  <TableCell className="py-3">
+                    <Skeleton className="h-4 w-32" />
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                </TableRow>
+              ))}
+
+            {!isPending && (error || isEmpty) && (
+              <TableRow className="hover:bg-transparent border-border/20">
+                <TableCell colSpan={3} className="text-center py-12">
+                  <div className="flex flex-col items-center gap-2">
+                    <Layers className="h-5 w-5 text-muted-foreground/50" />
+                    <span className="text-sm text-muted-foreground">
+                      {error ? "Ошибка загрузки" : "Активных мероприятий нет"}
+                    </span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+
+            {!isPending &&
+              events?.map((event, index) => (
+                <TableRow key={index} className="border-border/20 hover:bg-muted/40 transition-colors group">
+                  <TableCell className="text-sm font-medium text-foreground truncate py-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    {event.event}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <Badge
+                      variant="secondary"
+                      className="text-xs bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800/50"
+                    >
+                      {event.team}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground truncate py-3">{event.stage}</TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
         </Table>
       </CardContent>
     </Card>
