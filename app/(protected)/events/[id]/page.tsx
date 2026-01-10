@@ -223,10 +223,10 @@ export default function EventDetailsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-4 md:py-8 pb-[160px]">
+    <div className="container mx-auto px-4 py-4 md:py-8 pb-[160px] text-slate-900 dark:text-slate-100">
       {event && (
         <div className="space-y-6 md:space-y-8">
-          <Card className="overflow-hidden border-none shadow-lg">
+          <Card className="overflow-hidden border border-gray-200 bg-white shadow-md dark:border-neutral-800 dark:bg-neutral-900">
             <div className="relative h-[280px] sm:h-[320px] md:h-[400px] lg:h-[480px] rounded-2xl overflow-hidden">
               <Image src={event.image_url || "/placeholder.svg"} alt={event.event_name} fill className="object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
@@ -248,70 +248,70 @@ export default function EventDetailsPage() {
           </Card>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card className="bg-gradient-to-br from-slate-900/60 via-slate-900/40 to-slate-800/50 border border-white/10 hover:border-white/20 transition-colors shadow-lg hover:shadow-xl">
-              <CardContent className="p-4 md:p-6 space-y-2">
-                <div className="flex items-center gap-2 text-slate-400">
-                  <CalendarIcon className="w-4 h-4" />
+            <Card className="border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 h-full min-h-[110px] flex flex-col">
+              <CardContent className="p-4 md:p-6 space-y-2 flex-1 flex flex-col justify-between">
+                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                  <CalendarIcon className="w-4 h-4 flex-shrink-0" />
                   <p className="text-xs uppercase tracking-wide font-semibold">Старт</p>
                 </div>
-                <p className="text-sm md:text-base font-semibold text-white">{formatEventDate(event.start_date)}</p>
+                <p className="text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100 break-words">{formatEventDate(event.start_date)}</p>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-cyan-600/20 via-cyan-500/10 to-blue-500/15 border border-cyan-500/30 hover:border-cyan-500/50 transition-colors shadow-lg hover:shadow-xl">
-              <CardContent className="p-4 md:p-6 space-y-2">
-                <div className="flex items-center gap-2 text-cyan-400">
-                  <ClockIcon className="w-4 h-4" />
+            <Card className="border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 h-full min-h-[110px] flex flex-col">
+              <CardContent className="p-4 md:p-6 space-y-2 flex-1 flex flex-col justify-between">
+                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                  <ClockIcon className="w-4 h-4 flex-shrink-0" />
                   <p className="text-xs uppercase tracking-wide font-semibold">Формат</p>
                 </div>
-                <p className="text-sm md:text-base font-semibold text-white capitalize">{event.format}</p>
+                <p className="text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100 capitalize">{event.format}</p>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-emerald-600/20 via-emerald-500/10 to-teal-500/15 border border-emerald-500/30 hover:border-emerald-500/50 transition-colors shadow-lg hover:shadow-xl">
-              <CardContent className="p-4 md:p-6 space-y-2">
-                <div className="flex items-center gap-2 text-emerald-400">
-                  <UsersIcon className="w-4 h-4" />
+            <Card className="border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 h-full min-h-[110px] flex flex-col">
+              <CardContent className="p-4 md:p-6 space-y-2 flex-1 flex flex-col justify-between">
+                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                  <UsersIcon className="w-4 h-4 flex-shrink-0" />
                   <p className="text-xs uppercase tracking-wide font-semibold">Участники</p>
                 </div>
-                <p className="text-sm md:text-base font-semibold text-white">{event.users_count}</p>
+                <p className="text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100">{event.users_count}</p>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-amber-600/20 via-amber-500/10 to-orange-500/15 border border-amber-500/30 hover:border-amber-500/50 transition-colors shadow-lg hover:shadow-xl">
-              <CardContent className="p-4 md:p-6 space-y-2">
-                <div className="flex items-center gap-2 text-amber-400">
-                  <MapPinIcon className="w-4 h-4" />
+            <Card className="border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 h-full min-h-[110px] flex flex-col">
+              <CardContent className="p-4 md:p-6 space-y-2 flex-1 flex flex-col justify-between">
+                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                  <MapPinIcon className="w-4 h-4 flex-shrink-0" />
                   <p className="text-xs uppercase tracking-wide font-semibold">Локация</p>
                 </div>
-                <p className="text-sm md:text-base font-semibold text-white truncate">{event.venue}</p>
+                <p className="text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 break-words">{event.venue}</p>
               </CardContent>
             </Card>
           </div>
 
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className="relative w-full h-auto bg-transparent border-b border-white/10 rounded-none p-0 mb-8 flex gap-2 flex-wrap md:flex-nowrap">
+            <TabsList className="relative w-full h-auto bg-gray-50 dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-1 mb-8 flex gap-2 flex-wrap md:flex-nowrap">
               <TabsTrigger
                 value="details"
-                className="relative px-4 py-3 text-sm md:text-base font-semibold rounded-t-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600/40 data-[state=active]:to-indigo-500/30 data-[state=active]:border data-[state=active]:border-indigo-500/50 data-[state=active]:text-indigo-300 text-slate-400 hover:text-white transition-all border-0 shadow-none"
+                className="relative px-4 py-2.5 text-sm md:text-base font-semibold rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50 text-slate-600 dark:text-slate-300 border border-transparent"
               >
                 <LandmarkIcon className="h-4 w-4 mr-2 inline" />
                 Детали
               </TabsTrigger>
               <TabsTrigger
                 value="stages"
-                className="relative px-4 py-3 text-sm md:text-base font-semibold rounded-t-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600/40 data-[state=active]:to-cyan-500/30 data-[state=active]:border data-[state=active]:border-cyan-500/50 data-[state=active]:text-cyan-300 text-slate-400 hover:text-white transition-all border-0 shadow-none"
+                className="relative px-4 py-2.5 text-sm md:text-base font-semibold rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50 text-slate-600 dark:text-slate-300 border border-transparent"
               >
                 <ClipboardListIcon className="h-4 w-4 mr-2 inline" />
                 Этапы
               </TabsTrigger>
               <TabsTrigger
                 value="rules"
-                className="relative px-4 py-3 text-sm md:text-base font-semibold rounded-t-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600/40 data-[state=active]:to-emerald-500/30 data-[state=active]:border data-[state=active]:border-emerald-500/50 data-[state=active]:text-emerald-300 text-slate-400 hover:text-white transition-all border-0 shadow-none"
+                className="relative px-4 py-2.5 text-sm md:text-base font-semibold rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50 text-slate-600 dark:text-slate-300 border border-transparent"
               >
                 <CheckIcon className="h-4 w-4 mr-2 inline" />
                 Регламент
               </TabsTrigger>
               <TabsTrigger
                 value="results"
-                className="relative px-4 py-3 text-sm md:text-base font-semibold rounded-t-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600/40 data-[state=active]:to-amber-500/30 data-[state=active]:border data-[state=active]:border-amber-500/50 data-[state=active]:text-amber-300 text-slate-400 hover:text-white transition-all border-0 shadow-none"
+                className="relative px-4 py-2.5 text-sm md:text-base font-semibold rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50 text-slate-600 dark:text-slate-300 border border-transparent"
               >
                 <TrophyIcon className="h-4 w-4 mr-2 inline" />
                 Итоги
@@ -322,23 +322,23 @@ export default function EventDetailsPage() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                 <div className="lg:col-span-2 space-y-6 md:space-y-8">
                   {/* About Section */}
-                  <Card className="border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-900/30 shadow-lg">
-                    <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 flex items-center gap-3 text-lg md:text-xl font-bold text-white">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center">
-                        <LandmarkIcon className="w-5 h-5 text-white" />
+                  <Card className="border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                    <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 flex items-center gap-3 text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500/20 to-cyan-500/20 text-indigo-600 dark:text-cyan-200 flex items-center justify-center">
+                        <LandmarkIcon className="w-5 h-5" />
                       </div>
                       О мероприятии
                     </CardTitle>
                     <CardContent className="p-5 md:p-6 pt-0">
-                      <p className="text-slate-300 whitespace-pre-line leading-relaxed">{event.description}</p>
+                      <p className="text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed">{event.description}</p>
                     </CardContent>
                   </Card>
 
                   {/* Stages Section */}
-                  <Card className="border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-900/30 shadow-lg">
-                    <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 flex items-center gap-3 text-lg md:text-xl font-bold text-white">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
-                        <ClipboardListIcon className="w-5 h-5 text-white" />
+                  <Card className="border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                    <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 flex items-center gap-3 text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 text-cyan-700 dark:text-cyan-100 flex items-center justify-center">
+                        <ClipboardListIcon className="w-5 h-5" />
                       </div>
                       Этапы мероприятия
                     </CardTitle>
@@ -353,43 +353,43 @@ export default function EventDetailsPage() {
                               {index < event.stages.length - 1 && <div className="w-0.5 h-20 bg-slate-700 mt-2"></div>}
                             </div>
                             <div className="flex-1 pt-1">
-                              <p className="font-semibold text-white text-base">
+                              <p className="font-semibold text-slate-900 dark:text-slate-100 text-base">
                                 {stage.stage_name}
-                                <span className="text-slate-400 font-normal text-sm ml-2">
+                                <span className="text-slate-500 dark:text-slate-400 font-normal text-sm ml-2">
                                   {formatEventDate(stage.start_date)} — {formatEventDate(stage.end_date)}
                                 </span>
                               </p>
-                              <p className="text-sm text-slate-400 mt-1">{stage.description}</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{stage.description}</p>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <p className="text-slate-400">Этапы будут добавлены позже</p>
+                        <p className="text-slate-500 dark:text-slate-400">Этапы будут добавлены позже</p>
                       )}
                     </CardContent>
                   </Card>
 
                   {/* Goals Section */}
-                  <Card className="border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-900/30 shadow-lg">
-                    <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 flex items-center gap-3 text-lg md:text-xl font-bold text-white">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                        <TrophyIcon className="w-5 h-5 text-white" />
+                  <Card className="border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                    <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 flex items-center gap-3 text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-700 dark:text-emerald-100 flex items-center justify-center">
+                        <TrophyIcon className="w-5 h-5" />
                       </div>
                       Основные цели
                     </CardTitle>
                     <CardContent className="p-5 md:p-6 pt-0 space-y-4">
                       <ul className="list-none space-y-3">
                         <li className="flex items-start gap-3">
-                          <CheckIcon className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                          <span className="text-slate-300">Развитие навыков в области инновационных технологий</span>
+                          <CheckIcon className="w-5 h-5 text-emerald-500 dark:text-emerald-300 mt-0.5 flex-shrink-0" />
+                          <span className="text-slate-700 dark:text-slate-300">Развитие навыков в области инновационных технологий</span>
                         </li>
                         <li className="flex items-start gap-3">
-                          <CheckIcon className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                          <span className="text-slate-300">Создание командного взаимодействия и сотрудничества</span>
+                          <CheckIcon className="w-5 h-5 text-emerald-500 dark:text-emerald-300 mt-0.5 flex-shrink-0" />
+                          <span className="text-slate-700 dark:text-slate-300">Создание командного взаимодействия и сотрудничества</span>
                         </li>
                         <li className="flex items-start gap-3">
-                          <CheckIcon className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                          <span className="text-slate-300">Представление и демонстрация творческих решений</span>
+                          <CheckIcon className="w-5 h-5 text-emerald-500 dark:text-emerald-300 mt-0.5 flex-shrink-0" />
+                          <span className="text-slate-700 dark:text-slate-300">Представление и демонстрация творческих решений</span>
                         </li>
                       </ul>
                     </CardContent>
@@ -398,29 +398,29 @@ export default function EventDetailsPage() {
 
                 {/* Sidebar */}
                 <div className="lg:col-span-1 space-y-4 md:space-y-6">
-                  <Card className="sticky top-20 bg-gradient-to-br from-emerald-600/30 via-cyan-600/20 to-blue-600/30 border border-emerald-500/40 shadow-xl">
-                    <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 text-lg md:text-xl font-bold flex items-center gap-2 text-white">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
-                        <UsersIcon className="w-5 h-5 text-white" />
+                  <Card className="sticky top-20 border border-gray-200 bg-white shadow-md dark:border-neutral-800 dark:bg-neutral-900">
+                    <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 text-lg md:text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-emerald-700 dark:text-emerald-100 flex items-center justify-center">
+                        <UsersIcon className="w-5 h-5" />
                       </div>
                       Регистрация
                     </CardTitle>
                     <CardContent className="p-5 md:p-6 pt-0 space-y-4">
                       {team ? (
-                        <div className="bg-white/10 border border-white/20 rounded-lg p-4 text-center">
-                          <p className="text-sm text-emerald-300 font-semibold">Вы уже участник</p>
-                          <p className="text-xs text-slate-300 mt-1">Команда: {team.team?.name}</p>
+                        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg p-4 text-center dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-100">
+                          <p className="text-sm font-semibold">Вы уже участник</p>
+                          <p className="text-xs mt-1">Команда: {team.team?.name}</p>
                         </div>
                       ) : (
                         <button
                           onClick={() => setIsModalOpen(true)}
-                          className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 rounded-lg font-semibold text-white transition-all transform hover:scale-105 active:scale-95"
+                          className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 rounded-lg font-semibold text-white transition-all"
                         >
                           Подать заявку
                         </button>
                       )}
 
-                      <button className="w-full py-3 px-4 border border-white/20 hover:border-white/40 rounded-lg font-semibold text-white transition-all bg-white/5 hover:bg-white/10">
+                      <button className="w-full py-3 px-4 border border-gray-300 text-slate-800 hover:bg-gray-100 rounded-lg font-semibold transition-all dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800">
                         Поделиться событием
                       </button>
 
@@ -512,10 +512,10 @@ export default function EventDetailsPage() {
             </TabsContent>
 
             <TabsContent value="stages" className="space-y-6">
-              <Card className="border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-900/30 shadow-lg">
-                <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 flex items-center gap-3 text-lg md:text-xl font-bold text-white">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
-                    <ClipboardListIcon className="w-5 h-5 text-white" />
+              <Card className="border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 flex items-center gap-3 text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 text-cyan-700 dark:text-cyan-100 flex items-center justify-center">
+                    <ClipboardListIcon className="w-5 h-5" />
                   </div>
                   Детальное расписание
                 </CardTitle>
@@ -524,87 +524,87 @@ export default function EventDetailsPage() {
                     stages.map((stage) => (
                       <div
                         key={stage.id}
-                        className="border-l-4 border-cyan-500 pl-6 py-4 bg-white/5 rounded-r-lg p-4 -ml-4 pl-6"
+                        className="border-l-4 border-cyan-500/70 pl-6 py-4 bg-gray-50 rounded-r-lg p-4 -ml-4 pl-6 dark:bg-neutral-900 dark:border-cyan-500/60"
                       >
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-lg font-semibold text-white">{stage.stage_name}</h3>
+                          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{stage.stage_name}</h3>
                           <Badge
-                            className={`${stage.stage_status === "active" ? "bg-emerald-500" : stage.stage_status === "upcoming" ? "bg-cyan-500" : "bg-slate-600"} text-white`}
+                            className={`${stage.stage_status === "active" ? "bg-emerald-500 text-white" : stage.stage_status === "upcoming" ? "bg-cyan-500 text-white" : "bg-slate-600 text-white"}`}
                           >
                             {stage.stage_status}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-slate-400 mb-3">
+                        <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400 mb-3">
                           <span>
                             {formatEventDate(stage.start_date)} - {formatEventDate(stage.end_date)}
                           </span>
                         </div>
-                        <p className="text-slate-300">{stage.description}</p>
+                        <p className="text-slate-700 dark:text-slate-300">{stage.description}</p>
                       </div>
                     ))
                   ) : (
-                    <p className="text-slate-400">Этапы будут добавлены позже</p>
+                    <p className="text-slate-500 dark:text-slate-400">Этапы будут добавлены позже</p>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="rules" className="space-y-6">
-              <Card className="border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-900/30 shadow-lg">
-                <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 flex items-center gap-3 text-lg md:text-xl font-bold text-white">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                    <CheckIcon className="w-5 h-5 text-white" />
+              <Card className="border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 flex items-center gap-3 text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-700 dark:text-emerald-100 flex items-center justify-center">
+                    <CheckIcon className="w-5 h-5" />
                   </div>
                   Регламент мероприятия
                 </CardTitle>
                 <CardContent className="p-5 md:p-6 pt-0 space-y-6">
                   <div>
-                    <h4 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                       Общие правила
                     </h4>
-                    <ul className="space-y-2 text-slate-300 list-none">
+                    <ul className="space-y-2 text-slate-700 dark:text-slate-300 list-none">
                       <li className="flex items-start gap-3">
-                        <span className="text-emerald-400 mt-1">•</span>
+                        <span className="text-emerald-500 dark:text-emerald-300 mt-1">•</span>
                         <span>Команда должна состоять из 3-5 человек</span>
                       </li>
                       <li className="flex items-start gap-3">
-                        <span className="text-emerald-400 mt-1">•</span>
+                        <span className="text-emerald-500 dark:text-emerald-300 mt-1">•</span>
                         <span>Все участники должны быть зарегистрированы</span>
                       </li>
                       <li className="flex items-start gap-3">
-                        <span className="text-emerald-400 mt-1">•</span>
+                        <span className="text-emerald-500 dark:text-emerald-300 mt-1">•</span>
                         <span>Запрещено использование чужого кода без указания авторства</span>
                       </li>
                       <li className="flex items-start gap-3">
-                        <span className="text-emerald-400 mt-1">•</span>
+                        <span className="text-emerald-500 dark:text-emerald-300 mt-1">•</span>
                         <span>Решения должны быть представлены в виде работающего прототипа</span>
                       </li>
                     </ul>
                   </div>
 
-                  <div className="border-t border-slate-700"></div>
+                  <div className="border-t border-gray-200 dark:border-neutral-800"></div>
 
                   <div>
-                    <h4 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-amber-500"></span>
                       Критерии оценки
                     </h4>
-                    <ul className="space-y-2 text-slate-300 list-none">
+                    <ul className="space-y-2 text-slate-700 dark:text-slate-300 list-none">
                       <li className="flex items-start gap-3">
-                        <span className="text-amber-400 mt-1">•</span>
+                        <span className="text-amber-500 dark:text-amber-300 mt-1">•</span>
                         <span>Оригинальность идеи (до 25 баллов)</span>
                       </li>
                       <li className="flex items-start gap-3">
-                        <span className="text-amber-400 mt-1">•</span>
+                        <span className="text-amber-500 dark:text-amber-300 mt-1">•</span>
                         <span>Техническая реализация (до 30 баллов)</span>
                       </li>
                       <li className="flex items-start gap-3">
-                        <span className="text-amber-400 mt-1">•</span>
+                        <span className="text-amber-500 dark:text-amber-300 mt-1">•</span>
                         <span>Качество презентации (до 20 баллов)</span>
                       </li>
                       <li className="flex items-start gap-3">
-                        <span className="text-amber-400 mt-1">•</span>
+                        <span className="text-amber-500 dark:text-amber-300 mt-1">•</span>
                         <span>Практическая применимость (до 25 баллов)</span>
                       </li>
                     </ul>

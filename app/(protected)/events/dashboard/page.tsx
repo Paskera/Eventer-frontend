@@ -29,13 +29,13 @@ export default function EventsPage() {
     if (isPending) {
         return (
             <div className="p-4 sm:p-6">
-                <div className="mb-6 rounded-2xl border border-white/10 bg-gradient-to-r from-indigo-900/70 via-slate-900/60 to-emerald-800/60 p-5 text-white shadow-lg">
+                <div className="mb-6 rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 shadow-sm">
                     <Skeleton className="h-6 w-32" />
                     <Skeleton className="h-10 w-64 mt-2" />
                 </div>
                 <div className="grid items-stretch grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {Array.from({ length: 9 }).map((_, idx) => (
-                        <Card key={idx} className="h-full overflow-hidden flex flex-col bg-slate-900/60 border border-white/10">
+                        <Card key={idx} className="h-full overflow-hidden flex flex-col bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800">
                             <Skeleton className="w-full h-44 sm:h-52" />
                             <CardContent className="p-4 sm:p-6 space-y-3 flex-1 flex flex-col">
                                 <Skeleton className="h-5 w-3/4" />
@@ -55,17 +55,16 @@ export default function EventsPage() {
 
     return (
         <div className="p-4 sm:p-6 space-y-6">
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-indigo-900/80 via-slate-900/70 to-emerald-800/70 p-6 text-white shadow-[0_12px_40px_rgba(0,0,0,0.45)]">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.12),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(16,185,129,0.15),transparent_40%)] blur-2xl" />
+            <div className="relative overflow-hidden rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6 shadow-sm">
                 <div className="relative flex flex-col gap-3">
-                    <div className="flex items-center gap-2 text-sm uppercase tracking-wide text-white/70">
+                    <div className="flex items-center gap-2 text-sm uppercase tracking-wide text-gray-600 dark:text-gray-400">
                         <Globe2Icon className="h-4 w-4" />
                         Дашборд мероприятий
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold">Обзор активных и будущих событий</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Обзор активных и будущих событий</h1>
                     <div className="flex flex-wrap gap-2">
-                        <Badge className="bg-white/15 border-white/25 text-white">Всего: {events.length}</Badge>
-                        <Badge className="bg-white/15 border-white/25 text-white">Страница 1</Badge>
+                        <Badge className="bg-gray-100 dark:bg-neutral-800 border-gray-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300">Всего: {events.length}</Badge>
+                        <Badge className="bg-gray-100 dark:bg-neutral-800 border-gray-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300">Страница 1</Badge>
                     </div>
                 </div>
             </div>
@@ -78,40 +77,40 @@ export default function EventsPage() {
                         className="block h-full group"
                         aria-label={`Перейти к событию ${event.event_name}`}
                     >
-                        <Card className="relative h-full overflow-hidden border border-white/10 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white shadow-[0_12px_30px_rgba(0,0,0,0.35)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
-                            <div className="absolute inset-0">
+                        <Card className="relative h-full overflow-hidden border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md">
+                            <div className="relative h-44 sm:h-52 overflow-hidden">
                                 <img
                                     src={event.image_url || "/placeholder.svg"}
                                     alt={event.event_name}
-                                    className="w-full h-full object-cover opacity-70"
+                                    className="w-full h-full object-cover"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/20" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                             </div>
-                            <CardContent className="relative h-full p-5 flex flex-col justify-end gap-3">
+                            <CardContent className="p-5 flex flex-col gap-3">
                                 <div className="flex flex-wrap gap-2">
-                                    <Badge variant="secondary" className="bg-white/95 text-slate-900 font-semibold">
+                                    <Badge variant="secondary" className="bg-gray-100 dark:bg-neutral-800 text-slate-700 dark:text-slate-300 border-gray-300 dark:border-neutral-700 font-semibold">
                                         {event.format}
                                     </Badge>
                                     {event.event_status && (
-                                        <Badge variant="secondary" className="bg-emerald-500 text-white font-semibold">
+                                        <Badge variant="secondary" className="bg-gray-800 dark:bg-neutral-700 text-white border-gray-700 dark:border-neutral-600 font-semibold">
                                             {event.event_status}
                                         </Badge>
                                     )}
                                 </div>
-                                <h3 className="text-xl font-bold leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] group-hover:text-emerald-200 transition-colors">
+                                <h3 className="text-xl font-bold leading-tight text-slate-900 dark:text-slate-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
                                     {event.event_name}
                                 </h3>
-                                <div className="space-y-1.5 text-sm text-white font-medium">
-                                    <div className="flex items-center gap-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
-                                        <MapPinIcon className="h-4 w-4 flex-shrink-0 text-white" />
+                                <div className="space-y-1.5 text-sm text-gray-700 dark:text-gray-300 font-medium">
+                                    <div className="flex items-center gap-2">
+                                        <MapPinIcon className="h-4 w-4 flex-shrink-0" />
                                         <span className="truncate">{event.venue}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
-                                        <CalendarIcon className="h-4 w-4 flex-shrink-0 text-white" />
+                                    <div className="flex items-center gap-2">
+                                        <CalendarIcon className="h-4 w-4 flex-shrink-0" />
                                         <span>{parseDate(event.start_date)} — {parseDate(event.end_date)}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
-                                        <UsersIcon className="h-4 w-4 flex-shrink-0 text-white" />
+                                    <div className="flex items-center gap-2">
+                                        <UsersIcon className="h-4 w-4 flex-shrink-0" />
                                         <span>{event.users_count ?? 0} участников</span>
                                     </div>
                                 </div>

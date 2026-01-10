@@ -446,40 +446,40 @@ export default function HackathonBoard() {
                                         </div>
 
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm text-muted-foreground">
-                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center">
-                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center min-h-[70px] h-full">
+                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
                                                     <ClockIcon className="h-4 w-4" />
                                                 </div>
-                                                <div className="flex flex-col gap-0.5">
+                                                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                                                     <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90">Начало</span>
-                                                    <span className="font-semibold text-foreground">{parseDate(event.start_date)}</span>
+                                                    <span className="font-semibold text-foreground text-xs break-words">{parseDate(event.start_date)}</span>
                                                 </div>
                                             </div>
-                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center">
-                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center min-h-[70px] h-full">
+                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
                                                     <CalendarIcon className="h-4 w-4" />
                                                 </div>
-                                                <div className="flex flex-col gap-0.5">
+                                                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                                                     <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90">Окончание</span>
-                                                    <span className="font-semibold text-foreground">{parseDate(event.end_date)}</span>
+                                                    <span className="font-semibold text-foreground text-xs break-words">{parseDate(event.end_date)}</span>
                                                 </div>
                                             </div>
-                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center sm:col-span-2">
-                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center sm:col-span-2 min-h-[70px] h-full">
+                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
                                                     <MapPinIcon className="h-4 w-4" />
                                                 </div>
-                                                <div className="flex flex-col gap-0.5">
+                                                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                                                     <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90">Место</span>
-                                                    <span className="font-semibold text-foreground truncate">{event.venue}</span>
+                                                    <span className="font-semibold text-foreground text-xs line-clamp-2 break-words">{event.venue}</span>
                                                 </div>
                                             </div>
-                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center sm:col-span-2">
-                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center sm:col-span-2 min-h-[70px] h-full">
+                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
                                                     <UsersIcon className="h-4 w-4" />
                                                 </div>
-                                                <div className="flex flex-col gap-0.5">
+                                                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                                                     <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90">Участники</span>
-                                                    <span className="font-semibold text-foreground">{event.users_count} чел.</span>
+                                                    <span className="font-semibold text-foreground text-xs">{event.users_count} чел.</span>
                                                 </div>
                                             </div>
                                         </div>

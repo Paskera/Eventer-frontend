@@ -61,8 +61,8 @@ export default function MyEventDetailsPage() {
                         <TabsTrigger value="task" className="pr-4 snap-end">Задание</TabsTrigger>
                     </TabsList>
                     <TabsContent value="team">
-                        <Card className="bg-muted/40">
-                            <CardHeader><CardTitle>Моя команда</CardTitle></CardHeader>
+                        <Card className="bg-white dark:bg-neutral-900 border-gray-200 dark:border-neutral-800">
+                            <CardHeader><CardTitle className="text-slate-900 dark:text-slate-100">Моя команда</CardTitle></CardHeader>
                             <CardContent>
                                 <div className="text-muted-foreground mb-2 text-sm">Участников - {team.length}</div>
                                 <div className="flex flex-col gap-3">
@@ -86,8 +86,8 @@ export default function MyEventDetailsPage() {
                         </Card>
                     </TabsContent>
                     <TabsContent value="schedule">
-                        <Card className="bg-muted/40">
-                            <CardHeader><CardTitle>Расписание</CardTitle></CardHeader>
+                        <Card className="bg-white dark:bg-neutral-900 border-gray-200 dark:border-neutral-800">
+                            <CardHeader><CardTitle className="text-slate-900 dark:text-slate-100">Расписание</CardTitle></CardHeader>
                             <CardContent>
                                 <div className="flex flex-col gap-3">
                                     {schedule.map((item, idx) => (
@@ -102,8 +102,8 @@ export default function MyEventDetailsPage() {
                         </Card>
                     </TabsContent>
                     <TabsContent value="criteria">
-                        <Card className="bg-muted/40">
-                            <CardHeader><CardTitle>Критерии оценивания</CardTitle></CardHeader>
+                        <Card className="bg-white dark:bg-neutral-900 border-gray-200 dark:border-neutral-800">
+                            <CardHeader><CardTitle className="text-slate-900 dark:text-slate-100">Критерии оценивания</CardTitle></CardHeader>
                             <CardContent>
                                 <ul className="list-disc pl-5 space-y-2 text-sm">
                                     {criteria.map((c, i) => <li key={i}>{c}</li>)}
@@ -112,16 +112,16 @@ export default function MyEventDetailsPage() {
                         </Card>
                     </TabsContent>
                     <TabsContent value="rules">
-                        <Card className="bg-muted/40">
-                            <CardHeader><CardTitle>Регламент</CardTitle></CardHeader>
+                        <Card className="bg-white dark:bg-neutral-900 border-gray-200 dark:border-neutral-800">
+                            <CardHeader><CardTitle className="text-slate-900 dark:text-slate-100">Регламент</CardTitle></CardHeader>
                             <CardContent>
                                 <pre className="whitespace-pre-wrap text-sm font-sans">{rules}</pre>
                             </CardContent>
                         </Card>
                     </TabsContent>
                     <TabsContent value="task">
-                        <Card className="bg-muted/40">
-                            <CardHeader><CardTitle>Задание</CardTitle></CardHeader>
+                        <Card className="bg-white dark:bg-neutral-900 border-gray-200 dark:border-neutral-800">
+                            <CardHeader><CardTitle className="text-slate-900 dark:text-slate-100">Задание</CardTitle></CardHeader>
                             <CardContent>
                                 <pre className="whitespace-pre-wrap text-sm font-sans">{task}</pre>
                             </CardContent>

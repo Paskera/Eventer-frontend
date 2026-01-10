@@ -50,10 +50,10 @@ export default function CreateTeamForm() {
 
     return (
         <div className="max-w-2xl mx-auto">
-            <Card>
+            <Card className="border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <UsersIcon className="w-6 h-6" />
+                    <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                        <UsersIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                         Создать новую команду
                     </CardTitle>
                 </CardHeader>

@@ -366,29 +366,25 @@ const EventDetailDashboard = () => {
         label: "Старт",
         value: formatDate(event.start_date),
         icon: Calendar,
-        accent: "from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-950",
-        iconBg: "bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-slate-100",
+        iconBg: "bg-gray-100 text-slate-700 dark:bg-neutral-800 dark:text-slate-300",
       },
       {
         label: "Финиш",
         value: formatDate(event.end_date),
         icon: CalendarCheck,
-        accent: "from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-950",
-        iconBg: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-100",
+        iconBg: "bg-gray-100 text-slate-700 dark:bg-neutral-800 dark:text-slate-300",
       },
       {
         label: "Участники",
         value: event.users_count || 0,
         icon: Users,
-        accent: "from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-950",
-        iconBg: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-100",
+        iconBg: "bg-gray-100 text-slate-700 dark:bg-neutral-800 dark:text-slate-300",
       },
       {
         label: "Команды",
         value: teamStats.total,
         icon: UsersRound,
-        accent: "from-gray-50 via-white to-gray-100 dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-950",
-        iconBg: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-100",
+        iconBg: "bg-gray-100 text-slate-700 dark:bg-neutral-800 dark:text-slate-300",
       },
     ]
     : [];
@@ -413,12 +409,12 @@ const EventDetailDashboard = () => {
       {event && (
         <div className="space-y-8">
           <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-            <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-xl">
+            <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
               <div
-                className="absolute inset-0 bg-cover bg-center opacity-40"
+                className="absolute inset-0 bg-cover bg-center opacity-30"
                 style={{ backgroundImage: `url(${event.image_url || "/placeholder.svg"})` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-br from-white via-white/60 to-gray-100 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-neutral-950" />
+              <div className="absolute inset-0 bg-white/90 dark:bg-neutral-900/90" />
               <div className="relative z-10 flex min-h-[320px] flex-col justify-between gap-6 p-6 lg:p-8">
                 <div className="flex flex-wrap items-center gap-3">
                   <EventStatusBadge status={event.event_status} />
@@ -544,15 +540,15 @@ const EventDetailDashboard = () => {
             {summaryCards.map((card) => (
                <Card
                  key={card.label}
-                 className={`border-gray-200 bg-gradient-to-br ${card.accent} text-slate-900 shadow-sm dark:border-neutral-800 dark:text-slate-100`}
+                 className="border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 h-full min-h-[100px] flex flex-col"
                >
-                <CardContent className="flex items-center gap-3 p-4">
-                  <div className={`rounded-lg p-2 ${card.iconBg}`}>
+                <CardContent className="flex items-center gap-3 p-4 flex-1">
+                  <div className={`rounded-lg p-2 flex-shrink-0 ${card.iconBg}`}>
                     <card.icon className="h-5 w-5" />
                   </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{card.label}</p>
-                    <p className="text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">{card.value}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">{card.label}</p>
+                    <p className="text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100 break-words">{card.value}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -593,9 +589,9 @@ const EventDetailDashboard = () => {
                   { label: "Отклонено", value: teamStats.rejected },
                   { label: "Участники", value: teamStats.totalParticipants },
                 ].map((stat) => (
-                  <Card key={stat.label} className="border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                    <CardContent className="p-3">
-                      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{stat.label}</p>
+                  <Card key={stat.label} className="border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 h-full min-h-[90px] flex flex-col">
+                    <CardContent className="p-3 flex-1 flex flex-col justify-between">
+                      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">{stat.label}</p>
                       <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{stat.value}</p>
                     </CardContent>
                   </Card>

@@ -84,11 +84,11 @@ export function Notifications() {
   })
 
   return (
-    <Card className="border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300">
-      <CardHeader className="pb-4 border-b border-border/30">
+    <Card className="border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm hover:shadow-md transition-shadow duration-300">
+      <CardHeader className="pb-4 border-b border-gray-200 dark:border-neutral-800">
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-xl font-bold flex items-center gap-2">
-            <BellRing className="h-5 w-5 text-amber-500" />
+          <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+            <BellRing className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             Приглашения
           </CardTitle>
           <Button
@@ -115,10 +115,10 @@ export function Notifications() {
             </div>
           ))}
 
-        {!isPending && (error || !invites?.length) && (
+        {!isPending && !invites?.length && (
           <div className="rounded-lg border border-dashed border-border/40 bg-muted/20 p-6 text-center space-y-2">
             <AlertCircle className="mx-auto h-5 w-5 text-muted-foreground/60" />
-            <p className="text-sm text-muted-foreground">{error ? "Ошибка загрузки" : "Приглашений нет"}</p>
+            <p className="text-sm text-muted-foreground">Приглашений нет</p>
           </div>
         )}
 

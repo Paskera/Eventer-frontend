@@ -48,12 +48,11 @@ export function ProfileCard() {
   }
 
   return (
-    <Card className="overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300">
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600/15 via-purple-500/10 to-slate-600/5 dark:from-indigo-500/20 dark:via-purple-500/15 dark:to-slate-700/10 p-6 sm:p-8 border-b border-border/40">
-        <div className="absolute inset-0 opacity-40 blur-3xl bg-[radial-gradient(circle_at_15%_25%,#6366f1_0,transparent_40%),radial-gradient(circle_at_85%_15%,#8b5cf6_0,transparent_35%)]" />
+    <Card className="overflow-hidden border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm hover:shadow-md transition-shadow duration-300">
+      <div className="relative overflow-hidden bg-gray-50 dark:bg-neutral-800/50 p-6 sm:p-8 border-b border-gray-200 dark:border-neutral-800">
 
         <div className="relative flex flex-col sm:flex-row gap-5 sm:items-center">
-          <Avatar className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border-3 border-white/50 dark:border-slate-950/50 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 shadow-lg flex-shrink-0">
+          <Avatar className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border-3 border-white/50 dark:border-neutral-900/50 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-neutral-800 dark:to-neutral-700 shadow-lg flex-shrink-0">
             <AvatarImage
               src={`https://ui-avatars.com/api/?name=${encodeURIComponent(session.user?.name || "")}&background=random`}
               alt="Аватар профиля"
@@ -67,7 +66,7 @@ export function ProfileCard() {
                   {session.user?.name || "Пользователь"}
                 </h2>
               </div>
-              <Badge className="gap-1.5 flex-shrink-0 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/50">
+              <Badge className="gap-1.5 flex-shrink-0 bg-white dark:bg-neutral-800 text-slate-700 dark:text-slate-300 border-gray-300 dark:border-neutral-700">
                 <Shield className="h-3.5 w-3.5" />
                 <span className="text-xs font-medium">{session.role || "Роль"}</span>
               </Badge>
@@ -92,8 +91,8 @@ export function ProfileCard() {
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Cpu className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              <h3 className="text-lg font-semibold text-foreground">Топ категории</h3>
+              <Cpu className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Топ категории</h3>
             </div>
             {isPending && (
               <Badge variant="secondary" className="text-xs">
@@ -115,12 +114,12 @@ export function ProfileCard() {
               ? categories["top-categories"].map((stat, index) => (
                   <div
                     key={index}
-                    className="group rounded-lg border border-border/50 bg-gradient-to-br from-indigo-50/40 to-purple-50/40 dark:from-indigo-950/30 dark:to-purple-950/20 p-4 hover:border-indigo-300/50 dark:hover:border-indigo-700/50 transition-all duration-200 hover:shadow-md cursor-pointer"
+                    className="group rounded-lg border border-gray-200 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-800/50 p-4 hover:border-gray-300 dark:hover:border-neutral-700 transition-all duration-200 hover:shadow-md cursor-pointer"
                   >
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    <p className="text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400 font-medium mb-2 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">
                       {stat.category.name}
                     </p>
-                    <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
+                    <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">
                       {stat.count}
                     </p>
                   </div>

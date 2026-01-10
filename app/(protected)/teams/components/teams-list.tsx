@@ -85,7 +85,7 @@ export default function TeamsList({ searchQuery }: TeamsListProps) {
         <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
                 {all_team?.map((team, index) => (
-                    <Card key={team.id} className="hover:shadow-lg transition-all duration-200 group border-0 shadow-sm min-h-[340px] h-full flex flex-col cursor-pointer" onClick={() => handleOpenModal(team)}>
+                    <Card key={team.id} className="hover:shadow-md transition-all duration-200 group border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm min-h-[340px] h-full flex flex-col cursor-pointer" onClick={() => handleOpenModal(team)}>
                         <CardContent className="p-4 flex flex-col h-full">
                             {/* Header with avatar and status */}
                             <div className="flex items-center justify-between mb-3">

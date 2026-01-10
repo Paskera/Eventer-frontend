@@ -83,10 +83,10 @@ export function ProfileTimer() {
 
   if (isPending) {
     return (
-      <Card className="border-border/50 shadow-sm">
-        <CardHeader className="border-b border-border/30">
-          <CardTitle className="text-xl font-bold flex items-center gap-2">
-            <Clock className="h-5 w-5 text-rose-500" />
+      <Card className="border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
+        <CardHeader className="border-b border-gray-200 dark:border-neutral-800">
+          <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+            <Clock className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             Таймер
           </CardTitle>
         </CardHeader>
@@ -104,10 +104,10 @@ export function ProfileTimer() {
 
   if (error || !currentStage) {
     return (
-      <Card className="border-border/50 shadow-sm">
-        <CardHeader className="border-b border-border/30">
-          <CardTitle className="text-xl font-bold flex items-center gap-2">
-            <Clock className="h-5 w-5 text-rose-500" />
+      <Card className="border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
+        <CardHeader className="border-b border-gray-200 dark:border-neutral-800">
+          <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+            <Clock className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             Таймер
           </CardTitle>
         </CardHeader>
@@ -120,16 +120,16 @@ export function ProfileTimer() {
   }
 
   return (
-    <Card className="border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-      <CardHeader className="pb-4 border-b border-border/30">
+    <Card className="border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+      <CardHeader className="pb-4 border-b border-gray-200 dark:border-neutral-800">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-xl font-bold flex items-center gap-2">
-            <Clock className="h-5 w-5 text-rose-500" />
+          <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+            <Clock className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             Таймер
           </CardTitle>
           <Badge
             variant="secondary"
-            className="text-xs bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-800/50 whitespace-nowrap"
+            className="text-xs bg-white dark:bg-neutral-800 text-slate-700 dark:text-slate-300 border-gray-300 dark:border-neutral-700 whitespace-nowrap"
           >
             Этап {currentIndex + 1} / {stages?.stages.length}
           </Badge>
@@ -143,9 +143,9 @@ export function ProfileTimer() {
         </div>
 
         <div className="flex items-center justify-center gap-3">
-          <div className="flex items-center gap-3 rounded-lg bg-gradient-to-r from-rose-50 to-orange-50 dark:from-rose-950/30 dark:to-orange-950/20 px-4 py-3 border border-rose-200/40 dark:border-rose-800/40 shadow-sm">
-            <Timer className="h-4 w-4 text-rose-500 dark:text-rose-400 flex-shrink-0" />
-            <span className="text-xl sm:text-2xl font-mono font-bold text-foreground">{countdown}</span>
+          <div className="flex items-center gap-3 rounded-lg bg-gray-50 dark:bg-neutral-800 px-4 py-3 border border-gray-200 dark:border-neutral-700 shadow-sm">
+            <Timer className="h-4 w-4 text-gray-700 dark:text-gray-300 flex-shrink-0" />
+            <span className="text-xl sm:text-2xl font-mono font-bold text-slate-900 dark:text-slate-100">{countdown}</span>
           </div>
           <div className="h-2.5 w-2.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)] flex-shrink-0" />
         </div>

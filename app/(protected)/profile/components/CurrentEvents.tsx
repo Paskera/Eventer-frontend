@@ -22,10 +22,10 @@ export function CurrentEvents() {
   const isEmpty = !events?.length
 
   return (
-    <Card className="border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-      <CardHeader className="pb-4 border-b border-border/30">
-        <CardTitle className="text-xl font-bold flex items-center gap-2">
-          <CalendarClock className="h-5 w-5 text-cyan-500" />
+    <Card className="border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+      <CardHeader className="pb-4 border-b border-gray-200 dark:border-neutral-800">
+        <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+          <CalendarClock className="h-5 w-5 text-gray-700 dark:text-gray-300" />
           Мероприятия
         </CardTitle>
       </CardHeader>
@@ -33,7 +33,7 @@ export function CurrentEvents() {
       <CardContent className="p-4 sm:p-6 overflow-x-auto">
         <Table className="min-w-[320px]">
           <TableHeader>
-            <TableRow className="border-border/30 hover:bg-transparent">
+              <TableRow className="border-gray-200 dark:border-neutral-800 hover:bg-transparent">
               <TableHead className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Мероприятие
               </TableHead>
@@ -49,7 +49,7 @@ export function CurrentEvents() {
           <TableBody>
             {isPending &&
               Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i} className="border-border/20">
+                <TableRow key={i} className="border-gray-200 dark:border-neutral-800">
                   <TableCell className="py-3">
                     <Skeleton className="h-4 w-32" />
                   </TableCell>
@@ -63,7 +63,7 @@ export function CurrentEvents() {
               ))}
 
             {!isPending && (error || isEmpty) && (
-              <TableRow className="hover:bg-transparent border-border/20">
+              <TableRow className="hover:bg-transparent border-gray-200 dark:border-neutral-800">
                 <TableCell colSpan={3} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2">
                     <Layers className="h-5 w-5 text-muted-foreground/50" />
@@ -77,14 +77,14 @@ export function CurrentEvents() {
 
             {!isPending &&
               events?.map((event, index) => (
-                <TableRow key={index} className="border-border/20 hover:bg-muted/40 transition-colors group">
-                  <TableCell className="text-sm font-medium text-foreground truncate py-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                <TableRow key={index} className="border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors group">
+                  <TableCell className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate py-3 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
                     {event.event}
                   </TableCell>
                   <TableCell className="py-3">
                     <Badge
                       variant="secondary"
-                      className="text-xs bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800/50"
+                      className="text-xs bg-white dark:bg-neutral-800 text-slate-700 dark:text-slate-300 border-gray-300 dark:border-neutral-700"
                     >
                       {event.team}
                     </Badge>

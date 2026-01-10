@@ -268,7 +268,7 @@ export default function CreateEvent() {
         <div className="space-y-8">
           {/* Header */}
           <div className="space-y-3">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Создание мероприятия
             </h1>
             <p className="text-muted-foreground">
@@ -280,9 +280,9 @@ export default function CreateEvent() {
           <Stepper currentStep={currentStep} steps={steps}/>
 
           {/* Content */}
-          <Card className="border-border/50 shadow-sm">
+          <Card className="border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-xl">
+              <CardTitle className="text-xl text-slate-900 dark:text-slate-100">
                 {steps[currentStep - 1].title}
               </CardTitle>
             </CardHeader>

@@ -16,24 +16,24 @@ export default function TeamsPage() {
     return (
         <div className="container mx-auto px-4 py-6">
             <div className="mb-6">
-                <h1 className="text-3xl font-bold mb-2">Команды</h1>
+                <h1 className="text-3xl font-bold mb-2 text-slate-900 dark:text-slate-100">Команды</h1>
                 <p className="text-muted-foreground">Управляйте своими командами и участвуйте в мероприятиях</p>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="w-full sm:w-auto">
-                        <TabsList className="inline-flex bg-muted p-1 rounded-lg border border-border">
+                        <TabsList className="inline-flex bg-gray-100 dark:bg-neutral-800 p-1 rounded-lg border border-gray-200 dark:border-neutral-700">
                             <TabsTrigger
                                 value="teams"
-                                className="flex items-center gap-2 px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:shadow-none data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground"
+                                className="flex items-center gap-2 px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:shadow-none dark:data-[state=active]:bg-neutral-900 dark:data-[state=active]:text-slate-100 data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground"
                             >
                                 <UsersIcon className="w-4 h-4" />
                                 <span className="truncate">Мои команды</span>
                             </TabsTrigger>
                             <TabsTrigger
                                 value="create"
-                                className="flex items-center gap-2 px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:shadow-none data-[state=inactive]:bg-muted data-[state=inactive]:text-muted-foreground"
+                                className="flex items-center gap-2 px-4 py-2 rounded-md data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:font-bold data-[state=active]:shadow-none dark:data-[state=active]:bg-neutral-900 dark:data-[state=active]:text-slate-100 data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground"
                             >
                                 <PlusIcon className="w-4 h-4" />
                                 <span className="truncate">Создать команду</span>
