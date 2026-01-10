@@ -6,9 +6,10 @@ import { Separator } from "@/components/ui/separator"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AuthGuard } from "@/components/auth-guard"
 import { usePathname } from "next/navigation"
-import { CircleUserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { useSession } from "next-auth/react"
 import { Toaster } from "@/components/ui/sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function MainLayout({
     children,
@@ -40,9 +41,22 @@ export default function MainLayout({
                             <span className="font-extrabold text-3xl">{pageTitle}</span>
                             <Separator orientation="vertical" className="mr-2 h-4" />
                         </div>
-                        <div className="ml-auto flex items-center gap-2 px-4">
-                            {status === "unauthenticated" ? <CircleUserRound size={35} color="Gray"/> : <CircleUserRound size={35} color="Green"/>}
-                            <span className="font-bold text-xl">{session?.user?.name}</span>
+                        <div className="ml-auto flex items-center gap-3 px-4">
+                            <Avatar className="h-10 w-10 border border-gray-200 bg-gradient-to-br from-slate-100 to-gray-200 text-slate-900 shadow-sm dark:border-slate-700 dark:from-slate-800 dark:to-slate-700 dark:text-slate-100">
+                                {session?.user?.image ? (
+                                  <AvatarImage src={session.user.image} alt={session.user.name || "profile"} />
+                                ) : null}
+                                <AvatarFallback className="bg-transparent text-base font-semibold">
+                                  {session?.user?.name
+                                    ? session.user.name
+                                        .split(" ")
+                                        .map((n) => n[0])
+                                        .join("")
+                                        .slice(0, 2)
+                                    : <UserRound className="h-5 w-5" />}
+                                </AvatarFallback>
+                            </Avatar>
+                            <span className="font-bold text-xl text-slate-900 dark:text-slate-100">{session?.user?.name || "Гость"}</span>
                             <ThemeToggle />
                         </div>
                     </header>
