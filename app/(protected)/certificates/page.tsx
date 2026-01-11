@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import Certificates from "./components/certificates"
+import Certificates from "./components/Certificates"
 import { certificates } from "./data"
 import { Input } from "@/components/ui/input"
 import { RoleGuard } from "@/components/role-guard"

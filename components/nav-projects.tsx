@@ -29,26 +29,29 @@ export function NavProjects({
     <SidebarGroup>
       <SidebarGroupLabel className="text-lg font-medium">Основное</SidebarGroupLabel>
       <SidebarMenu>
-        {projects.map((item) => (
-          <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton
-              asChild
-              size="lg"
-              isActive={pathname.startsWith(item.url)}
-              className={state === "collapsed" ? "justify-center px-0" : ""}
-            >
-              <Link
-                href={item.url}
-                onClick={() => {
-                  if (isMobile) setOpenMobile(false)
-                }}
+        {projects.map((item) => {
+          const Icon = item.icon
+          return (
+            <SidebarMenuItem key={item.name}>
+              <SidebarMenuButton
+                asChild
+                size="lg"
+                isActive={pathname.startsWith(item.url)}
+                className={state === "collapsed" ? "justify-center px-0" : ""}
               >
-                <item.icon />
-                {state === "expanded" && <span className="text-base">{item.name}</span>}
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
+                <Link
+                  href={item.url}
+                  onClick={() => {
+                    if (isMobile) setOpenMobile(false)
+                  }}
+                >
+                  <Icon />
+                  {state === "expanded" && <span className="text-base">{item.name}</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )
+        })}
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" className={state === "collapsed" ? "justify-center px-0" : ""}>
             <MoreHorizontal />

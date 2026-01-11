@@ -25,6 +25,8 @@ import { useMutation, useQuery } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { apiStages } from "@/app/api/http/stages/stages"
+import { StageFileUpload } from "./components/StageFileUpload"
+import { StageResources } from "./components/StageResources"
 
 export default function EventDetailsPage() {
   const params = useParams()
@@ -219,7 +221,12 @@ export default function EventDetailsPage() {
   }
 
   if (stages) {
-    console.log(stages)
+    console.log("Stages data:", stages)
+    stages.forEach((stage: any) => {
+      if (stage.resources && stage.resources.length > 0) {
+        console.log(`Stage ${stage.id} (${stage.stage_name}) has ${stage.resources.length} resources:`, stage.resources)
+      }
+    })
   }
 
   return (
@@ -301,13 +308,6 @@ export default function EventDetailsPage() {
               >
                 <ClipboardListIcon className="h-4 w-4 mr-2 inline" />
                 Этапы
-              </TabsTrigger>
-              <TabsTrigger
-                value="rules"
-                className="relative px-4 py-2.5 text-sm md:text-base font-semibold rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50 text-slate-600 dark:text-slate-300 border border-transparent"
-              >
-                <CheckIcon className="h-4 w-4 mr-2 inline" />
-                Регламент
               </TabsTrigger>
               <TabsTrigger
                 value="results"
@@ -521,7 +521,7 @@ export default function EventDetailsPage() {
                 </CardTitle>
                 <CardContent className="p-5 md:p-6 pt-0 space-y-6">
                   {stages && stages.length > 0 ? (
-                    stages.map((stage) => (
+                    stages.map((stage: any) => (
                       <div
                         key={stage.id}
                         className="border-l-4 border-cyan-500/70 pl-6 py-4 bg-gray-50 rounded-r-lg p-4 -ml-4 pl-6 dark:bg-neutral-900 dark:border-cyan-500/60"
@@ -540,75 +540,20 @@ export default function EventDetailsPage() {
                           </span>
                         </div>
                         <p className="text-slate-700 dark:text-slate-300">{stage.description}</p>
+                        {stage.stage_type === "submission" && stage.requirements && stage.requirements.length > 0 && (
+                          <StageFileUpload stageId={stage.id} requirements={stage.requirements} />
+                        )}
+                        {(stage as any).resources && Array.isArray((stage as any).resources) && (stage as any).resources.length > 0 && (
+                          <StageResources 
+                            stageId={stage.id} 
+                            resources={(stage as any).resources} 
+                          />
+                        )}
                       </div>
                     ))
                   ) : (
                     <p className="text-slate-500 dark:text-slate-400">Этапы будут добавлены позже</p>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="rules" className="space-y-6">
-              <Card className="border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 flex items-center gap-3 text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-700 dark:text-emerald-100 flex items-center justify-center">
-                    <CheckIcon className="w-5 h-5" />
-                  </div>
-                  Регламент мероприятия
-                </CardTitle>
-                <CardContent className="p-5 md:p-6 pt-0 space-y-6">
-                  <div>
-                    <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                      Общие правила
-                    </h4>
-                    <ul className="space-y-2 text-slate-700 dark:text-slate-300 list-none">
-                      <li className="flex items-start gap-3">
-                        <span className="text-emerald-500 dark:text-emerald-300 mt-1">•</span>
-                        <span>Команда должна состоять из 3-5 человек</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-emerald-500 dark:text-emerald-300 mt-1">•</span>
-                        <span>Все участники должны быть зарегистрированы</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-emerald-500 dark:text-emerald-300 mt-1">•</span>
-                        <span>Запрещено использование чужого кода без указания авторства</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-emerald-500 dark:text-emerald-300 mt-1">•</span>
-                        <span>Решения должны быть представлены в виде работающего прототипа</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="border-t border-gray-200 dark:border-neutral-800"></div>
-
-                  <div>
-                    <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                      Критерии оценки
-                    </h4>
-                    <ul className="space-y-2 text-slate-700 dark:text-slate-300 list-none">
-                      <li className="flex items-start gap-3">
-                        <span className="text-amber-500 dark:text-amber-300 mt-1">•</span>
-                        <span>Оригинальность идеи (до 25 баллов)</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-amber-500 dark:text-amber-300 mt-1">•</span>
-                        <span>Техническая реализация (до 30 баллов)</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-amber-500 dark:text-amber-300 mt-1">•</span>
-                        <span>Качество презентации (до 20 баллов)</span>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <span className="text-amber-500 dark:text-amber-300 mt-1">•</span>
-                        <span>Практическая применимость (до 25 баллов)</span>
-                      </li>
-                    </ul>
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
