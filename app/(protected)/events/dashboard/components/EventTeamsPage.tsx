@@ -36,11 +36,14 @@ import EventTeamStatsCard from "./EventTeamStatsCards"
 // import { EventTeamStatsCard } from "./EventTeamStatsCards"
 import { EventTeamFilters } from "./EventTeamFilters"
 import { EventTeamsTable } from "./EventTeamsTable"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { apiEvents } from "@/app/api/http/event/events"
+import { apiEventTeams } from "@/app/api/http/EventTeams/event_teams"
 import { useParams } from "next/navigation"
+import { useMutation } from "@tanstack/react-query"
+import { toast } from "sonner"
 
-// Mock data - команды для текущего ивента
+// Mock data - команды для текущего ивента (используется только для fallback)
 const mockTeams = [
   {
     id: 1,
@@ -302,7 +305,8 @@ const eventStats = {
 
 export default function EventTeamsPage() {
   const params = useParams();
-  const eventId = params.id;
+  const eventId = Number(params.id);
+  const queryClient = useQueryClient();
 
   const [selectedTeam, setSelectedTeam] = useState(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -310,9 +314,16 @@ export default function EventTeamsPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const { data: eventstats, isPending, error } = useQuery({
-    queryKey: ['EventsStat'],
-    queryFn: () => apiEvents.getEventStats(Number(eventId)),
+    queryKey: ['EventsStat', eventId],
+    queryFn: () => apiEvents.getEventStats(eventId),
   })
+
+  const { data: teamsData, isLoading: teamsLoading } = useQuery({
+    queryKey: ['eventTeams', eventId],
+    queryFn: () => apiEventTeams.getEventTeams(eventId),
+  })
+
+  const teams = teamsData?.teams || []
 
   const getStatusBadge = (status) => {
     const statusConfig = {
@@ -350,19 +361,60 @@ export default function EventTeamsPage() {
     )
   }
 
-  const handleTeamAction = (teamId, action) => {
-    console.log(`${action} team ${teamId}`)
+  const updateTeamStatusMutation = useMutation({
+    mutationFn: ({ teamId, status }: { teamId: number; status: 'approved' | 'rejected' }) => {
+      return apiEventTeams.updateTeamStatus(eventId, teamId, status);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['eventTeams', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['EventsStat', eventId] });
+      toast.success('Статус команды обновлен');
+    },
+    onError: (error: any) => {
+      toast.error('Ошибка при обновлении статуса команды: ' + (error.response?.data?.detail || error.message));
+    }
+  });
+
+  const handleTeamAction = (teamId: number, action: 'approve' | 'reject') => {
+    if (action === 'approve' || action === 'reject') {
+      updateTeamStatusMutation.mutate({ teamId, status: action });
+    }
   }
 
-  const handleParentalConsentAction = (memberId, action) => {
+  const handleParentalConsentAction = (memberId: number, action: string) => {
+    // TODO: Реализовать API для обновления статуса родительского согласия
+    // PATCH /api/teams/{team_id}/members/{member_id}/consent_status/
     console.log(`${action} parental consent for member ${memberId}`)
   }
 
-  const handleMassParentalConsent = (teamId, action) => {
+  const handleMassParentalConsent = (teamId: number, action: string) => {
+    // TODO: Реализовать массовое обновление родительских согласий
     console.log(`${action} all parental consents for team ${teamId}`)
   }
 
-  const filteredTeams = mockTeams.filter((team) => {
+  // Преобразуем данные из API в формат, ожидаемый компонентом
+  const transformedTeams = teams.map((team: any) => {
+    const captain = team.members?.find((m: any) => m.is_event_leader);
+    return {
+      id: team.id,
+      name: team.name,
+      memberCount: team.members?.length || 0,
+      captain: captain ? `${captain.firstname} ${captain.lastname}` : 'Не указан',
+      status: team.status,
+      submissionDate: team.created_at,
+      members: team.members?.map((m: any) => ({
+        id: m.id,
+        name: `${m.firstname} ${m.lastname}`,
+        email: m.email,
+        phone: m.phone || '',
+        status: 'confirmed',
+        isMinor: m.isMinor || false,
+        parentalConsent: m.parentalConsent || 'pending',
+      })) || [],
+    };
+  });
+
+  const filteredTeams = transformedTeams.filter((team: any) => {
     const matchesStatus = statusFilter === "all" || team.status === statusFilter
     const matchesSearch =
       team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -410,7 +462,7 @@ export default function EventTeamsPage() {
             handleParentalConsentAction={handleParentalConsentAction}
             handleMassParentalConsent={handleMassParentalConsent}
             openTeamDetails={openTeamDetails}
-            mockTeams={mockTeams}
+            mockTeams={transformedTeams}
           />
         </div>
       </div>

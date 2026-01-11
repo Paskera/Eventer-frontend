@@ -23,6 +23,22 @@ export interface Stages {
 
 export const apiStages = {
   getAllStages: async (event_id: number): Promise<Stages[]> => {
-    return (await restAxios.get(`http://localhost:8000/api/events/${event_id}/stages/`)).data
+    return (await restAxios.get(`/api/events/${event_id}/stages/`)).data
+  },
+
+  getStage: async (event_id: number, stage_id: number): Promise<Stages> => {
+    return (await restAxios.get(`/api/events/${event_id}/stages/${stage_id}/`)).data
+  },
+
+  createStage: async (event_id: number, data: Partial<Stages>): Promise<Stages> => {
+    return (await restAxios.post(`/api/events/${event_id}/stages/`, data)).data
+  },
+
+  updateStage: async (event_id: number, stage_id: number, data: Partial<Stages>): Promise<Stages> => {
+    return (await restAxios.patch(`/api/events/${event_id}/stages/${stage_id}/`, data)).data
+  },
+
+  deleteStage: async (event_id: number, stage_id: number): Promise<void> => {
+    await restAxios.delete(`/api/events/${event_id}/stages/${stage_id}/`);
   },
 }

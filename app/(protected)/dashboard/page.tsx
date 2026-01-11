@@ -60,10 +60,8 @@ export default function DashboardPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['organizerEvents'],
     queryFn: async () => {
-      // Здесь нужно получить события, в которых пользователь является организатором
-      // Временно используем все события, пока не реализуем API для получения событий организатора
-      const allEvents = await apiEvents.getAllEvents()
-      return allEvents.events
+      const response = await apiEvents.getMyCreatedEvents()
+      return response.events
     },
     refetchInterval: 30000, // Обновляем каждые 30 секунд
   })

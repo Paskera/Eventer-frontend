@@ -115,5 +115,20 @@ export const apiEvents = {
   getMyEvents: async (): Promise<{ events: Event[], total: number, count: number, offset: number }> => {
     const res = await restAxios.get(`api/events/my/participations/?page=1&page_size=10`);
     return res.data;
-  }
+  },
+
+  getMyCreatedEvents: async (params?: {
+    page?: number;
+    page_size?: number;
+  }): Promise<EventsResponse> => {
+    return (await restAxios.get(`api/events/my/created/`, { params })).data;
+  },
+
+  updateEvent: async (id: number, data: Partial<Event>): Promise<Event> => {
+    return (await restAxios.patch(`api/events/${id}`, data)).data;
+  },
+
+  deleteEvent: async (id: number): Promise<void> => {
+    await restAxios.delete(`api/events/${id}`);
+  },
 }

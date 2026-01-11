@@ -40,6 +40,7 @@ import { StageModal } from "@/app/(protected)/events/dashboard/components/StageM
 import { NotificationModal } from "@/app/(protected)/events/dashboard/components/NotificationModal";
 import { EventSettingsModal } from "@/app/(protected)/events/dashboard/components/EventSettingsModal";
 import { ArchiveConfirmationModal } from "@/app/(protected)/events/dashboard/components/ArchiveConfirmationModal";
+import { StageCriteriaModal } from "@/app/(protected)/events/dashboard/components/StageCriteriaModal";
 
 // Интерфейсы для типизации данных
 interface Event {
@@ -197,10 +198,7 @@ const EventDetailDashboard = () => {
   // Мутация для обновления статуса мероприятия
   const updateEventStatusMutation = useMutation({
     mutationFn: ({ eventId, status }: { eventId: number; status: string }) => {
-      // Здесь должна быть реализация API вызова для обновления статуса
-      // return apiEvents.updateEventStatus(eventId, status);
-      // Временная реализация для демонстрации
-      return Promise.resolve({ id: eventId, event_status: status });
+      return apiEvents.updateEvent(eventId, { event_status: status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["event", eventId] });
@@ -219,6 +217,8 @@ const EventDetailDashboard = () => {
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isEventSettingsModalOpen, setIsEventSettingsModalOpen] = useState(false);
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [isStageCriteriaModalOpen, setIsStageCriteriaModalOpen] = useState(false);
+  const [selectedStageForCriteria, setSelectedStageForCriteria] = useState<any>(null);
   const [editingStage, setEditingStage] = useState<any>(null);
 
   useEffect(() => {
@@ -256,26 +256,16 @@ const EventDetailDashboard = () => {
  const confirmAction = async () => {
     if (teamToModify && approvalAction) {
       try {
-        if (approvalAction === "approve") {
-          // Логика для одобрения команды
-          console.log(`Approving team ${teamToModify}`);
-          // Здесь можно добавить вызов API для одобрения команды
-        } else if (approvalAction === "reject") {
-          // Логика для отклонения команды
-          console.log(`Rejecting team ${teamToModify}`);
-          // Здесь можно добавить вызов API для отклонения команды
-        }
-        
+        await apiEventTeams.updateTeamStatus(eventId, teamToModify, approvalAction);
         // Обновляем данные
         queryClient.invalidateQueries({ queryKey: ["eventTeams", eventId] });
+        // Закрываем модальное окно и сбрасываем состояние
+        setIsApprovalModalOpen(false);
+        setTeamToModify(null);
+        setApprovalAction(null);
       } catch (error) {
         console.error("Error updating team status:", error);
       }
-      
-      // Закрываем модальное окно и сбрасываем состояние
-      setIsApprovalModalOpen(false);
-      setTeamToModify(null);
-      setApprovalAction(null);
     }
   };
 
@@ -297,11 +287,17 @@ const EventDetailDashboard = () => {
   };
 
   const saveStage = async (stageData: any) => {
-    // Заглушка для сохранения этапа - в реальном приложении здесь будет API вызов
-    console.log('Saving stage:', stageData);
-    // Для демонстрации работы, просто обновим данные на клиенте
-    queryClient.invalidateQueries({ queryKey: ["eventStages", eventId] });
-    closeStageModal();
+    try {
+      if (editingStage?.id) {
+        await apiStages.updateStage(eventId, editingStage.id, stageData);
+      } else {
+        await apiStages.createStage(eventId, stageData);
+      }
+      queryClient.invalidateQueries({ queryKey: ["eventStages", eventId] });
+      closeStageModal();
+    } catch (error) {
+      console.error('Error saving stage:', error);
+    }
   };
 
   const openNotificationModal = () => {
@@ -328,11 +324,13 @@ const EventDetailDashboard = () => {
   };
 
   const saveEventSettings = async (updatedEvent: any) => {
-    // Заглушка для сохранения настроек мероприятия - в реальном приложении здесь будет API вызов
-    console.log('Saving event settings:', updatedEvent);
-    // Для демонстрации работы, просто обновим данные на клиенте
-    queryClient.invalidateQueries({ queryKey: ["event", eventId] });
-    closeEventSettingsModal();
+    try {
+      await apiEvents.updateEvent(eventId, updatedEvent);
+      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+      closeEventSettingsModal();
+    } catch (error) {
+      console.error('Error saving event settings:', error);
+    }
   };
 
   const openArchiveModal = () => {
@@ -344,11 +342,13 @@ const EventDetailDashboard = () => {
   };
 
   const confirmArchiveEvent = async () => {
-    // Заглушка для архивации мероприятия - в реальном приложении здесь будет API вызов
-    console.log('Archiving event');
-    // Для демонстрации работы, просто обновим данные на клиенте
-    queryClient.invalidateQueries({ queryKey: ["event", eventId] });
-    closeArchiveModal();
+    try {
+      await apiEvents.updateEvent(eventId, { event_status: 'archived' });
+      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+      closeArchiveModal();
+    } catch (error) {
+      console.error('Error archiving event:', error);
+    }
   };
 
   // Статистика команд
@@ -786,14 +786,29 @@ const EventDetailDashboard = () => {
                             </div>
                             <p className="text-sm text-slate-700 dark:text-slate-200">{stage.description}</p>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                             className="h-9 w-9 border-gray-300 text-slate-800 hover:bg-gray-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800"
-                            onClick={() => openStageModal(stage)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-9 border-gray-300 text-slate-800 hover:bg-gray-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800"
+                              onClick={() => {
+                                setSelectedStageForCriteria(stage);
+                                setIsStageCriteriaModalOpen(true);
+                              }}
+                              title="Критерии оценивания"
+                            >
+                              <BarChart4 className="h-4 w-4 mr-2" />
+                              Критерии
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-9 w-9 border-gray-300 text-slate-800 hover:bg-gray-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800"
+                              onClick={() => openStageModal(stage)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1008,6 +1023,15 @@ const EventDetailDashboard = () => {
         onOpenChange={setIsArchiveModalOpen}
         onConfirm={confirmArchiveEvent}
         eventName={event?.event_name || ""}
+      />
+      
+      {/* Модальное окно управления критериями этапа */}
+      <StageCriteriaModal
+        isOpen={isStageCriteriaModalOpen}
+        onOpenChange={setIsStageCriteriaModalOpen}
+        stageId={selectedStageForCriteria?.id || 0}
+        stageName={selectedStageForCriteria?.stage_name}
+        availableStages={stages?.map((s: any) => ({ id: s.id, stage_name: s.stage_name })) || []}
       />
     </div>
   );

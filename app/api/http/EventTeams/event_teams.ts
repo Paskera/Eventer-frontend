@@ -64,6 +64,14 @@ export const apiEventTeams = {
     return (await restAxios.get(`/api/events/${event_id}/event-teams`)).data;
   },
 
+  updateTeamStatus: async (event_id: number, team_id: number, status: 'approved' | 'rejected'): Promise<void> => {
+    await restAxios.post(`/api/events/${event_id}/event-teams/${team_id}/update-status`, { status });
+  },
+
+  deleteEventTeam: async (event_id: number, team_id: number): Promise<void> => {
+    await restAxios.delete(`/api/events/${event_id}/event-teams/${team_id}`);
+  },
+
   // getEventsTeams: async (params?: {
   //   event_id: number
   //   page?: number
