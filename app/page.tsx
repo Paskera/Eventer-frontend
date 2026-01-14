@@ -9,15 +9,18 @@ export default function Home() {
       <div className="container">
         <div className="content">
           <div className="logo-container flex items-center justify-center">
-            <div className="w-[100px] h-[100px] rounded-full bg-gray-200 font-bold text-5xl text-gray-700 flex items-center justify-center">
-              U
-            </div>
+            <Image
+              src={logo}
+              alt="Horizen Logo"
+              className="w-[100px] h-[100px] rounded-full object-cover"
+              priority
+            />
           </div>
 
-          <h1 className="title">Eventer</h1>
+          <h1 className="title">Horizon</h1>
 
           <p className="subtitle">
-            Eventer — удобный сервис для<br />
+            Horizon — удобный сервис для<br />
             организации мероприятий в<br />
             университете
           </p>

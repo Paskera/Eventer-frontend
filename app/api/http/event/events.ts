@@ -72,6 +72,36 @@ export interface EventStats {
   total_participants: number;
 }
 
+export interface EventCreateData {
+  event_name: string;
+  description: string;
+  users_count: number;
+  participation_type: 'team' | 'individual';
+  format: 'online' | 'offline' | 'hybrid';
+  venue: string;
+  start_date: string;
+  end_date: string;
+  event_status?: 'active' | 'cancelled' | 'completed';
+  organizer_id: number;
+  category_id: number;
+  stages?: Array<{
+    stage_name: string;
+    description?: string;
+    stage_type: 'content' | 'submission';
+    stage_format: 'online' | 'offline' | 'hybrid';
+    start_date: string;
+    end_date: string;
+    content?: string;
+    requirements?: Array<{
+      key: string;
+      name: string;
+      mimes: string[];
+      required: boolean;
+    }>;
+    max_files?: number;
+  }>;
+}
+
 export const apiEvents = {
   getAllEvents: async (params?: {
     name?: string | null
@@ -130,5 +160,20 @@ export const apiEvents = {
 
   deleteEvent: async (id: number): Promise<void> => {
     await restAxios.delete(`api/events/${id}`);
+  },
+
+  createEvent: async (data: EventCreateData, imageFile?: File): Promise<Event> => {
+    const formData = new FormData();
+    formData.append('event_payload', JSON.stringify(data));
+    
+    if (imageFile) {
+      formData.append('file', imageFile);
+    }
+
+    return (await restAxios.post(`api/events/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })).data;
   },
 }

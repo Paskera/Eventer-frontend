@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { hostname: 'cdn2.thecatapi.com' },
       { hostname: 'images.unsplash.com' },
+      { hostname: 's0.rbk.ru' },
     ],
   },
 };

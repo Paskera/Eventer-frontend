@@ -25,8 +25,10 @@ import { useMutation, useQuery } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { apiStages } from "@/app/api/http/stages/stages"
+import { apiStageCriteria } from "@/app/api/http/stage-criteria/stage_criteria"
 import { StageFileUpload } from "./components/StageFileUpload"
 import { StageResources } from "./components/StageResources"
+import { BarChart3, Target } from "lucide-react"
 
 export default function EventDetailsPage() {
   const params = useParams()
@@ -147,6 +149,25 @@ export default function EventDetailsPage() {
     queryFn: () => apiStages.getAllStages(Number(eventId)),
   })
 
+  // Загружаем критерии для всех этапов
+  const { data: allStageCriteria } = useQuery({
+    queryKey: ["allStageCriteria", eventId],
+    queryFn: async () => {
+      if (!stages || stages.length === 0) return {}
+      const criteriaMap: Record<number, any[]> = {}
+      for (const stage of stages) {
+        try {
+          const criteria = await apiStageCriteria.getStageCriteriaByStage(stage.id)
+          criteriaMap[stage.id] = criteria
+        } catch (error) {
+          criteriaMap[stage.id] = []
+        }
+      }
+      return criteriaMap
+    },
+    enabled: !!stages && stages.length > 0,
+  })
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -235,7 +256,16 @@ export default function EventDetailsPage() {
         <div className="space-y-6 md:space-y-8">
           <Card className="overflow-hidden border border-gray-200 bg-white shadow-md dark:border-neutral-800 dark:bg-neutral-900">
             <div className="relative h-[280px] sm:h-[320px] md:h-[400px] lg:h-[480px] rounded-2xl overflow-hidden">
-              <Image src={event.image_url || "/placeholder.svg"} alt={event.event_name} fill className="object-cover" />
+              <Image 
+                src={event.image_url || "/placeholder.svg"} 
+                alt={event.event_name || "Изображение мероприятия"} 
+                fill 
+                className="object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement
+                  target.src = "/placeholder.svg"
+                }}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
               <div className="absolute inset-0 flex flex-col justify-end gap-4 p-6 md:p-8 lg:p-10">
                 <div className="flex flex-wrap items-center gap-3">
@@ -308,6 +338,13 @@ export default function EventDetailsPage() {
               >
                 <ClipboardListIcon className="h-4 w-4 mr-2 inline" />
                 Этапы
+              </TabsTrigger>
+              <TabsTrigger
+                value="criteria"
+                className="relative px-4 py-2.5 text-sm md:text-base font-semibold rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50 text-slate-600 dark:text-slate-300 border border-transparent"
+              >
+                <BarChart3 className="h-4 w-4 mr-2 inline" />
+                Критерии оценивания
               </TabsTrigger>
               <TabsTrigger
                 value="results"
@@ -556,6 +593,94 @@ export default function EventDetailsPage() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="criteria" className="space-y-6">
+              {stages && stages.length > 0 ? (
+                stages.map((stage: any) => {
+                  const stageCriteria = allStageCriteria?.[stage.id] || []
+                  return (
+                    <Card key={stage.id} className="border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                      <CardTitle className="p-5 md:p-6 pb-3 md:pb-4 flex items-center gap-3 text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-700 dark:text-indigo-100 flex items-center justify-center">
+                          <Target className="w-5 h-5" />
+                        </div>
+                        {stage.stage_name}
+                        <Badge
+                          className={`ml-auto ${stage.stage_status === "active" ? "bg-emerald-500 text-white" : stage.stage_status === "upcoming" ? "bg-cyan-500 text-white" : "bg-slate-600 text-white"}`}
+                        >
+                          {stage.stage_status}
+                        </Badge>
+                      </CardTitle>
+                      <CardContent className="p-5 md:p-6 pt-0">
+                        <div className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+                          <span className="font-medium">Период:</span> {formatEventDate(stage.start_date)} — {formatEventDate(stage.end_date)}
+                        </div>
+                        {stageCriteria.length > 0 ? (
+                          <div className="space-y-4">
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                              {stageCriteria
+                                .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+                                .map((criterion: any) => (
+                                  <div
+                                    key={criterion.id}
+                                    className="border border-gray-200 dark:border-neutral-700 rounded-lg p-4 bg-gray-50 dark:bg-neutral-800/50 hover:shadow-md transition-shadow"
+                                  >
+                                    <div className="flex items-start justify-between mb-2">
+                                      <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-base">
+                                        {criterion.criteria_name}
+                                      </h4>
+                                      <Badge variant="outline" className="ml-2 flex-shrink-0">
+                                        {criterion.max_score} балл{criterion.max_score > 1 && criterion.max_score < 5 ? 'а' : criterion.max_score >= 5 ? 'ов' : ''}
+                                      </Badge>
+                                    </div>
+                                    {criterion.description && (
+                                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
+                                        {criterion.description}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center gap-2 mt-3 text-xs text-slate-500 dark:text-slate-400">
+                                      {criterion.weight && criterion.weight !== 1 && (
+                                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
+                                          Вес: {criterion.weight}
+                                        </span>
+                                      )}
+                                      {criterion.order !== undefined && (
+                                        <span className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">
+                                          Порядок: {criterion.order}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <div className="flex items-center gap-2 text-sm text-blue-900 dark:text-blue-100">
+                                <BarChart3 className="w-4 h-4" />
+                                <span className="font-medium">
+                                  Всего критериев: {stageCriteria.length} | 
+                                  Максимальный балл: {stageCriteria.reduce((sum: number, c: any) => sum + (c.max_score || 0), 0)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                            <Target className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                            <p>Критерии оценивания для этого этапа еще не добавлены</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )
+                })
+              ) : (
+                <Card className="border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                  <CardContent className="p-8 text-center">
+                    <p className="text-slate-500 dark:text-slate-400">Этапы мероприятия еще не созданы</p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="results" className="space-y-6">

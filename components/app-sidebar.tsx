@@ -107,11 +107,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
                 <div className="flex items-center justify-center rounded-full bg-gray-200 font-bold text-xl mx-auto my-2 w-10 h-10 min-w-[40px] min-h-[40px] group-data-[state=collapsed]/sidebar:w-6 group-data-[state=collapsed]/sidebar:h-6 group-data-[state=collapsed]/sidebar:min-w-[24px] group-data-[state=collapsed]/sidebar:min-h-[24px] group-data-[state=collapsed]/sidebar:text-base overflow-visible">
-                  U
+                  H
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Eventer</span>
-                  <span className="truncate text-xs">Eventer</span>
+                  <span className="truncate font-semibold">Horizon</span>
+                  <span className="truncate text-xs">Horizon</span>
                 </div>
               </Link>
             </SidebarMenuButton>

@@ -57,6 +57,10 @@ export const apiUsers = {
 
   getCurrentEventsUser: async (): Promise<CurrentEvents[]> => {
     return (await restAxios.get(`/api/users/my/events/current`)).data
+  },
+
+  getProfile: async (): Promise<User> => {
+    return (await restAxios.get(`/api/users/profile`)).data
   }
 }
 

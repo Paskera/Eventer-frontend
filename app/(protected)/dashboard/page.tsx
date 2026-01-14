@@ -22,7 +22,6 @@ import { useQuery } from "@tanstack/react-query"
 import { apiEvents } from "@/app/api/http/event/events"
 import { useSession } from "next-auth/react"
 
-// Типы данных для дашборда организатора
 type Team = {
   id: string
   name: string
@@ -63,13 +62,11 @@ export default function DashboardPage() {
       const response = await apiEvents.getMyCreatedEvents()
       return response.events
     },
-    refetchInterval: 30000, // Обновляем каждые 30 секунд
+    refetchInterval: 30000, 
   })
 
   useEffect(() => {
     if (data) {
-      // Фильтруем события, в которых пользователь является организатором
-      // Пока просто устанавливаем все события, позже нужно будет реализовать фильтрацию
       setEvents(data)
     }
   }, [data])

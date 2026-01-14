@@ -4,11 +4,14 @@ import { useQuery } from "@tanstack/react-query"
 import { apiEvents, Events } from "@/app/api/http/event/events"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarIcon, MapPinIcon, UsersIcon, Globe2Icon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { CalendarIcon, MapPinIcon, UsersIcon, Globe2Icon, PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useRouter } from "next/navigation"
 
 export default function EventsPage() {
+    const router = useRouter()
     const { data, isPending, error } = useQuery({
         queryKey: ["Events", { page: 1, page_size: 12 }],
         queryFn: () => apiEvents.getAllEvents({ page: 1, page_size: 12 }),
@@ -57,14 +60,26 @@ export default function EventsPage() {
         <div className="p-4 sm:p-6 space-y-6">
             <div className="relative overflow-hidden rounded-xl border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6 shadow-sm">
                 <div className="relative flex flex-col gap-3">
-                    <div className="flex items-center gap-2 text-sm uppercase tracking-wide text-gray-600 dark:text-gray-400">
-                        <Globe2Icon className="h-4 w-4" />
-                        Дашборд мероприятий
-                    </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Обзор активных и будущих событий</h1>
-                    <div className="flex flex-wrap gap-2">
-                        <Badge className="bg-gray-100 dark:bg-neutral-800 border-gray-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300">Всего: {events.length}</Badge>
-                        <Badge className="bg-gray-100 dark:bg-neutral-800 border-gray-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300">Страница 1</Badge>
+                    <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-2 text-sm uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                                <Globe2Icon className="h-4 w-4" />
+                                Дашборд мероприятий
+                            </div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Обзор активных и будущих событий</h1>
+                            <div className="flex flex-wrap gap-2">
+                                <Badge className="bg-gray-100 dark:bg-neutral-800 border-gray-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300">Всего: {events.length}</Badge>
+                                <Badge className="bg-gray-100 dark:bg-neutral-800 border-gray-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300">Страница 1</Badge>
+                            </div>
+                        </div>
+                        <Button 
+                            onClick={() => router.push('/events/create')}
+                            className="flex items-center gap-2"
+                            size="lg"
+                        >
+                            <PlusIcon className="h-4 w-4" />
+                            Создать событие
+                        </Button>
                     </div>
                 </div>
             </div>
