@@ -53,7 +53,10 @@ export default function PageSizeModal({ open, onOpenChange, onSave, initialSetti
   }, [format, orientation, isManualInput])
 
   const handleSave = () => {
-    onSave({ format, width, height, orientation })
+    const clamp = (n: number) => Math.round(Math.min(2000, Math.max(8, n)))
+    const w = clamp(width)
+    const h = clamp(height)
+    onSave({ format, width: w, height: h, orientation })
     onOpenChange(false)
   }
 

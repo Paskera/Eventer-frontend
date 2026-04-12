@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
-import { TEMPLATES, VARIABLES } from "../data"
+import { TEMPLATES, VARIABLES, type CertificateVariable, variableKindLabel } from "../data"
 import { useRef } from "react"
 import { Grid } from "lucide-react"
 
 interface ToolboxProps {
   onLoadTemplate: (index: number) => void
-  onAddVariable: (label: string) => void
+  onAddVariable: (variable: CertificateVariable) => void
   onBackgroundUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
   onRemoveBackground: () => void
   backgroundImage: string | null
@@ -65,16 +65,23 @@ export default function Toolbox({
           {VARIABLES.map((variable) => (
             <button
               key={variable.id}
-              onClick={() => onAddVariable(variable.label)}
+              type="button"
+              onClick={() => onAddVariable(variable)}
               draggable
               onDragStart={(e) => {
                 e.dataTransfer.effectAllowed = "copy"
-                e.dataTransfer.setData("text/plain", variable.label)
+                e.dataTransfer.setData("text/plain", `certificate-var:${variable.id}`)
               }}
-              className="w-full"
+              className="w-full text-left"
             >
-              <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80 w-full justify-center">
-                {variable.label}
+              <Badge
+                variant="secondary"
+                className="cursor-pointer hover:bg-secondary/80 w-full justify-between gap-2 px-3 py-2 h-auto whitespace-normal"
+              >
+                <span className="font-medium leading-snug">{variable.label}</span>
+                <span className="text-[10px] opacity-70 shrink-0 uppercase">
+                  {variableKindLabel(variable.kind)}
+                </span>
               </Badge>
             </button>
           ))}

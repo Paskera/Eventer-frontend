@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { type TextLayer, FONTS } from "../data"
+import { normalizeListMarkerFontSizes } from "../normalizeListMarkerFontSizes"
 import { List, ListOrdered } from "lucide-react"
 
 interface FloatingPropertiesPanelProps {
@@ -17,6 +18,7 @@ interface FloatingPropertiesPanelProps {
   position: { x: number; y: number }
   onPositionChange: (position: { x: number; y: number }) => void
   isSidebar?: boolean
+  onSetEditingText?: (text: string) => void
 }
 
 const FONT_SIZES = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72]
@@ -45,6 +47,7 @@ export default function FloatingPropertiesPanel({
   position,
   onPositionChange,
   isSidebar = false,
+  onSetEditingText,
 }: FloatingPropertiesPanelProps) {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
@@ -65,6 +68,151 @@ export default function FloatingPropertiesPanel({
     x: Math.round(selectedLayer.x),
     y: Math.round(selectedLayer.y),
   })
+
+  const [selectionStyles, setSelectionStyles] = useState({
+    bold: false,
+    italic: false,
+    underline: false,
+    fontSize: "",
+    fontFamily: "",
+    color: "",
+  })
+  const lastRangeRef = useRef<Range | null>(null)
+
+  useEffect(() => {
+    const updateSelectionStyles = () => {
+      if (typeof document !== 'undefined') {
+        const selection = window.getSelection()
+        let fontSize = ""
+        let fontFamily = ""
+        let color = ""
+
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0)
+          
+          let container = range.commonAncestorContainer as HTMLElement
+          if (container.nodeType === Node.TEXT_NODE) container = container.parentElement as HTMLElement
+          if (container && container.closest('[contenteditable="true"]')) {
+            lastRangeRef.current = range.cloneRange()
+          }
+
+          let element = range.commonAncestorContainer as HTMLElement
+          if (element.nodeType === Node.TEXT_NODE) {
+            element = element.parentElement as HTMLElement
+          }
+
+          if (element && element.closest('[contenteditable="true"]')) {
+            const style = window.getComputedStyle(element)
+            fontSize = style.fontSize.replace("px", "")
+            fontFamily = style.fontFamily.split(",")[0].replace(/['"]/g, "").trim()
+            
+            const rgb = style.color.match(/\d+/g)
+            if (rgb && rgb.length >= 3) {
+              color = "#" + rgb.slice(0, 3).map(x => {
+                const hex = parseInt(x).toString(16)
+                return hex.length === 1 ? "0" + hex : hex
+              }).join("")
+            }
+          }
+        }
+
+        setSelectionStyles({
+          bold: document.queryCommandState('bold'),
+          italic: document.queryCommandState('italic'),
+          underline: document.queryCommandState('underline'),
+          fontSize,
+          fontFamily,
+          color,
+        })
+      }
+    }
+
+    document.addEventListener('selectionchange', updateSelectionStyles)
+    return () => document.removeEventListener('selectionchange', updateSelectionStyles)
+  }, [])
+
+  const executeCommand = (command: string, value: string | undefined = undefined) => {
+    const selection = window.getSelection()
+    if (selection && lastRangeRef.current && (selection.rangeCount === 0 || selection.getRangeAt(0) !== lastRangeRef.current)) {
+      selection.removeAllRanges()
+      selection.addRange(lastRangeRef.current)
+    }
+
+    document.execCommand(command, false, value)
+    
+    const activeEl = document.activeElement
+    if (activeEl && activeEl.getAttribute('contenteditable') === 'true') {
+      const el = activeEl as HTMLElement
+      if (el.querySelector("li")) {
+        normalizeListMarkerFontSizes(el)
+      }
+      onSetEditingText?.(el.innerHTML)
+    }
+  }
+
+  const applyInlineStyle = (styleName: string, styleValue: string) => {
+    const selection = window.getSelection()
+    let range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : lastRangeRef.current
+
+    if (!range || range.collapsed) return
+
+    if (selection && lastRangeRef.current && (selection.rangeCount === 0 || selection.getRangeAt(0) !== lastRangeRef.current)) {
+      selection.removeAllRanges()
+      selection.addRange(lastRangeRef.current)
+      range = lastRangeRef.current
+    }
+
+    const activeEl = range.commonAncestorContainer instanceof HTMLElement 
+      ? range.commonAncestorContainer.closest('[contenteditable="true"]') as HTMLElement
+      : range.commonAncestorContainer.parentElement?.closest('[contenteditable="true"]') as HTMLElement
+    
+    if (!activeEl) return
+
+    activeEl.focus({ preventScroll: true })
+
+    if (styleName === 'font-size') {
+      document.execCommand('styleWithCSS', false, 'false')
+      document.execCommand('fontSize', false, '7')
+      const fontTags = activeEl.querySelectorAll('font[size="7"]')
+      fontTags.forEach(tag => {
+        const span = document.createElement('span')
+        span.style.fontSize = styleValue
+        while (tag.firstChild) span.appendChild(tag.firstChild)
+        tag.parentNode?.replaceChild(span, tag)
+      })
+      document.execCommand('styleWithCSS', false, 'true')
+    } else if (styleName === 'font-family') {
+      // Use the same robust replacement strategy for font-family
+      document.execCommand('styleWithCSS', false, 'false')
+      document.execCommand('fontName', false, '___temp_font___')
+      
+      const fontTags = activeEl.querySelectorAll('font[face="___temp_font___"]')
+      fontTags.forEach(tag => {
+        const span = document.createElement('span')
+        span.style.fontFamily = styleValue
+        
+        while (tag.firstChild) span.appendChild(tag.firstChild)
+        tag.parentNode?.replaceChild(span, tag)
+      })
+      
+      document.execCommand('styleWithCSS', false, 'true')
+    } else if (styleName === 'color') {
+      // Прямое применение цвета стабильнее между браузерами.
+      document.execCommand('styleWithCSS', false, 'true')
+      document.execCommand('foreColor', false, styleValue)
+      document.execCommand('styleWithCSS', false, 'true')
+    } else if (styleName === 'text-align') {
+      document.execCommand('styleWithCSS', false, 'true')
+      const command = styleValue === 'center' ? 'justifyCenter' : 
+                     styleValue === 'right' ? 'justifyRight' : 'justifyLeft'
+      document.execCommand(command, false, undefined)
+    }
+
+    if (activeEl.querySelector("li")) {
+      normalizeListMarkerFontSizes(activeEl)
+    }
+    onSetEditingText?.(activeEl.innerHTML)
+  }
 
   useEffect(() => {
     setTempValues({
@@ -209,13 +357,20 @@ export default function FloatingPropertiesPanel({
 
   return (
     <div
-      className={
+      className={`${
         isSidebar 
           ? "h-full flex flex-col" 
-          : "fixed z-50 bg-card border border-border rounded-lg shadow-lg overflow-hidden flex flex-col max-h-[90vh]"
-      }
+          : "fixed z-50 bg-card border border-border rounded-lg shadow-lg overflow-hidden flex flex-col max-h-[90vh] properties-panel"
+      }`}
       style={!isSidebar ? { left: `${position.x}px`, top: `${position.y}px`, width: "320px" } : undefined}
-      onMouseDown={!isSidebar ? handleMouseDown : undefined}
+      onMouseDown={(e) => {
+        if (!isSidebar) handleMouseDown(e)
+        // Prevent stealing focus from the active contenteditable
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || (e.target as HTMLElement).closest('[role="combobox"]')) {
+           return;
+        }
+        e.preventDefault();
+      }}
     >
       <div
         ref={headerRef}
@@ -268,11 +423,13 @@ export default function FloatingPropertiesPanel({
             <Button
               variant={selectedLayer.listType === "bullet" ? "default" : "outline"}
               size="sm"
-              onClick={() =>
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                executeCommand('insertUnorderedList')
                 onUpdateLayer(selectedLayer.id, {
                   listType: selectedLayer.listType === "bullet" ? "none" : "bullet",
                 })
-              }
+              }}
               className="flex-1 h-8 text-xs gap-2"
             >
               <List className="w-3 h-3" />
@@ -281,11 +438,13 @@ export default function FloatingPropertiesPanel({
             <Button
               variant={selectedLayer.listType === "number" ? "default" : "outline"}
               size="sm"
-              onClick={() =>
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                executeCommand('insertOrderedList')
                 onUpdateLayer(selectedLayer.id, {
                   listType: selectedLayer.listType === "number" ? "none" : "number",
                 })
-              }
+              }}
               className="flex-1 h-8 text-xs gap-2"
             >
               <ListOrdered className="w-3 h-3" />
@@ -323,12 +482,17 @@ export default function FloatingPropertiesPanel({
         <div>
           <Label className="text-xs font-medium text-foreground">Шрифт</Label>
           <Select
-            value={selectedLayer.fontFamily}
-            onValueChange={(value) =>
-              onUpdateLayer(selectedLayer.id, {
-                fontFamily: value,
-              })
-            }
+            value={selectionStyles.fontFamily || selectedLayer.fontFamily}
+            onValueChange={(value) => {
+              const selection = window.getSelection()
+              if (selection && !selection.isCollapsed) {
+                applyInlineStyle('font-family', value)
+              } else {
+                onUpdateLayer(selectedLayer.id, {
+                  fontFamily: value,
+                })
+              }
+            }}
           >
             <SelectTrigger className="mt-1 text-sm">
               <SelectValue />
@@ -346,12 +510,17 @@ export default function FloatingPropertiesPanel({
         <div>
           <Label className="text-xs font-medium text-foreground">Жирность</Label>
           <Select
-            value={selectedLayer.fontWeight || "normal"}
-            onValueChange={(value) =>
-              onUpdateLayer(selectedLayer.id, {
-                fontWeight: value,
-              })
-            }
+            value={selectionStyles.bold ? "bold" : selectedLayer.fontWeight || "normal"}
+            onValueChange={(value) => {
+              const selection = window.getSelection()
+              if (selection && !selection.isCollapsed) {
+                executeCommand('bold')
+              } else {
+                onUpdateLayer(selectedLayer.id, {
+                  fontWeight: value,
+                })
+              }
+            }}
           >
             <SelectTrigger className="mt-1 text-sm">
               <SelectValue />
@@ -367,12 +536,17 @@ export default function FloatingPropertiesPanel({
         <div>
           <Label className="text-xs font-medium text-foreground">Размер шрифта</Label>
           <Select
-            value={String(selectedLayer.fontSize)}
-            onValueChange={(value) =>
-              onUpdateLayer(selectedLayer.id, {
-                fontSize: Number(value),
-              })
-            }
+            value={selectionStyles.fontSize || String(selectedLayer.fontSize)}
+            onValueChange={(value) => {
+              const selection = window.getSelection()
+              if (selection && !selection.isCollapsed) {
+                applyInlineStyle('font-size', `${value}px`)
+              } else {
+                onUpdateLayer(selectedLayer.id, {
+                  fontSize: Number(value),
+                })
+              }
+            }}
           >
             <SelectTrigger className="mt-1 text-sm">
               <SelectValue />
@@ -392,21 +566,31 @@ export default function FloatingPropertiesPanel({
           <div className="mt-1 flex items-center gap-2">
             <input
               type="color"
-              value={selectedLayer.color}
-              onChange={(e) =>
-                onUpdateLayer(selectedLayer.id, {
-                  color: e.target.value,
-                })
-              }
+              value={selectionStyles.color || selectedLayer.color}
+              onChange={(e) => {
+                const selection = window.getSelection()
+                if (selection && !selection.isCollapsed) {
+                  applyInlineStyle('color', e.target.value)
+                } else {
+                  onUpdateLayer(selectedLayer.id, {
+                    color: e.target.value,
+                  })
+                }
+              }}
               className="h-9 w-12 rounded border border-border cursor-pointer"
             />
             <Input
-              value={selectedLayer.color}
-              onChange={(e) =>
-                onUpdateLayer(selectedLayer.id, {
-                  color: e.target.value,
-                })
-              }
+              value={selectionStyles.color || selectedLayer.color}
+              onChange={(e) => {
+                const selection = window.getSelection()
+                if (selection && !selection.isCollapsed) {
+                  applyInlineStyle('color', e.target.value)
+                } else {
+                  onUpdateLayer(selectedLayer.id, {
+                    color: e.target.value,
+                  })
+                }
+              }}
               className="text-xs flex-1"
             />
           </div>
@@ -416,25 +600,37 @@ export default function FloatingPropertiesPanel({
           <Label className="text-xs font-medium text-foreground">Стиль текста</Label>
           <div className="mt-2 flex gap-1">
             <Button
-              variant={selectedLayer.fontStyle === "italic" ? "default" : "outline"}
+              variant={selectionStyles.italic || selectedLayer.fontStyle === "italic" ? "default" : "outline"}
               size="sm"
-              onClick={() =>
-                onUpdateLayer(selectedLayer.id, {
-                  fontStyle: selectedLayer.fontStyle === "italic" ? "normal" : "italic",
-                })
-              }
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                const selection = window.getSelection()
+                if (selection && !selection.isCollapsed) {
+                  executeCommand('italic')
+                } else {
+                  onUpdateLayer(selectedLayer.id, {
+                    fontStyle: selectedLayer.fontStyle === "italic" ? "normal" : "italic",
+                  })
+                }
+              }}
               className="flex-1 h-8 text-xs"
             >
               <span className="italic">I</span>
             </Button>
             <Button
-              variant={selectedLayer.textDecoration?.includes("underline") ? "default" : "outline"}
+              variant={selectionStyles.underline || selectedLayer.textDecoration?.includes("underline") ? "default" : "outline"}
               size="sm"
-              onClick={() =>
-                onUpdateLayer(selectedLayer.id, {
-                  textDecoration: selectedLayer.textDecoration === "underline" ? "none" : "underline",
-                })
-              }
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                const selection = window.getSelection()
+                if (selection && !selection.isCollapsed) {
+                  executeCommand('underline')
+                } else {
+                  onUpdateLayer(selectedLayer.id, {
+                    textDecoration: selectedLayer.textDecoration === "underline" ? "none" : "underline",
+                  })
+                }
+              }}
               className="flex-1 h-8 text-xs"
             >
               <span className="underline">U</span>
@@ -442,11 +638,17 @@ export default function FloatingPropertiesPanel({
             <Button
               variant={selectedLayer.textDecoration?.includes("line-through") ? "default" : "outline"}
               size="sm"
-              onClick={() =>
-                onUpdateLayer(selectedLayer.id, {
-                  textDecoration: selectedLayer.textDecoration === "line-through" ? "none" : "line-through",
-                })
-              }
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                const selection = window.getSelection()
+                if (selection && !selection.isCollapsed) {
+                  executeCommand('strikeThrough')
+                } else {
+                  onUpdateLayer(selectedLayer.id, {
+                    textDecoration: selectedLayer.textDecoration === "line-through" ? "none" : "line-through",
+                  })
+                }
+              }}
               className="flex-1 h-8 text-xs"
             >
               <span className="line-through">S</span>
@@ -460,11 +662,17 @@ export default function FloatingPropertiesPanel({
             <Button
               variant={selectedLayer.alignment === "left" ? "default" : "outline"}
               size="sm"
-              onClick={() =>
-                onUpdateLayer(selectedLayer.id, {
-                  alignment: "left",
-                })
-              }
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                const selection = window.getSelection()
+                if (selection && !selection.isCollapsed) {
+                  applyInlineStyle('text-align', 'left')
+                } else {
+                  onUpdateLayer(selectedLayer.id, {
+                    alignment: "left",
+                  })
+                }
+              }}
               className="h-8 text-xs"
             >
               ⬅
@@ -472,11 +680,17 @@ export default function FloatingPropertiesPanel({
             <Button
               variant={selectedLayer.alignment === "center" ? "default" : "outline"}
               size="sm"
-              onClick={() =>
-                onUpdateLayer(selectedLayer.id, {
-                  alignment: "center",
-                })
-              }
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                const selection = window.getSelection()
+                if (selection && !selection.isCollapsed) {
+                  applyInlineStyle('text-align', 'center')
+                } else {
+                  onUpdateLayer(selectedLayer.id, {
+                    alignment: "center",
+                  })
+                }
+              }}
               className="h-8 text-xs"
             >
               ↔
@@ -484,11 +698,17 @@ export default function FloatingPropertiesPanel({
             <Button
               variant={selectedLayer.alignment === "right" ? "default" : "outline"}
               size="sm"
-              onClick={() =>
-                onUpdateLayer(selectedLayer.id, {
-                  alignment: "right",
-                })
-              }
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                const selection = window.getSelection()
+                if (selection && !selection.isCollapsed) {
+                  applyInlineStyle('text-align', 'right')
+                } else {
+                  onUpdateLayer(selectedLayer.id, {
+                    alignment: "right",
+                  })
+                }
+              }}
               className="h-8 text-xs"
             >
               ➡

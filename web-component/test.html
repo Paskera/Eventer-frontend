@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Document Constructor Demo (Web Component)</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div style="padding: 12px">
+      <button id="btn-save" type="button">Trigger save</button>
+      <span id="log" style="margin-left: 12px; font-size: 12px; color: #444"></span>
+    </div>
+
+    <script>
+      window.addEventListener("error", (e) => {
+        const log = document.getElementById("log");
+        if (log) log.textContent = "JS error: " + (e.message || "unknown");
+        console.error("[document-constructor] window error:", e);
+      });
+      window.addEventListener("unhandledrejection", (e) => {
+        const log = document.getElementById("log");
+        if (log) log.textContent = "Unhandled rejection: " + (e.reason?.message || e.reason || "unknown");
+        console.error("[document-constructor] unhandledrejection:", e);
+      });
+    </script>
+
+    <script type="module" src="./dist/document-constructor.js?demo=2026-04-02"></script>
+    <script type="module">
+      // Demo: host passes data via property:
+      //   el.initialState = {...}
+      // The component dispatches:
+      //   constructor-ready
+      //   constructor-save
+
+      const el = document.createElement("document-constructor")
+      el.setAttribute("doc-id", "123")
+
+      el.addEventListener("constructor-ready", (e) => {
+        document.getElementById("log").textContent = "Ready. docId=" + (e.detail?.docId ?? "n/a")
+        console.log("[document-constructor] constructor-ready", e.detail)
+      })
+
+      el.addEventListener("constructor-save", (e) => {
+        document.getElementById("log").textContent =
+          "Saved. docId=" + (e.detail?.docId ?? "n/a") + " layers=" + (e.detail?.state?.layers?.length ?? 0)
+        console.log("[document-constructor] constructor-save", e.detail)
+      })
+
+      el.addEventListener("constructor-error", (e) => {
+        document.getElementById("log").textContent = "Error: " + (e.detail?.message ?? "unknown")
+        console.error("[document-constructor] constructor-error", e.detail)
+      })
+
+      // Wait until the custom element is defined (upgraded),
+      // otherwise `el.initialState = ...` won't call the setter.
+      customElements.whenDefined("document-constructor").then(() => {
+        console.log("[test.html] document-constructor is defined, setting initialState")
+        el.initialState = {
+          layers: [
+            {
+              type: "text",
+              id: "layer-1",
+              text: "Привет из Web Component",
+              x: 105,
+              y: 120,
+              fontSize: 32,
+              fontFamily: "serif",
+              color: "#000000",
+              alignment: "center",
+              width: 120,
+              xPercent: (105 / 210) * 100,
+              yPercent: (120 / 297) * 100,
+              widthPercent: (120 / 210) * 100,
+            },
+          ],
+          backgroundImage: null,
+          pageSizeSettings: { format: "A4", width: 210, height: 297, orientation: "portrait" },
+        }
+
+        document.body.appendChild(el)
+      })
+
+      // Optional: because the demo UI has its own Save button, this "Trigger save"
+      // is left as placeholder. It demonstrates you can wire extra controls from host.
+      document.getElementById("btn-save").addEventListener("click", () => {
+        document.getElementById("log").textContent = "Use the component's Save button."
+      })
+    </script>
+  </body>
+</html>
+
