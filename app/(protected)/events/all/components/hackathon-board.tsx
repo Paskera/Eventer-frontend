@@ -6,14 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { CalendarIcon, MapPinIcon, ClockIcon, UsersIcon, X, Globe2Icon, TrendingUpIcon } from "lucide-react"
-import { parse, isValid } from "date-fns"
-import { ru } from "date-fns/locale"
-import { Hackathon, hackathons } from "../data"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { apiEvents } from "@/app/api/http/event/events"
@@ -24,13 +20,13 @@ export default function HackathonBoard() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case "active":
-                return <Badge className="bg-green-600 hover:bg-green-700">Активный</Badge>
+                return <Badge className="text-[13px] leading-none h-[26px] px-3 py-0 bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-500/20 dark:text-green-400 border border-green-200 dark:border-green-500/30 shadow-none">Активный</Badge>
             case "waiting":
-                return <Badge className="bg-blue-600 hover:bg-blue-700">Предстоящий</Badge>
+                return <Badge className="text-[13px] leading-none h-[26px] px-3 py-0 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 shadow-none">Предстоящий</Badge>
             case "closed":
-                return <Badge className="bg-gray-600 hover:bg-gray-700">Завершен</Badge>
+                return <Badge className="text-[13px] leading-none h-[26px] px-3 py-0 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700 shadow-none">Завершен</Badge>
             default:
-                return <Badge variant="secondary">{status}</Badge>
+                return <Badge variant="secondary" className="text-[13px] leading-none h-[26px] px-3 py-0 shadow-none">{status}</Badge>
         }
     }
 
@@ -38,51 +34,45 @@ export default function HackathonBoard() {
         switch (format) {
             case "online":
                 return (
-                    <Badge variant="outline" className="border-blue-500 text-blue-400">
+                    <Badge variant="outline" className="text-[13px] leading-none h-[26px] px-3 py-0 border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:bg-blue-900/30 shadow-none">
                         Онлайн
                     </Badge>
                 )
             case "offline":
                 return (
-                    <Badge variant="outline" className="border-purple-500 text-purple-400">
+                    <Badge variant="outline" className="text-[13px] leading-none h-[26px] px-3 py-0 border-purple-300 text-purple-700 bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:bg-purple-900/30 shadow-none">
                         Офлайн
                     </Badge>
                 )
             case "hybrid":
                 return (
-                    <Badge variant="outline" className="border-orange-500 text-orange-400">
+                    <Badge variant="outline" className="text-[13px] leading-none h-[26px] px-3 py-0 border-orange-300 text-orange-700 bg-orange-50 dark:border-orange-800 dark:text-orange-400 dark:bg-orange-900/30 shadow-none">
                         Гибрид
                     </Badge>
                 )
             default:
-                return <Badge variant="outline">{format}</Badge>
+                return <Badge variant="outline" className="text-[13px] leading-none h-[26px] px-3 py-0 shadow-none">{format}</Badge>
         }
     }
 
-    // Функция для получения цвета бейджа формата
-    const getFormatBadgeStyle = (format: string) => {
-        switch (format) {
-            case "online":
-                return "border-blue-500 text-blue-500";
-            case "offline":
-                return "border-purple-500 text-purple-500";
-            case "hybrid":
-                return "border-orange-500 text-orange-500";
-            default:
-                return "";
-        }
-    };
 
     function parseDate(dateStr: string) {
-        const date = new Date(dateStr); // автоматически парсит ISO строку
-        const year = date.getUTCFullYear();
-        const month = date.getUTCMonth() + 1; // месяцы от 0 до 11
-        const day = date.getUTCDate();
-        const hours = date.getUTCHours();
-        const minutes = date.getUTCMinutes();
-        const seconds = date.getUTCSeconds();
-
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+        if (!dateStr) return "";
+        try {
+            const date = new Date(dateStr);
+            const datePart = new Intl.DateTimeFormat('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+            }).format(date).replace(' г.', '');
+            const timePart = new Intl.DateTimeFormat('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(date);
+            return `${datePart} в ${timePart}`;
+        } catch {
+            return dateStr;
+        }
     }
 
     const initialFilters = {
@@ -243,7 +233,7 @@ export default function HackathonBoard() {
                         <div className="flex gap-2">
                             <Button
                                 onClick={() => setFilters({ ...tempFilters, page: 1 })}
-                                className="flex-1"
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                             >
                                 Применить
                             </Button>
@@ -379,7 +369,7 @@ export default function HackathonBoard() {
                     <div className="flex gap-2">
                         <Button
                             onClick={() => setFilters({ ...tempFilters, page: 1 })}
-                            className="flex-1"
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                         >
                             Применить
                         </Button>
@@ -400,106 +390,89 @@ export default function HackathonBoard() {
             {/* Main content */}
             <div className="flex-1 p-2 sm:p-4 md:p-6">
                 <div className="w-full max-w-[1200px] mx-auto space-y-6">
-                    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-indigo-900/80 via-slate-900/70 to-emerald-800/70 p-5 sm:p-6 text-white shadow-[0_12px_40px_rgba(0,0,0,0.45)]">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.12),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(16,185,129,0.15),transparent_40%)] blur-2xl" />
-                        <div className="relative flex flex-col gap-2 sm:gap-3">
-                            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-white/70">
-                                <Globe2Icon className="h-4 w-4" />
-                                Все мероприятия
+                    <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 pb-4 mb-2 border-b border-border">
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                                <Globe2Icon className="h-6 w-6 text-green-600 dark:text-green-500" />
+                                <h1 className="text-3xl font-bold tracking-tight text-foreground">Все мероприятия</h1>
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                                <Badge className="bg-white/15 border-white/25 text-white">Всего: {events.length}</Badge>
-                                <Badge className="bg-white/15 border-white/25 text-white">Страница: {filters.page}</Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-white/75">
-                                <TrendingUpIcon className="h-4 w-4" />
-                                Подборка актуальных событий по фильтрам
-                            </div>
+                            <p className="text-muted-foreground text-[15px] flex items-center gap-2">
+                                <TrendingUpIcon className="h-4 w-4 text-green-600/70" />
+                                Подборка актуальных событий по вашим фильтрам
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <Badge variant="outline" className="border-green-600/30 text-green-700 bg-green-50 dark:bg-green-600/10 dark:text-green-400 px-3 py-1 font-medium text-sm rounded-md">
+                                Найдено: {events.length}
+                            </Badge>
+                            <Badge variant="outline" className="border-border text-foreground px-3 py-1 text-sm font-medium rounded-md">
+                                Страница: {filters.page}
+                            </Badge>
                         </div>
                     </div>
 
-                    <div className="grid gap-5 md:gap-6 grid-cols-1">
+                    <div className="grid gap-6 grid-cols-1">
                         {events?.map((event) => (
                             <Card
                                 key={event.id}
-                                className="group relative overflow-hidden border border-border bg-card text-foreground shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                                className="group flex flex-col md:flex-row relative overflow-hidden border border-border bg-card text-foreground shadow-sm transition-all duration-300 hover:shadow-md"
                             >
-                                <div className="pointer-events-none absolute inset-0 bg-black/25" />
-                                <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-30 bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.45),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(79,70,229,0.35),transparent_35%),radial-gradient(circle_at_50%_80%,rgba(56,189,248,0.35),transparent_35%)]" />
-                                <div className="flex flex-col md:flex-row">
-                                    <div className="relative w-full md:w-64 h-44 md:h-auto flex-shrink-0">
-                                        <img
-                                            src={event.image_url || "/placeholder.svg"}
-                                            alt={event.event_name}
-                                            className="absolute inset-0 w-full h-full object-cover"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent" />
-                                    </div>
+                                {/* Header Image */}
+                                <div className="relative w-full md:w-[350px] lg:w-[400px] h-48 md:h-auto flex-shrink-0 bg-muted border-r border-border block overflow-hidden rounded-r-md">
+                                    <img
+                                        src={event.image_url || "/placeholder.svg"}
+                                        alt={event.event_name}
+                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                                    />
+                                </div>
 
-                                    <CardContent className="relative flex-1 p-4 md:p-5 flex flex-col gap-4 z-10">
-                                        <div className="flex flex-col gap-2">
+                                {/* Content */}
+                                <CardContent className="flex flex-col flex-1 p-5 md:p-6 gap-4">
+                                    <div>
+                                        <div className="flex flex-wrap items-center gap-3 mb-2">
+                                            <Link href={`/events/${event.id}`}>
+                                                <h3 className="text-2xl md:text-[26px] font-bold leading-tight group-hover:text-green-600 transition-colors line-clamp-2 break-words">
+                                                    {event.event_name}
+                                                </h3>
+                                            </Link>
                                             <div className="flex flex-wrap gap-2">
                                                 {getStatusBadge(event.event_status)}
                                                 {getFormatBadge(event.format)}
                                             </div>
-                                            <h3 className="text-xl font-bold leading-tight">{event.event_name}</h3>
                                         </div>
 
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm text-muted-foreground">
-                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center min-h-[70px] h-full">
-                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                                                    <ClockIcon className="h-4 w-4" />
-                                                </div>
-                                                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90">Начало</span>
-                                                    <span className="font-semibold text-foreground text-xs break-words">{parseDate(event.start_date)}</span>
-                                                </div>
+                                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[15px] md:text-base text-muted-foreground mt-3">
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                                                <span>{parseDate(event.start_date)} - {parseDate(event.end_date)}</span>
                                             </div>
-                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center min-h-[70px] h-full">
-                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                                                    <CalendarIcon className="h-4 w-4" />
-                                                </div>
-                                                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90">Окончание</span>
-                                                    <span className="font-semibold text-foreground text-xs break-words">{parseDate(event.end_date)}</span>
-                                                </div>
-                                            </div>
-                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center sm:col-span-2 min-h-[70px] h-full">
-                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                                                    <MapPinIcon className="h-4 w-4" />
-                                                </div>
-                                                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90">Место</span>
-                                                    <span className="font-semibold text-foreground text-xs line-clamp-2 break-words">{event.venue}</span>
-                                                </div>
-                                            </div>
-                                            <div className="rounded-lg border border-border bg-muted/60 px-3 py-2 flex gap-3 items-center sm:col-span-2 min-h-[70px] h-full">
-                                                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                                                    <UsersIcon className="h-4 w-4" />
-                                                </div>
-                                                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                                                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90">Участники</span>
-                                                    <span className="font-semibold text-foreground text-xs">{event.users_count} чел.</span>
-                                                </div>
-                                            </div>
-                                        </div>
 
-                                        <div className="space-y-1">
-                                            <h4 className="text-xs font-semibold text-muted-foreground">Описание</h4>
-                                            <p className="text-sm text-foreground/90 line-clamp-2">
-                                                {event.description}
-                                            </p>
-                                        </div>
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <MapPinIcon className="h-5 w-5 text-muted-foreground" />
+                                                <span className="line-clamp-1">{event.venue}</span>
+                                            </div>
 
-                                        <div className="flex justify-end">
-                                            <Button asChild>
-                                                <Link href={`/events/${event.id}`}>
-                                                    Подробнее
-                                                </Link>
-                                            </Button>
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <UsersIcon className="h-5 w-5 text-muted-foreground" />
+                                                <span>{event.users_count} чел.</span>
+                                            </div>
                                         </div>
-                                    </CardContent>
-                                </div>
+                                    </div>
+
+                                    <div className="space-y-1.5 mt-2">
+                                        <h4 className="text-lg font-semibold text-foreground">Описание</h4>
+                                        <p className="text-[16px] leading-relaxed text-muted-foreground/90 line-clamp-3 md:line-clamp-4 break-words group-hover:text-white">
+                                            {event.description}
+                                        </p>
+                                    </div>
+                                    <div className="mt-auto flex justify-end pt-2">
+                                        <Button asChild className="text-[14px] bg-green-600 hover:bg-green-700 text-white min-w-[140px] shadow-sm">
+                                            <Link href={`/events/${event.id}`}>
+                                                Подробнее
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </CardContent>
                             </Card>
                         ))}
                     </div>

@@ -36,6 +36,10 @@ export const authOptions = {
       try {
         const refreshedToken = await refreshAccessToken(token.refresh_token);
 
+        if (!refreshedToken) {
+          throw new Error('No refresh token returned from Keycloak');
+        }
+
         token.access_token = refreshedToken.access_token;
         token.id_token = refreshedToken.id_token;
         token.refresh_token = refreshedToken.refresh_token;
