@@ -1,6 +1,7 @@
 "use client"
 
-import { ClockIcon, CheckCircleIcon, CalendarClock } from "lucide-react"
+import { ClockIcon, CheckCircleIcon, CalendarClock, NetworkIcon } from "lucide-react"
+import { useRouter, useParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { formatEventDate } from "./utils"
 import { StageFileUpload } from "./StageFileUpload"
@@ -11,6 +12,10 @@ interface EventTimelineProps {
 }
 
 export const EventTimeline = ({ stages }: EventTimelineProps) => {
+  const router = useRouter()
+  const params = useParams()
+  const eventId = params.id as string
+
   if (!stages || stages.length === 0) {
     return (
       <div className="text-center py-10 text-muted-foreground bg-muted/20 border border-dashed border-border rounded-md">
@@ -99,13 +104,25 @@ export const EventTimeline = ({ stages }: EventTimelineProps) => {
 
                 {/* Subcomponents for Requirements & Resources */}
                 {((stage.stage_type === "submission" && stage.requirements && stage.requirements.length > 0) || 
-                  (stage.resources && Array.isArray(stage.resources) && stage.resources.length > 0)) && (
+                  (stage.resources && Array.isArray(stage.resources) && stage.resources.length > 0) ||
+                  (stage.stage_type === "bracket")) && (
                    <div className="flex flex-col gap-4 mt-2 pt-4 border-t border-border/50">
                      {stage.stage_type === "submission" && stage.requirements && stage.requirements.length > 0 && (
                        <StageFileUpload stageId={stage.id} requirements={stage.requirements} />
                      )}
                      {stage.resources && Array.isArray(stage.resources) && stage.resources.length > 0 && (
                        <StageResources stageId={stage.id} resources={stage.resources} />
+                     )}
+                     {stage.stage_type === "bracket" && (
+                       <div className="pt-2">
+                         <button
+                           onClick={() => router.push(`/events/${eventId}/stages/${stage.id}/bracket`)}
+                           className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-bold shadow-md transition-all w-fit"
+                         >
+                           <NetworkIcon className="w-4 h-4" />
+                           Смотреть турнирную сетку
+                         </button>
+                       </div>
                      )}
                    </div>
                 )}

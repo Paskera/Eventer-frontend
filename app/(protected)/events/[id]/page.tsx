@@ -11,9 +11,6 @@ import {
   TrophyIcon,
   ClipboardListIcon,
   LandmarkIcon,
-  MapPinIcon,
-  CalendarIcon,
-  NetworkIcon,
   Target,
 } from "lucide-react"
 import { apiEventTeams } from "@/app/api/http/EventTeams/event_teams"
@@ -26,7 +23,6 @@ import { EventSidebar } from "./components/EventSidebar"
 import { EventHeaderBanner } from "./components/EventHeaderBanner"
 import { EventTimeline } from "./components/EventTimeline"
 import { EventTeamTab } from "./components/EventTeamTab"
-import { formatEventDate } from "./components/utils"
 
 export default function EventDetailsPage() {
   const params = useParams()
@@ -144,7 +140,7 @@ export default function EventDetailsPage() {
   })
 
   const { data: stages, isPending: isStagePending } = useQuery({
-    queryKey: ["stages"],
+    queryKey: ["stages", eventId],
     queryFn: () => apiStages.getAllStages(Number(eventId)),
   })
 
@@ -229,15 +225,6 @@ export default function EventDetailsPage() {
                     Команда
                   </TabsTrigger>
 
-                  {/* Link to Bracket Page */}
-                  <TabsTrigger
-                    value="bracket"
-                    onClick={() => router.push(`/events/${eventId}/bracket`)}
-                    className="relative pb-3 pt-2 px-4 md:px-6 rounded-none border-b-2 border-transparent text-muted-foreground hover:text-foreground text-[15px] md:text-[16px] font-medium transition-colors cursor-pointer"
-                  >
-                    <NetworkIcon className="h-4 w-4 mr-2 inline" />
-                    Турнирная сетка
-                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="details" className="space-y-8 mt-0 focus-visible:outline-none focus:outline-none">
