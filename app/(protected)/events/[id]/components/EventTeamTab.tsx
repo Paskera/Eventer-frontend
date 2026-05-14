@@ -2,7 +2,17 @@
 
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { UsersIcon, ShieldAlert, LinkIcon, CopyIcon, RefreshCcw } from "lucide-react"
+import { 
+  UsersIcon, 
+  ShieldAlert, 
+  LinkIcon, 
+  CopyIcon, 
+  RefreshCw, 
+  Trash2, 
+  MoreHorizontal, 
+  UserMinus, 
+  ShieldCheck 
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useSession } from "next-auth/react"
@@ -10,6 +20,21 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiEventTeams } from "@/app/api/http/EventTeams/event_teams"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface EventTeamTabProps {
   team: any;
@@ -22,6 +47,7 @@ export const EventTeamTab = ({ team, eventId, isPending, onRegisterClick }: Even
   const { data: session } = useSession()
   const queryClient = useQueryClient()
   const [copiedLink, setCopiedLink] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
   const RegenerateTokenMutation = useMutation({
     mutationFn: () => apiEventTeams.regenerateInviteToken(eventId, team.team.id),
@@ -33,6 +59,40 @@ export const EventTeamTab = ({ team, eventId, isPending, onRegisterClick }: Even
     },
     onError: () => {
        toast.error("Ошибка при обновлении ссылки")
+    }
+  })
+
+  const DeleteTeamMutation = useMutation({
+    mutationFn: () => apiEventTeams.deleteEventTeam(eventId, team.team.id),
+    onSuccess: () => {
+       setIsDeleteModalOpen(false)
+       queryClient.invalidateQueries({ queryKey: ["team", String(eventId)] })
+       toast.success("Команда расформирована")
+    },
+    onError: () => {
+       toast.error("Ошибка при расформировании команды")
+    }
+  })
+
+  const RemoveMemberMutation = useMutation({
+    mutationFn: (memberId: number) => apiEventTeams.removeMember(eventId, team.team.id, memberId),
+    onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ["team", String(eventId)] })
+       toast.success("Участник удален из команды")
+    },
+    onError: () => {
+       toast.error("Ошибка при удалении участника")
+    }
+  })
+
+  const PromoteMemberMutation = useMutation({
+    mutationFn: (memberId: number) => apiEventTeams.promoteToLeader(eventId, team.team.id, memberId),
+    onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ["team", String(eventId)] })
+       toast.success("Лидер команды изменен")
+    },
+    onError: () => {
+       toast.error("Ошибка при смене лидера")
     }
   })
 
@@ -96,36 +156,69 @@ export const EventTeamTab = ({ team, eventId, isPending, onRegisterClick }: Even
                 </Badge>
              </div>
 
-             <ul className="space-y-3">
+             <div className="space-y-3">
                {team.members.map((u: any, idx: number) => {
                   const displayName = [u.firstname, u.lastname].filter(Boolean).join(' ') || `Участник ${idx + 1}`;
-                  const isLeader = u.role === 'LEADER';
+                  const isLeader = u.role === 'LEADER' || u.role === '1';
                   
+                  // Identify if this member is the current user viewing the page
+                  const isMe = (u.firstname === session?.user?.name?.split(' ')[0] && u.lastname === session?.user?.name?.split(' ')[1]) ||
+                               (u.firstname + " " + u.lastname === session?.user?.name);
+
                   return (
-                    <li key={idx} className="flex items-center justify-between p-3.5 bg-card border border-border shadow-sm rounded-md transition-all hover:border-border/80">
-                      <div className="flex items-center gap-3.5">
-                         <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex flex-shrink-0 items-center justify-center text-[15px] font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                           {displayName[0]?.toUpperCase()}
-                         </div>
-                         <div>
-                            <span className="text-[15px] font-semibold text-foreground flex items-center gap-2">
-                               {displayName}
-                            </span>
-                            <span className="text-[13px] text-muted-foreground pr-2 block mt-0.5">
-                               Роль: {isLeader ? 'Капитан' : 'Участник'}
-                            </span>
-                         </div>
-                      </div>
-                      {isLeader && (
-                         <div className="flex items-center gap-1 text-[11px] uppercase tracking-wider font-bold text-yellow-600 dark:text-yellow-500 bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1.5 rounded-md border border-yellow-200 dark:border-yellow-700/50">
-                           <ShieldAlert className="w-3.5 h-3.5" />
-                           Капитан
-                         </div>
-                      )}
-                    </li>
+                     <div key={idx} className="group flex items-center justify-between p-4 bg-background border border-border rounded-xl hover:border-green-500/30 hover:bg-muted/30 transition-all duration-300">
+                        <div className="flex items-center gap-4">
+                           <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shadow-sm ${isLeader ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'}`}>
+                              {u.firstname ? u.firstname[0] : '?'}
+                           </div>
+                           <div>
+                              <div className="flex items-center gap-2">
+                                 <p className="font-bold text-foreground">{displayName}</p>
+                                 {isLeader && (
+                                    <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400 border-none px-1.5 py-0 h-5 text-[10px] font-bold uppercase tracking-wider">
+                                       Капитан
+                                    </Badge>
+                                 )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">{isLeader ? 'Организатор и лидер' : 'Участник команды'}</p>
+                           </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                           {isCurrentUserLeader && !isMe && (
+                              <DropdownMenu>
+                                 <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                       <MoreHorizontal className="w-4 h-4" />
+                                    </Button>
+                                 </DropdownMenuTrigger>
+                                 <DropdownMenuContent align="end" className="w-48 rounded-xl border-border shadow-xl">
+                                    <DropdownMenuItem 
+                                       className="gap-2 cursor-pointer focus:bg-green-50 dark:focus:bg-green-500/10 focus:text-green-600"
+                                       onClick={() => PromoteMemberMutation.mutate(u.id)}
+                                    >
+                                       <ShieldCheck className="w-4 h-4" />
+                                       Назначить капитаном
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                       className="gap-2 cursor-pointer focus:bg-rose-50 dark:focus:bg-rose-500/10 focus:text-rose-600 text-rose-600"
+                                       onClick={() => {
+                                          if (window.confirm(`Удалить участника ${displayName} из команды?`)) {
+                                             RemoveMemberMutation.mutate(u.id)
+                                          }
+                                       }}
+                                    >
+                                       <UserMinus className="w-4 h-4" />
+                                       Удалить участника
+                                    </DropdownMenuItem>
+                                 </DropdownMenuContent>
+                              </DropdownMenu>
+                           )}
+                        </div>
+                     </div>
                   );
                })}
-             </ul>
+             </div>
           </div>
 
           <div className="w-full md:w-1/3 shrink-0">
@@ -171,9 +264,49 @@ export const EventTeamTab = ({ team, eventId, isPending, onRegisterClick }: Even
                                        disabled={RegenerateTokenMutation.isPending}
                                        title="Обновить ссылку"
                                      >
-                                        <RefreshCcw className={`w-4 h-4 ${RegenerateTokenMutation.isPending ? 'animate-spin' : ''}`} />
+                                        <RefreshCw className={`w-4 h-4 ${RegenerateTokenMutation.isPending ? 'animate-spin' : ''}`} />
                                      </Button>
                                   </div>
+                               </div>
+
+                               <div className="pt-2 border-t border-border/50">
+                                  <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+                                     <DialogTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          className="w-full justify-start h-10 text-[13px] text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all font-medium rounded-md"
+                                          disabled={DeleteTeamMutation.isPending}
+                                        >
+                                           <Trash2 className="w-4 h-4 mr-2" />
+                                           Расформировать команду
+                                        </Button>
+                                     </DialogTrigger>
+                                     <DialogContent className="sm:max-w-[425px] rounded-xl border-border">
+                                        <DialogHeader>
+                                           <DialogTitle className="text-xl font-bold text-foreground">Расформировать команду?</DialogTitle>
+                                           <DialogDescription className="text-[14px] text-muted-foreground pt-2">
+                                              Это действие необратимо. Ваша команда «{team.team.name}» будет удалена, а все участники будут исключены.
+                                           </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter className="mt-6 flex gap-3 sm:gap-0">
+                                           <Button 
+                                             variant="outline" 
+                                             onClick={() => setIsDeleteModalOpen(false)}
+                                             className="rounded-md h-11"
+                                           >
+                                              Отмена
+                                           </Button>
+                                           <Button 
+                                             variant="destructive" 
+                                             onClick={() => DeleteTeamMutation.mutate()}
+                                             disabled={DeleteTeamMutation.isPending}
+                                             className="rounded-md h-11 px-6 bg-rose-600 hover:bg-rose-700"
+                                           >
+                                              {DeleteTeamMutation.isPending ? "Удаление..." : "Да, расформировать"}
+                                           </Button>
+                                        </DialogFooter>
+                                     </DialogContent>
+                                  </Dialog>
                                </div>
                             </div>
                             

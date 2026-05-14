@@ -76,6 +76,14 @@ export const apiEventTeams = {
     return (await restAxios.post(`/api/events/${event_id}/event-teams/${team_id}/generate-invite-code/`)).data;
   },
 
+  removeMember: async (event_id: number, team_id: number, member_id: number): Promise<void> => {
+    await restAxios.delete(`/api/events/${event_id}/event-teams/${team_id}/members/${member_id}/`);
+  },
+
+  promoteToLeader: async (event_id: number, team_id: number, member_id: number): Promise<void> => {
+    await restAxios.post(`/api/events/${event_id}/event-teams/${team_id}/members/${member_id}/promote/`);
+  },
+
   // getEventsTeams: async (params?: {
   //   event_id: number
   //   page?: number
