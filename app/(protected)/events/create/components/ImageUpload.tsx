@@ -1,18 +1,29 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 interface ImageUploadProps {
+  value?: File | null;
   onImageChange: (file: File | null) => void;
 }
 
-export function ImageUpload({ onImageChange }: ImageUploadProps) {
+export function ImageUpload({ value, onImageChange }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (value) {
+      const objectUrl = URL.createObjectURL(value);
+      setPreview(objectUrl);
+      return () => URL.revokeObjectURL(objectUrl);
+    } else {
+      setPreview(null);
+    }
+  }, [value]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -27,11 +38,6 @@ export function ImageUpload({ onImageChange }: ImageUploadProps) {
         return;
       }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
       onImageChange(file);
       toast.success("Изображение загружено");
     }

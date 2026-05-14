@@ -21,7 +21,10 @@ export function Stepper({ currentStep, steps }: StepperProps) {
       <div className="space-y-4">
         <Progress value={progressPercentage} className="h-2" />
       
-      <div className="grid grid-cols-4 gap-4">
+      <div 
+        className="grid gap-4" 
+        style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
+      >
         {steps.map((step) => {
           const Icon = step.icon;
           const isActive = currentStep === step.number;

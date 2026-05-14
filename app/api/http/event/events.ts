@@ -10,11 +10,11 @@ export interface Events {
   description: string;
   image_url: string;
   users_count: number;
-  format: 'online' | 'offline' | 'hybrid'; 
+  format: 'online' | 'offline' | 'hybrid';
   venue: string;
-  start_date: string; 
-  end_date: string;   
-  event_status: 'active' | 'cancelled' | 'completed'; 
+  start_date: string;
+  end_date: string;
+  event_status: 'active' | 'cancelled' | 'completed';
   id: number;
   organizer_id: number;
   category: Category;
@@ -39,7 +39,7 @@ export interface Event {
   users_count: number;
   format: 'offline' | 'online' | string;
   venue: string;
-  start_date: string; 
+  start_date: string;
   end_date: string;
   event_status: 'active' | 'inactive' | string;
   id: number;
@@ -76,7 +76,7 @@ export interface EventCreateData {
   event_name: string;
   description: string;
   users_count: number;
-  participation_type: 'team' | 'individual';
+  participation_type: 'team' | 'solo';
   format: 'online' | 'offline' | 'hybrid';
   venue: string;
   start_date: string;
@@ -113,7 +113,7 @@ export const apiEvents = {
     format?: string | null
     event_status?: string | null
   }): Promise<EventsResponse> => {
-    return (await restAxios.get(`api/events`, {params })).data
+    return (await restAxios.get(`api/events/`, { params })).data
   },
 
   getParticipationsEvents: async (params?: {
@@ -126,7 +126,7 @@ export const apiEvents = {
     // format?: string | null
     event_status?: string | null
   }): Promise<EventsResponse> => {
-    return (await restAxios.get(`api/events/my/participations`, {params })).data
+    return (await restAxios.get(`api/events/my/participations`, { params })).data
   },
 
   getCurrentEventsUser: async (): Promise<CurrentEvents[]> => {
@@ -165,7 +165,7 @@ export const apiEvents = {
   createEvent: async (data: EventCreateData, imageFile?: File): Promise<Event> => {
     const formData = new FormData();
     formData.append('event_payload', JSON.stringify(data));
-    
+
     if (imageFile) {
       formData.append('file', imageFile);
     }

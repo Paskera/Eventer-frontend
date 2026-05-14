@@ -1,33 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useEventForm } from "@/app/(protected)/events/create/hooks/useEventForm";
 import { BasicSettings } from "@/app/(protected)/events/create/components/BasicSettings";
 import { ImageUpload } from "@/app/(protected)/events/create/components/ImageUpload";
-import { DaySelector } from "@/app/(protected)/events/create/components/DaySelector";
-import { CheckpointList } from "@/app/(protected)/events/create/components/CheckpointList";
-import { DocumentUpload } from "@/app/(protected)/events/create/components/DocumentUpload";
-import { StatusControl } from "@/app/(protected)/events/create/components/StatusControl";
-import { StepControl } from "@/app/(protected)/events/create/components/StepControl";
-import { CheckpointModal } from "@/app/(protected)/events/create/components/CheckpointModal";
 import { Stepper } from "@/app/(protected)/events/create/components/Stepper";
+import { StepControl } from "@/app/(protected)/events/create/components/StepControl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, CalendarDays, FileText, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
-interface Checkpoint {
-  id: number;
-  title: string;
-  subtitle: string;
-  date: Date;
-  startTime: string;
-  endTime: string;
-  description: string;
-  format: 'online' | 'offline' | 'hybrid';
-}
+import { apiEvents } from "@/app/api/http/event/events";
+import { CheckCircle2, CalendarDays, Settings, Info } from "lucide-react";
 
 export default function CreateEvent() {
-  const { formData, handleFormChange } = useEventForm();
+  const router = useRouter();
+  const { formData, handleFormChange, clearForm } = useEventForm();
   const {
     eventName,
     description,
@@ -42,30 +30,18 @@ export default function CreateEvent() {
   } = formData;
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [currentStatus, setCurrentStatus] = useState("Черновик");
-  const [isCheckpointModalOpen, setIsCheckpointModalOpen] = useState(false);
-  const [editingCheckpoint, setEditingCheckpoint] = useState<number | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const steps = [
-    { number: 1, title: "Базовые настройки", icon: Settings },
-    { number: 2, title: "Этапы мероприятия", icon: CalendarDays },
-    { number: 3, title: "Документы", icon: FileText },
-    { number: 4, title: "Публикация", icon: CheckCircle2 }
+    { number: 1, title: "Основная информация", icon: Settings },
+    { number: 2, title: "Этапы и материалы", icon: CalendarDays },
+    { number: 3, title: "Публикация", icon: CheckCircle2 }
   ];
 
   const handleNext = () => {
-    if (currentStep === 1 && (!startDate || !endDate)) {
+    if (currentStep === 1 && (!eventName || !description || !venue || !startDate || !endDate)) {
       toast.error("Ошибка валидации", {
-        description: "Пожалуйста, выберите даты начала и окончания мероприятия.",
-      });
-      return;
-    }
-    if (currentStep === 2 && checkpoints.length === 0) {
-      toast.error("Ошибка валидации", {
-        description: "Добавьте хотя бы один этап.",
+        description: "Пожалуйста, заполните все обязательные поля (Название, Описание, Место, Даты).",
       });
       return;
     }
@@ -80,76 +56,7 @@ export default function CreateEvent() {
     }
   };
 
-  const handleAddCheckpoint = () => {
-    if (!selectedDate) {
-      toast.warning("Не выбран день", {
-        description: "Пожалуйста, выберите день для добавления нового этапа.",
-      });
-      return;
-    }
-    setEditingCheckpoint(null);
-    setIsCheckpointModalOpen(true);
-  };
-
-  const handleEditCheckpoint = (id: number) => {
-    setEditingCheckpoint(id);
-    setIsCheckpointModalOpen(true);
-  };
-
-  const handleSaveCheckpoint = (checkpoint: {
-    name: string;
-    description: string;
-    startTime: string;
-    endTime: string;
-    stage_type: 'online' | 'offline';
-  }) => {
-    if (editingCheckpoint) {
-      setCheckpoints(prev => prev.map(cp =>
-        cp.id === editingCheckpoint
-          ? {
-              ...cp,
-              title: checkpoint.name,
-              description: checkpoint.description,
-              startTime: checkpoint.startTime,
-              endTime: checkpoint.endTime,
-              format: checkpoint.stage_type
-            }
-          : cp
-      ));
-    } else {
-      const newCheckpoint = {
-        id: checkpoints.length > 0
-          ? Math.max(...checkpoints.map(cp => cp.id)) + 1
-          : 1,
-        title: checkpoint.name,
-        subtitle: '',
-        description: checkpoint.description,
-        startTime: checkpoint.startTime,
-        endTime: checkpoint.endTime,
-        format: checkpoint.stage_type,
-        date: selectedDate!
-      };
-      setCheckpoints(prev => [...prev, newCheckpoint]);
-    }
-    setIsCheckpointModalOpen(false);
-    setEditingCheckpoint(null);
-  };
-
-  const handleFileUpload = (file: File, type: 'regulation' | 'task') => {
-    console.log('Загрузка файла:', file.name, type);
-    toast.success("Файл успешно загружен", {
-      description: `Файл "${file.name}" был успешно загружен.`,
-    });
-  };
-
   const handleSave = async () => {
-    if (!eventName || !description || !venue || !startDate || !endDate || checkpoints.length === 0) {
-      toast.error("Ошибка сохранения", {
-        description: "Пожалуйста, заполните все обязательные поля и добавьте хотя бы один этап.",
-      });
-      return;
-    }
-    
     const eventData = {
       event_name: eventName,
       description: description,
@@ -159,56 +66,30 @@ export default function CreateEvent() {
       venue: venue,
       start_date: startDate ? startDate.toISOString() : '',
       end_date: endDate ? endDate.toISOString() : '',
-      event_status: 'active',
-      organizer_id: 1,
+      event_status: 'active' as const,
+      organizer_id: 1, 
       category_id: category,
-      stages: checkpoints.map((checkpoint, index) => ({
-        name: checkpoint.title,
-        description: checkpoint.description,
-        stage_type: checkpoint.format === 'online' ? 'online' : 'offline',
-        start_time: new Date(`${new Date(checkpoint.date).toISOString().split('T')[0]}T${checkpoint.startTime}`).toISOString(),
-        end_time: new Date(`${new Date(checkpoint.date).toISOString().split('T')[0]}T${checkpoint.endTime}`).toISOString(),
-        order: index + 1,
-        event_id: 0
-      }))
+      stages: []
     };
 
-    const formData = new FormData();
-    formData.append('event_payload', JSON.stringify(eventData));
-
-    if (eventImage) {
-      formData.append('file', eventImage);
-    }
-
     try {
-      const response = await fetch('http://localhost:8000/api/v1/events/', {
-        method: 'POST',
-        body: formData,
+      setIsSubmitting(true);
+      const result = await apiEvents.createEvent(eventData, eventImage || undefined);
+      
+      toast.success("Мероприятие успешно создано", {
+        description: "Теперь вы можете добавить этапы и материалы в дашборде.",
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Мероприятие успешно создано:', result);
-        toast.success("Мероприятие создано", {
-          description: "Ваше мероприятие было успешно создано и сохранено.",
-        });
-      } else {
-        const errorData = await response.json();
-        console.error('Ошибка при создании мероприятия:', errorData);
-        toast.error("Ошибка сервера", {
-          description: `Не удалось создать мероприятие: ${errorData.detail || response.statusText}`,
-        });
-      }
-    } catch (error) {
+      
+      clearForm();
+      router.push(`/events/dashboard/${result.id}`);
+    } catch (error: any) {
       console.error('Ошибка при создании мероприятия:', error);
-      toast.error("Сетевая ошибка", {
-        description: "Не удалось подключиться к серверу. Проверьте ваше интернет-соединение.",
+      const detail = error?.response?.data?.detail;
+      toast.error("Ошибка сервера", {
+        description: typeof detail === 'string' ? detail : "Не удалось создать мероприятие.",
       });
+      setIsSubmitting(false); // Only set false on error, if success it will redirect
     }
-  };
-
-  const handleDaySelect = (date: Date) => {
-    setSelectedDate(date);
   };
 
   const renderStep = () => {
@@ -220,41 +101,69 @@ export default function CreateEvent() {
               formData={formData}
               onFormChange={handleFormChange}
             />
-           <ImageUpload
-              onImageChange={(file) => handleFormChange('eventImage', file)}
-            />
+            <div className="pt-4 border-t border-border/50">
+              <h3 className="text-xl font-semibold mb-4">Обложка мероприятия</h3>
+              <ImageUpload
+                value={eventImage}
+                onImageChange={(file) => handleFormChange('eventImage', file)}
+              />
+            </div>
           </div>
         );
       case 2:
         return (
-          <div className="space-y-6 animate-in fade-in-50 duration-500">
-            <DaySelector
-              startDate={startDate}
-              endDate={endDate}
-              activeDay={selectedDate}
-              onDaySelect={handleDaySelect}
-            />
-            <CheckpointList
-              stages={checkpoints}
-              onAddCheckpoint={handleAddCheckpoint}
-              onEditCheckpoint={handleEditCheckpoint}
-              selectedDate={selectedDate}
-            />
+          <div className="animate-in fade-in-50 duration-500 py-8">
+            <div className="flex flex-col items-center text-center max-w-2xl mx-auto space-y-6">
+              <div className="h-20 w-20 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <CalendarDays className="h-10 w-10 text-blue-600 dark:text-blue-400" />
+              </div>
+              
+              <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                Настройка этапов доступна позже
+              </h3>
+              
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                Чтобы не перегружать процесс создания, детальная настройка турнира перенесена в дашборд. Вы сможете сделать это сразу после сохранения.
+              </p>
+
+              <div className="w-full bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 text-left border border-border/50">
+                <h4 className="font-semibold text-lg mb-4 text-foreground">В дашборде вы сможете:</h4>
+                <ul className="space-y-4">
+                  <li className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">📅</div>
+                    <span className="text-lg text-slate-700 dark:text-slate-300">Создать этапы (Stages) и настроить расписание</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">📝</div>
+                    <span className="text-lg text-slate-700 dark:text-slate-300">Загрузить регламенты и документы для участников</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">🏆</div>
+                    <span className="text-lg text-slate-700 dark:text-slate-300">Настроить турнирные сетки и критерии оценки</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         );
       case 3:
         return (
-          <div className="animate-in fade-in-50 duration-500">
-            <DocumentUpload onFileUpload={handleFileUpload} />
-          </div>
-        );
-      case 4:
-        return (
-          <div className="animate-in fade-in-50 duration-500">
-            <StatusControl
-              currentStatus={currentStatus}
-              onStatusChange={setCurrentStatus}
-            />
+          <div className="animate-in fade-in-50 duration-500 py-8">
+            <div className="flex flex-col items-center text-center max-w-2xl mx-auto space-y-6">
+              <div className="h-20 w-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <Info className="h-10 w-10 text-amber-600 dark:text-amber-400" />
+              </div>
+              
+              <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                Сохранение черновика
+              </h3>
+              
+              <div className="text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto">
+                Сейчас ваше мероприятие будет сохранено со статусом <b>«Черновик»</b>. 
+                <br /><br />
+                Вы сможете опубликовать его и открыть регистрацию для команд из панели управления, когда убедитесь, что все этапы и правила настроены корректно.
+              </div>
+            </div>
           </div>
         );
       default:
@@ -264,29 +173,28 @@ export default function CreateEvent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="space-y-8">
           {/* Header */}
           <div className="space-y-3">
             <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
               Создание мероприятия
             </h1>
-            <p className="text-muted-foreground">
-              Заполните информацию о мероприятии и настройте этапы проведения
+            <p className="text-muted-foreground text-lg">
+              Пройдите основные шаги для регистрации нового турнира на платформе.
             </p>
           </div>
 
-          {/* Progress Bar */}
           <Stepper currentStep={currentStep} steps={steps}/>
 
           {/* Content */}
-          <Card className="border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-xl text-slate-900 dark:text-slate-100">
+          <Card className="border-border bg-card shadow-sm">
+            <CardHeader className="border-b border-border/50 pb-6 mb-6">
+              <CardTitle className="text-2xl font-bold">
                 {steps[currentStep - 1].title}
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="space-y-8">
               {renderStep()}
             </CardContent>
           </Card>
@@ -299,17 +207,9 @@ export default function CreateEvent() {
             onBack={handleBack}
             isLastStep={currentStep === steps.length}
             onSave={handleSave}
+            isSubmitting={isSubmitting}
           />
         </div>
-
-        <CheckpointModal
-          isOpen={isCheckpointModalOpen}
-          onOpenChange={setIsCheckpointModalOpen}
-          checkpointId={editingCheckpoint || undefined}
-          onSave={handleSaveCheckpoint}
-          selectedDate={selectedDate}
-          checkpoints={checkpoints}
-        />
       </div>
     </div>
   );
