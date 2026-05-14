@@ -67,7 +67,6 @@ export default function CreateEvent() {
       start_date: startDate ? startDate.toISOString() : '',
       end_date: endDate ? endDate.toISOString() : '',
       event_status: 'active' as const,
-      organizer_id: 1, 
       category_id: category,
       stages: []
     };

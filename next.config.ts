@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
       { hostname: 'cdn2.thecatapi.com' },
       { hostname: 'images.unsplash.com' },
       { hostname: 's0.rbk.ru' },
+      { hostname: 'eventer-app.ru' },
     ],
   },
 };

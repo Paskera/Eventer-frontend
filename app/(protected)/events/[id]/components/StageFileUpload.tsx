@@ -11,9 +11,10 @@ import { Upload, X, Download, FileIcon, Loader2 } from "lucide-react"
 interface StageFileUploadProps {
   stageId: number
   requirements: FileRequirement[]
+  hasTeam?: boolean
 }
 
-export function StageFileUpload({ stageId, requirements }: StageFileUploadProps) {
+export function StageFileUpload({ stageId, requirements, hasTeam }: StageFileUploadProps) {
   // const { toast } = useToast()
   const queryClient = useQueryClient()
 
@@ -148,7 +149,7 @@ export function StageFileUpload({ stageId, requirements }: StageFileUploadProps)
                       >
                         <Download className="h-4 w-4" />
                       </Button>
-                      {submission && (
+                      {submission && hasTeam && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -162,27 +163,37 @@ export function StageFileUpload({ stageId, requirements }: StageFileUploadProps)
                   </div>
                 ) : (
                   <div className="mt-3">
-                    <Input
-                      type="file"
-                      accept={requirement.mimes.join(",")}
-                      onChange={(e) => handleFileSelect(requirement, e)}
-                      disabled={isUploading}
-                      className="hidden"
-                      id={`file-input-${requirement.id}`}
-                    />
-                    <label htmlFor={`file-input-${requirement.id}`}>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        disabled={isUploading}
-                        asChild
-                      >
-                        <span>
-                          <Upload className="h-4 w-4 mr-2" />
-                          {isUploading ? "Загрузка..." : "Выбрать файл"}
-                        </span>
-                      </Button>
-                    </label>
+                    {!hasTeam ? (
+                      <div className="p-3 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-md">
+                        <p className="text-xs text-orange-700 dark:text-orange-400 font-medium">
+                          Для загрузки файлов необходимо зарегистрировать команду во вкладке «Команда».
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <Input
+                          type="file"
+                          accept={requirement.mimes.join(",")}
+                          onChange={(e) => handleFileSelect(requirement, e)}
+                          disabled={isUploading}
+                          className="hidden"
+                          id={`file-input-${requirement.id}`}
+                        />
+                        <label htmlFor={`file-input-${requirement.id}`}>
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            disabled={isUploading}
+                            asChild
+                          >
+                            <span>
+                              <Upload className="h-4 w-4 mr-2" />
+                              {isUploading ? "Загрузка..." : "Выбрать файл"}
+                            </span>
+                          </Button>
+                        </label>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

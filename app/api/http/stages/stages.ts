@@ -17,8 +17,14 @@ export interface Stages {
   id: number
   start_date: string
   end_date: string
+  stage_format?: string
+  max_slots?: number
   requirements?: FileRequirement[]
   resources?: StageResource[]
+  content?: string
+  max_files?: number
+  bracket_type?: string
+  settings?: any
 }
 
 export const apiStages = {

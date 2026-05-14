@@ -8,19 +8,21 @@ import {
   Users,
   Calendar,
   MapPin,
-  Trophy,
   CheckCircle,
   XCircle,
   Eye,
   MessageCircle,
-  FileText,
   Plus,
   Clock
 } from "lucide-react"
 import { useState, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { apiEvents } from "@/app/api/http/event/events"
+import { apiStages } from "@/app/api/http/stages/stages"
+import { apiResources } from "@/app/api/http/stages/resources"
 import { useSession } from "next-auth/react"
+import { StatusBadge, FormatBadge } from "@/app/(protected)/events/[id]/components/Badges"
+import { StageModal, ResourceFile } from "@/app/(protected)/events/dashboard/components/StageModal"
 
 type Team = {
   id: string
@@ -54,7 +56,10 @@ type Event = {
 
 export default function DashboardPage() {
   const { data: session } = useSession()
+  const queryClient = useQueryClient()
   const [events, setEvents] = useState<Event[]>([])
+  const [isStageModalOpen, setIsStageModalOpen] = useState(false)
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null)
   
   const { data, isLoading, error } = useQuery({
     queryKey: ['organizerEvents'],
@@ -70,6 +75,31 @@ export default function DashboardPage() {
       setEvents(data)
     }
   }, [data])
+
+  const openStageModal = (eventId: number) => {
+    setSelectedEventId(eventId)
+    setIsStageModalOpen(true)
+  }
+
+  const handleSaveStage = async (stageData: any, resourceFiles?: ResourceFile[]) => {
+    if (!selectedEventId) return
+    try {
+      const created = await apiStages.createStage(selectedEventId, stageData)
+
+      // Загружаем ресурсы-файлы после создания этапа
+      if (resourceFiles?.length && created.id) {
+        await Promise.all(
+          resourceFiles.map(rf => apiResources.uploadResource(created.id, rf))
+        )
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['organizerEvents'] })
+      setIsStageModalOpen(false)
+      setSelectedEventId(null)
+    } catch (error) {
+      console.error('Ошибка при создании этапа:', error)
+    }
+  }
 
   if (error) {
     return (
@@ -145,12 +175,8 @@ export default function DashboardPage() {
                                 <Badge variant="outline" className="text-xs">
                                   {event.users_count} участников
                                 </Badge>
-                                <Badge className="text-xs capitalize">
-                                  {event.event_status}
-                                </Badge>
-                                <Badge variant="secondary" className="text-xs capitalize">
-                                  {event.format}
-                                </Badge>
+                                <StatusBadge status={event.event_status} />
+                                <FormatBadge format={event.format} />
                               </CardTitle>
                               <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                                 {event.description}
@@ -167,12 +193,21 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           </div>
+                        </div>
                         <div className="flex flex-col sm:flex-row gap-2 min-w-fit">
                           <Button variant="outline" size="sm" asChild>
                             <a href={`/events/dashboard/${event.id}`}>
                               <Eye className="w-4 h-4 mr-2" />
                               Управление
                             </a>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openStageModal(event.id)}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Добавить этап
                           </Button>
                           <Button variant="outline" size="sm">
                             <MessageCircle className="w-4 h-4 mr-2" />
@@ -226,6 +261,15 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      <StageModal
+        isOpen={isStageModalOpen}
+        onOpenChange={(open) => {
+          setIsStageModalOpen(open)
+          if (!open) setSelectedEventId(null)
+        }}
+        onSave={handleSaveStage}
+      />
     </RoleGuard>
   )
 }

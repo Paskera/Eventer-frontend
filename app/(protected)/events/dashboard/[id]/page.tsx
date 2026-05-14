@@ -42,12 +42,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { apiEvents } from "@/app/api/http/event/events";
 import { apiEventTeams } from "@/app/api/http/EventTeams/event_teams";
 import { apiStages, Stages } from "@/app/api/http/stages/stages";
+import { apiResources } from "@/app/api/http/stages/resources";
 import { StatusControl } from "@/app/(protected)/events/create/components/StatusControl";
-import { StageModal } from "@/app/(protected)/events/dashboard/components/StageModal";
+import { StageModal, ResourceFile } from "@/app/(protected)/events/dashboard/components/StageModal";
 import { NotificationModal } from "@/app/(protected)/events/dashboard/components/NotificationModal";
 import { EventSettingsModal } from "@/app/(protected)/events/dashboard/components/EventSettingsModal";
 import { ArchiveConfirmationModal } from "@/app/(protected)/events/dashboard/components/ArchiveConfirmationModal";
 import { StageCriteriaModal } from "@/app/(protected)/events/dashboard/components/StageCriteriaModal";
+import { toast } from "sonner";
 
 // Интерфейсы для типизации данных
 interface Event {
@@ -216,7 +218,7 @@ const EventDetailDashboard = () => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
-  const [approvalAction, setApprovalAction] = useState<"approve" | "reject" | null>(null);
+  const [approvalAction, setApprovalAction] = useState<"approved" | "rejected" | null>(null);
   const [teamToModify, setTeamToModify] = useState<number | null>(null);
   const [currentEventStatus, setCurrentEventStatus] = useState<string>("");
   // Новые состояния для дополнительных модальных окон
@@ -237,13 +239,13 @@ const EventDetailDashboard = () => {
   // Функции для обработки действий с командами
   const handleApproveTeam = async (teamId: number) => {
     setTeamToModify(teamId);
-    setApprovalAction("approve");
+    setApprovalAction("approved");
     setIsApprovalModalOpen(true);
   };
 
   const handleRejectTeam = async (teamId: number) => {
     setTeamToModify(teamId);
-    setApprovalAction("reject");
+    setApprovalAction("rejected");
     setIsApprovalModalOpen(true);
   };
 
@@ -293,17 +295,60 @@ const EventDetailDashboard = () => {
     setEditingStage(null);
   };
 
-  const saveStage = async (stageData: any) => {
+  const saveStage = async (stageData: any, resourceFiles?: ResourceFile[]) => {
     try {
+      let stageId: number;
       if (editingStage?.id) {
-        await apiStages.updateStage(eventId, editingStage.id, stageData);
+        const updated = await apiStages.updateStage(eventId, editingStage.id, stageData);
+        stageId = updated.id;
+        toast.success("Этап успешно обновлен");
       } else {
-        await apiStages.createStage(eventId, stageData);
+        const created = await apiStages.createStage(eventId, stageData);
+        stageId = created.id;
+        toast.success("Этап успешно создан");
       }
+
+      // Upload resource files
+      if (resourceFiles?.length && stageId) {
+        try {
+          await Promise.all(
+            resourceFiles.map(rf => apiResources.uploadResource(stageId, rf))
+          );
+          toast.success(`Загружено ресурсов: ${resourceFiles.length}`);
+        } catch (resourceError) {
+          console.error('Error uploading resources:', resourceError);
+          toast.error("Ошибка при загрузке ресурсов", {
+            description: "Этап сохранен, но некоторые файлы не удалось загрузить."
+          });
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ["eventStages", eventId] });
       closeStageModal();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving stage:', error);
+      const detail = error?.response?.data?.detail;
+      toast.error("Ошибка при сохранении этапа", {
+        description: typeof detail === 'string' ? detail : "Не удалось сохранить изменения."
+      });
+    }
+  };
+
+  const handleDeleteResource = async (resourceId: number) => {
+    if (!editingStage?.id) return;
+    try {
+      await apiResources.deleteResource(editingStage.id, resourceId);
+      toast.success("Ресурс удален");
+      // Обновляем локальное состояние, чтобы ресурс исчез из модального окна мгновенно
+      setEditingStage((prev: any) => ({
+        ...prev,
+        resources: prev.resources?.filter((r: any) => r.id !== resourceId) || []
+      }));
+      // Инвалидируем кэш для обновления данных в фоне
+      queryClient.invalidateQueries({ queryKey: ["eventStages", eventId] });
+    } catch (error) {
+      console.error('Error deleting resource:', error);
+      toast.error("Не удалось удалить ресурс");
     }
   };
 
@@ -330,9 +375,12 @@ const EventDetailDashboard = () => {
     setIsEventSettingsModalOpen(false);
   };
 
-  const saveEventSettings = async (updatedEvent: any) => {
+  const saveEventSettings = async (updatedEvent: any, newImage?: File | null) => {
     try {
       await apiEvents.updateEvent(eventId, updatedEvent);
+      if (newImage) {
+        await apiEvents.uploadEventImage(eventId, newImage);
+      }
       queryClient.invalidateQueries({ queryKey: ["event", eventId] });
       closeEventSettingsModal();
     } catch (error) {
@@ -696,7 +744,7 @@ const EventDetailDashboard = () => {
                                 {team.status === "pending" && (
                                   <>
                                     <AlertDialog
-                                      open={isApprovalModalOpen && approvalAction === "approve" && teamToModify === team.id}
+                                      open={isApprovalModalOpen && approvalAction === "approved" && teamToModify === team.id}
                                     >
                                       <AlertDialogTrigger asChild>
                                         <Button
@@ -722,7 +770,7 @@ const EventDetailDashboard = () => {
                                       </AlertDialogContent>
                                     </AlertDialog>
                                     <AlertDialog
-                                      open={isApprovalModalOpen && approvalAction === "reject" && teamToModify === team.id}
+                                      open={isApprovalModalOpen && approvalAction === "rejected" && teamToModify === team.id}
                                     >
                                       <AlertDialogTrigger asChild>
                                         <Button
@@ -1095,6 +1143,7 @@ const EventDetailDashboard = () => {
         onOpenChange={setIsStageModalOpen}
         stageId={editingStage?.id}
         onSave={saveStage}
+        onDeleteResource={handleDeleteResource}
         stageData={editingStage}
       />
       

@@ -7,11 +7,12 @@ import { Badge } from "@/components/ui/badge"
 import { CalendarIcon, MapPinIcon, UsersIcon, CalendarCheck2 } from "lucide-react"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
+import { StatusBadge, FormatBadge } from "@/app/(protected)/events/[id]/components/Badges"
 
 export default function MyEventsPage() {
     const { data, isPending, error } = useQuery({
-        queryKey: ["myEvents", { page: 1, page_size: 12 }],
-        queryFn: () => apiEvents.getParticipationsEvents({ page: 1, page_size: 12 }),
+        queryKey: ["myCreatedEvents", { page: 1, page_size: 12 }],
+        queryFn: () => apiEvents.getMyCreatedEvents({ page: 1, page_size: 12 }),
     })
 
     const events: Events[] = data?.events ?? []
@@ -21,7 +22,7 @@ export default function MyEventsPage() {
         const year = date.getUTCFullYear()
         const month = date.toLocaleString('default', { month: 'long' })
         const day = date.getUTCDate()
-        
+
         return `${day} ${month} ${year}`
     }
 
@@ -64,9 +65,9 @@ export default function MyEventsPage() {
                 <div className="relative flex flex-col gap-3">
                     <div className="flex items-center gap-2 text-sm uppercase tracking-wide text-gray-600 dark:text-gray-400">
                         <CalendarCheck2 className="h-4 w-4" />
-                        Мои мероприятия
+                        Организация
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">События, в которых я участвую</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Мероприятия, созданные мной</h1>
                     <div className="flex flex-wrap gap-2">
                         <Badge className="bg-gray-100 dark:bg-neutral-800 border-gray-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300">
                             Всего: {events.length}
@@ -112,13 +113,9 @@ export default function MyEventsPage() {
                                 </div>
                                 <CardContent className="p-5 flex flex-col gap-3 min-h-[180px]">
                                     <div className="flex flex-wrap gap-2">
-                                        <Badge variant="secondary" className="bg-gray-100 dark:bg-neutral-800 text-slate-700 dark:text-slate-300 border-gray-300 dark:border-neutral-700 font-semibold">
-                                            {event.format}
-                                        </Badge>
+                                        <FormatBadge format={event.format} />
                                         {event.event_status && (
-                                            <Badge variant="secondary" className="bg-gray-800 dark:bg-neutral-700 text-white border-gray-700 dark:border-neutral-600 font-semibold">
-                                                {event.event_status}
-                                            </Badge>
+                                            <StatusBadge status={event.event_status} />
                                         )}
                                     </div>
                                     <h3 className="text-xl font-bold leading-tight text-slate-900 dark:text-slate-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">

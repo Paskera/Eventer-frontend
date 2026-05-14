@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import { ImageUpload } from "@/app/(protected)/events/create/components/ImageUpload"
 
 interface Event {
     id: number;
@@ -22,13 +23,14 @@ interface Event {
     registration_open: boolean;
     max_teams: number;
     max_team_size: number;
+    image_url?: string;
 }
 
 interface EventSettingsModalProps {
     isOpen: boolean
     onOpenChange: (open: boolean) => void
     event: Event | null
-    onSave: (updatedEvent: Event) => void
+    onSave: (updatedEvent: Event, newImage?: File | null) => void
 }
 
 export function EventSettingsModal({
@@ -46,6 +48,7 @@ export function EventSettingsModal({
     const [registrationOpen, setRegistrationOpen] = useState(true)
     const [maxTeams, setMaxTeams] = useState(50)
     const [maxTeamSize, setMaxTeamSize] = useState(5)
+    const [eventImage, setEventImage] = useState<File | null>(null)
 
     useEffect(() => {
         if (event) {
@@ -75,7 +78,7 @@ export function EventSettingsModal({
             max_team_size: maxTeamSize
         } as Event;
         
-        onSave(updatedEvent)
+        onSave(updatedEvent, eventImage)
     }
 
     return (
@@ -87,6 +90,14 @@ export function EventSettingsModal({
                     </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6 pt-4">
+                    <div className="space-y-2">
+                        <Label className="text-base">Обложка мероприятия</Label>
+                        <ImageUpload 
+                            value={eventImage} 
+                            onImageChange={(file) => setEventImage(file)} 
+                        />
+                    </div>
+
                     <div className="space-y-2">
                         <Label htmlFor="event-name" className="text-base">Название мероприятия</Label>
                         <Input

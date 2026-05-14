@@ -9,9 +9,10 @@ import { StageResources } from "./StageResources"
 
 interface EventTimelineProps {
   stages: any[]
+  hasTeam?: boolean
 }
 
-export const EventTimeline = ({ stages }: EventTimelineProps) => {
+export const EventTimeline = ({ stages, hasTeam }: EventTimelineProps) => {
   const router = useRouter()
   const params = useParams()
   const eventId = params.id as string
@@ -108,7 +109,7 @@ export const EventTimeline = ({ stages }: EventTimelineProps) => {
                   (stage.stage_type === "bracket")) && (
                    <div className="flex flex-col gap-4 mt-2 pt-4 border-t border-border/50">
                      {stage.stage_type === "submission" && stage.requirements && stage.requirements.length > 0 && (
-                       <StageFileUpload stageId={stage.id} requirements={stage.requirements} />
+                       <StageFileUpload stageId={stage.id} requirements={stage.requirements} hasTeam={hasTeam} />
                      )}
                      {stage.resources && Array.isArray(stage.resources) && stage.resources.length > 0 && (
                        <StageResources stageId={stage.id} resources={stage.resources} />

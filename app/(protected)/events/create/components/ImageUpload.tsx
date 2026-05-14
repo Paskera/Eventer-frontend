@@ -57,10 +57,6 @@ export function ImageUpload({ value, onImageChange }: ImageUploadProps) {
 
   return (
     <div className="space-y-3">
-      <label className="text-sm font-medium">
-        Обложка мероприятия
-      </label>
-      
       {preview ? (
         <Card className="relative overflow-hidden group">
           <div className="aspect-video relative">

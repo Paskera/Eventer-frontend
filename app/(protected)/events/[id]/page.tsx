@@ -241,7 +241,7 @@ export default function EventDetailsPage() {
 
                 <TabsContent value="stages" className="space-y-6 mt-0 focus-visible:outline-none focus:outline-none">
                   <div className="w-full">
-                    <EventTimeline stages={stages || event.stages || []} />
+                    <EventTimeline stages={stages || event.stages || []} hasTeam={!!team} />
                   </div>
                 </TabsContent>
 

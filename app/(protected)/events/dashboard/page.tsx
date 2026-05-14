@@ -9,6 +9,7 @@ import { CalendarIcon, MapPinIcon, UsersIcon, Globe2Icon, PlusIcon } from "lucid
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useRouter } from "next/navigation"
+import { StatusBadge, FormatBadge } from "@/app/(protected)/events/[id]/components/Badges"
 
 export default function EventsPage() {
     const router = useRouter()
@@ -103,13 +104,9 @@ export default function EventsPage() {
                             </div>
                             <CardContent className="p-5 flex flex-col gap-3">
                                 <div className="flex flex-wrap gap-2">
-                                    <Badge variant="secondary" className="bg-gray-100 dark:bg-neutral-800 text-slate-700 dark:text-slate-300 border-gray-300 dark:border-neutral-700 font-semibold">
-                                        {event.format}
-                                    </Badge>
+                                    <FormatBadge format={event.format} />
                                     {event.event_status && (
-                                        <Badge variant="secondary" className="bg-gray-800 dark:bg-neutral-700 text-white border-gray-700 dark:border-neutral-600 font-semibold">
-                                            {event.event_status}
-                                        </Badge>
+                                        <StatusBadge status={event.event_status} />
                                     )}
                                 </div>
                                 <h3 className="text-xl font-bold leading-tight text-slate-900 dark:text-slate-100 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">

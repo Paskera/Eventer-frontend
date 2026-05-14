@@ -158,6 +158,16 @@ export const apiEvents = {
     return (await restAxios.patch(`api/events/${id}`, data)).data;
   },
 
+  uploadEventImage: async (id: number, imageFile: File): Promise<void> => {
+    const formData = new FormData();
+    formData.append('file', imageFile);
+    await restAxios.post(`api/events/${id}/upload-image/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
   deleteEvent: async (id: number): Promise<void> => {
     await restAxios.delete(`api/events/${id}`);
   },
