@@ -72,6 +72,10 @@ export const apiEventTeams = {
     await restAxios.delete(`/api/events/${event_id}/event-teams/${team_id}`);
   },
 
+  regenerateInviteToken: async (event_id: number, team_id: number): Promise<string> => {
+    return (await restAxios.post(`/api/events/${event_id}/event-teams/${team_id}/generate-invite-code/`)).data;
+  },
+
   // getEventsTeams: async (params?: {
   //   event_id: number
   //   page?: number

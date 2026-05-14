@@ -52,20 +52,6 @@ import { StageCriteriaModal } from "@/app/(protected)/events/dashboard/component
 import { toast } from "sonner";
 import { restAxios } from "@/app/api/http/api";
 
-// Интерфейсы для типизации данных
-interface Event {
-  id: number;
-  event_name: string;
-  description: string;
-  start_date: string;
-  end_date: string;
-  format: string;
-  venue: string;
-  event_status: string;
-  image_url: string;
-  users_count: number;
-  stages: Stages[];
-}
 
 interface Team {
   id: number;
@@ -82,7 +68,7 @@ interface TeamMember {
   email: string;
   phone: string;
   is_event_leader: boolean;
- isMinor: boolean;
+  isMinor: boolean;
   parentalConsent: string;
 }
 
@@ -212,7 +198,7 @@ const EventDetailDashboard = () => {
     queryFn: () => apiEvents.getEventDetail(eventId),
   });
 
- const { data: teams, isLoading: teamsLoading } = useQuery<any>({
+  const { data: teams, isLoading: teamsLoading } = useQuery<any>({
     queryKey: ["eventTeams", eventId],
     queryFn: () => apiEventTeams.getEventTeams(eventId),
   });
@@ -252,7 +238,7 @@ const EventDetailDashboard = () => {
     if (event) {
       setCurrentEventStatus(event.event_status);
     }
- }, [event]);
+  }, [event]);
 
   // Функции для обработки действий с командами
   const handleApproveTeam = async (teamId: number) => {
@@ -280,7 +266,7 @@ const EventDetailDashboard = () => {
   };
 
   // Функция для подтверждения действия с командой
- const confirmAction = async () => {
+  const confirmAction = async () => {
     if (teamToModify && approvalAction) {
       try {
         await apiEventTeams.updateTeamStatus(eventId, teamToModify, approvalAction);
@@ -473,7 +459,7 @@ const EventDetailDashboard = () => {
   // const handleViewFile = (teamId: number, stageId: number) => alert(`Показать файл ответов команды ${teamId} (этап ${stageId})`);
   // const handleViewScore = (teamId: number, stageId: number) => alert(`Показать баллы команды ${teamId} (этап ${stageId})`);
 
-const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, number>>({});
+  const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, number>>({});
   const [loadingTeamStage, setLoadingTeamStage] = useState<Record<number, boolean>>({});
   const [transitioningTeam, setTransitioningTeam] = useState<Record<number, boolean>>({});
 
@@ -629,8 +615,8 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
                   </p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-3">
-                   <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                     <div className="rounded-lg bg-slate-100 p-2 text-slate-700 dark:bg-neutral-800 dark:text-slate-100">
+                  <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                    <div className="rounded-lg bg-slate-100 p-2 text-slate-700 dark:bg-neutral-800 dark:text-slate-100">
                       <Calendar className="h-5 w-5" />
                     </div>
                     <div className="text-sm text-slate-700 dark:text-slate-200">
@@ -639,8 +625,8 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
                       <p className="font-semibold text-slate-900 dark:text-slate-50">{formatDate(event.end_date)}</p>
                     </div>
                   </div>
-                   <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                     <div className="rounded-lg bg-slate-100 p-2 text-slate-700 dark:bg-neutral-800 dark:text-slate-100">
+                  <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                    <div className="rounded-lg bg-slate-100 p-2 text-slate-700 dark:bg-neutral-800 dark:text-slate-100">
                       <MapPin className="h-5 w-5" />
                     </div>
                     <div className="text-sm text-slate-700 dark:text-slate-200">
@@ -648,8 +634,8 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
                       <p className="font-semibold text-slate-900 line-clamp-2 dark:text-slate-50">{event.venue}</p>
                     </div>
                   </div>
-                   <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                     <div className="rounded-lg bg-slate-100 p-2 text-slate-700 dark:bg-neutral-800 dark:text-slate-100">
+                  <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                    <div className="rounded-lg bg-slate-100 p-2 text-slate-700 dark:bg-neutral-800 dark:text-slate-100">
                       <Clock className="h-5 w-5" />
                     </div>
                     <div className="text-sm text-slate-700 dark:text-slate-200">
@@ -661,7 +647,7 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
               </div>
             </div>
 
-              <Card className="h-full border-gray-200 bg-white shadow-md dark:border-neutral-800 dark:bg-neutral-900">
+            <Card className="h-full border-gray-200 bg-white shadow-md dark:border-neutral-800 dark:bg-neutral-900">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
                   <Settings className="h-5 w-5" />
@@ -709,7 +695,7 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
                   </Button>
                 </div>
 
-                 <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-900">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Текущий статус</p>
@@ -717,11 +703,11 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
                         {currentEventStatus || event.event_status}
                       </p>
                     </div>
-                     <Badge className="rounded-full border border-gray-200 bg-white px-3 py-1 text-slate-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-100">
+                    <Badge className="rounded-full border border-gray-200 bg-white px-3 py-1 text-slate-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-100">
                       {event.format}
                     </Badge>
                   </div>
-                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-slate-700 dark:text-slate-200">
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-slate-700 dark:text-slate-200">
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                       <span>{event.users_count || 0} участников</span>
@@ -736,12 +722,12 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
             </Card>
           </div>
 
-             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {summaryCards.map((card) => (
-               <Card
-                 key={card.label}
-                 className="border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 h-full min-h-[100px] flex flex-col"
-               >
+              <Card
+                key={card.label}
+                className="border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 h-full min-h-[100px] flex flex-col"
+              >
                 <CardContent className="flex items-center gap-3 p-4 flex-1">
                   <div className={`rounded-lg p-2 flex-shrink-0 ${card.iconBg}`}>
                     <card.icon className="h-5 w-5" />
@@ -838,10 +824,10 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
                       </thead>
                       <tbody>
                         {teams?.teams?.map((team: any) => (
-                           <tr
-                             key={team.id}
-                             className="border-b border-gray-100 transition-colors duration-150 hover:bg-gray-50 dark:border-neutral-800 dark:hover:bg-neutral-900/70"
-                           >
+                          <tr
+                            key={team.id}
+                            className="border-b border-gray-100 transition-colors duration-150 hover:bg-gray-50 dark:border-neutral-800 dark:hover:bg-neutral-900/70"
+                          >
                             <td className="p-3 text-sm font-medium text-slate-900 dark:text-slate-100">{team.name}</td>
                             <td className="p-3 text-sm text-slate-700 dark:text-slate-200">
                               {team.members?.find((m: any) => m.is_event_leader)?.firstname || "Не указан"}
@@ -981,8 +967,8 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
                                   stage.stage_status === "active"
                                     ? "rounded-full border border-emerald-400/40 bg-emerald-500/20 text-xs text-emerald-100"
                                     : stage.stage_status === "upcoming"
-                                    ? "rounded-full border border-cyan-400/40 bg-cyan-500/20 text-xs text-cyan-100"
-                                    : "rounded-full border border-slate-400/40 bg-slate-600/40 text-xs text-white"
+                                      ? "rounded-full border border-cyan-400/40 bg-cyan-500/20 text-xs text-cyan-100"
+                                      : "rounded-full border border-slate-400/40 bg-slate-600/40 text-xs text-white"
                                 }
                               >
                                 {stage.stage_status}
@@ -1026,84 +1012,84 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
 
                           {/* Раскрывающийся блок с командами (показывается только для выбранного этапа) */}
                           {expandedStageId === stage.id && (
-                        <div className="border-t border-gray-200 p-4 dark:border-neutral-800">
-                          <h4 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">Команды на этапе</h4>
-                          <div className="space-y-2">
-                            {teams?.teams
-                              .filter(team => teamCurrentStageMap[team.id] === stage.id)
-                              .map(team => {
-                                const isLoading = loadingTeamStage[team.id];
-                                const isTransitioning = transitioningTeam[team.id];
-                                const currentStageId = teamCurrentStageMap[team.id];
-                                const sortedStages = getSortedStages();
-                                const currentIndex = sortedStages.findIndex(s => s.id === currentStageId);
-                                const hasPrev = currentIndex > 0;
-                                const hasNext = currentIndex !== -1 && currentIndex < sortedStages.length - 1;
+                            <div className="border-t border-gray-200 p-4 dark:border-neutral-800">
+                              <h4 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">Команды на этапе</h4>
+                              <div className="space-y-2">
+                                {teams?.teams
+                                  .filter((team: Team) => teamCurrentStageMap[team.id] === stage.id)
+                                  .map((team: Team) => {
+                                    const isLoading = loadingTeamStage[team.id];
+                                    const isTransitioning = transitioningTeam[team.id];
+                                    const currentStageId = teamCurrentStageMap[team.id];
+                                    const sortedStages = getSortedStages();
+                                    const currentIndex = sortedStages.findIndex(s => s.id === currentStageId);
+                                    const hasPrev = currentIndex > 0;
+                                    const hasNext = currentIndex !== -1 && currentIndex < sortedStages.length - 1;
 
-                                return (
-                                  <div
-                                    key={team.id}
-                                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-800"
-                                  >
-                                    <span className="font-medium text-slate-800 dark:text-slate-100">{team.name}</span>
-                                    <div className="flex gap-2">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 w-8 p-0"
-                                        onClick={() => handleMovePrev(team.id, currentStageId)}
-                                        disabled={!hasPrev || isTransitioning || isLoading}
-                                        title="Вернуть на предыдущий этап"
+                                    return (
+                                      <div
+                                        key={team.id}
+                                        className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-800"
                                       >
-                                        <ArrowLeft className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 w-8 p-0"
-                                        onClick={() => handleMoveNext(team.id, currentStageId)}
-                                        disabled={!hasNext || isTransitioning || isLoading}
-                                        title="Перевести на следующий этап"
-                                      >
-                                        <ArrowRight className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 w-8 p-0"
-                                        onClick={() => handleDisqualify(team.id, stage.id)}
-                                        title="Исключить"
-                                      >
-                                        <Ban className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 w-8 p-0"
-                                        onClick={() => handleViewFile(team.id, stage.id)}
-                                        title="Файл ответов"
-                                      >
-                                        <FileText className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 w-8 p-0"
-                                        onClick={() => handleViewScore(team.id, stage.id)}
-                                        title="Баллы"
-                                      >
-                                        <Star className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            {teams?.teams && teams.teams.filter(team => teamCurrentStageMap[team.id] === stage.id).length === 0 && (
-                              <div className="py-4 text-center text-sm text-slate-500">На этом этапе нет команд</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                                        <span className="font-medium text-slate-800 dark:text-slate-100">{team.name}</span>
+                                        <div className="flex gap-2">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => handleMovePrev(team.id, currentStageId)}
+                                            disabled={!hasPrev || isTransitioning || isLoading}
+                                            title="Вернуть на предыдущий этап"
+                                          >
+                                            <ArrowLeft className="h-4 w-4" />
+                                          </Button>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => handleMoveNext(team.id, currentStageId)}
+                                            disabled={!hasNext || isTransitioning || isLoading}
+                                            title="Перевести на следующий этап"
+                                          >
+                                            <ArrowRight className="h-4 w-4" />
+                                          </Button>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => handleDisqualify(team.id, stage.id)}
+                                            title="Исключить"
+                                          >
+                                            <Ban className="h-4 w-4" />
+                                          </Button>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => handleViewFile(team.id, stage.id)}
+                                            title="Файл ответов"
+                                          >
+                                            <FileText className="h-4 w-4" />
+                                          </Button>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => handleViewScore(team.id, stage.id)}
+                                            title="Баллы"
+                                          >
+                                            <Star className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                {teams?.teams && teams.teams.filter(team => teamCurrentStageMap[team.id] === stage.id).length === 0 && (
+                                  <div className="py-4 text-center text-sm text-slate-500">На этом этапе нет команд</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1278,7 +1264,7 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
           </Tabs>
         </div>
       )}
-      
+
       {/* Модальное окно для просмотра деталей команды */}
       {selectedTeam && (
         <TeamDetailsModal
@@ -1287,7 +1273,7 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
           onOpenChange={handleToggleTeamModal}
         />
       )}
-      
+
       {/* Модальное окно для управления этапами */}
       <StageModal
         isOpen={isStageModalOpen}
@@ -1297,14 +1283,14 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
         onDeleteResource={handleDeleteResource}
         stageData={editingStage}
       />
-      
+
       {/* Модальное окно для отправки уведомлений */}
       <NotificationModal
         isOpen={isNotificationModalOpen}
         onOpenChange={setIsNotificationModalOpen}
         onSave={sendNotification}
       />
-      
+
       {/* Модальное окно для настройки параметров мероприятия */}
       <EventSettingsModal
         isOpen={isEventSettingsModalOpen}
@@ -1312,7 +1298,7 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
         event={event}
         onSave={saveEventSettings}
       />
-      
+
       {/* Модальное окно подтверждения архивации мероприятия */}
       <ArchiveConfirmationModal
         isOpen={isArchiveModalOpen}
@@ -1320,7 +1306,7 @@ const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, nu
         onConfirm={confirmArchiveEvent}
         eventName={event?.event_name || ""}
       />
-      
+
       {/* Модальное окно управления критериями этапа */}
       <StageCriteriaModal
         isOpen={isStageCriteriaModalOpen}

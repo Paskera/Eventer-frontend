@@ -101,7 +101,7 @@ export default function EventDetailsPage() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    const open = searchParams.get("openModal")
+    const open = searchParams.get("open")
     const team_name = searchParams.get("team_name")
     const token = searchParams.get("token")
 
@@ -351,7 +351,12 @@ export default function EventDetailsPage() {
                 </TabsContent>
 
                 <TabsContent value="team" className="space-y-6 mt-0 focus-visible:outline-none focus:outline-none">
-                  <EventTeamTab team={team} isPending={isTeamPending} onRegisterClick={() => setIsModalOpen(true)} />
+                  <EventTeamTab 
+                    team={team} 
+                    eventId={Number(eventId)}
+                    isPending={isTeamPending} 
+                    onRegisterClick={() => setIsModalOpen(true)} 
+                  />
                 </TabsContent>
               </Tabs>
             </div>

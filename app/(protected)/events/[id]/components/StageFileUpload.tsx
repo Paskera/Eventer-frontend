@@ -149,7 +149,7 @@ export function StageFileUpload({ stageId, requirements, hasTeam }: StageFileUpl
                       >
                         <Download className="h-4 w-4" />
                       </Button>
-                      {submission && hasTeam && (
+                      {submission && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -163,37 +163,27 @@ export function StageFileUpload({ stageId, requirements, hasTeam }: StageFileUpl
                   </div>
                 ) : (
                   <div className="mt-3">
-                    {!hasTeam ? (
-                      <div className="p-3 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-md">
-                        <p className="text-xs text-orange-700 dark:text-orange-400 font-medium">
-                          Для загрузки файлов необходимо зарегистрировать команду во вкладке «Команда».
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        <Input
-                          type="file"
-                          accept={requirement.mimes.join(",")}
-                          onChange={(e) => handleFileSelect(requirement, e)}
-                          disabled={isUploading}
-                          className="hidden"
-                          id={`file-input-${requirement.id}`}
-                        />
-                        <label htmlFor={`file-input-${requirement.id}`}>
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            disabled={isUploading}
-                            asChild
-                          >
-                            <span>
-                              <Upload className="h-4 w-4 mr-2" />
-                              {isUploading ? "Загрузка..." : "Выбрать файл"}
-                            </span>
-                          </Button>
-                        </label>
-                      </>
-                    )}
+                    <Input
+                      type="file"
+                      accept={requirement.mimes.join(",")}
+                      onChange={(e) => handleFileSelect(requirement, e)}
+                      disabled={isUploading}
+                      className="hidden"
+                      id={`file-input-${requirement.id}`}
+                    />
+                    <label htmlFor={`file-input-${requirement.id}`}>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        disabled={isUploading}
+                        asChild
+                      >
+                        <span>
+                          <Upload className="h-4 w-4 mr-2" />
+                          {isUploading ? "Загрузка..." : "Выбрать файл"}
+                        </span>
+                      </Button>
+                    </label>
                   </div>
                 )}
               </div>

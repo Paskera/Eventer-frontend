@@ -1,25 +1,48 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { UsersIcon, ShieldAlert, LinkIcon, CopyIcon } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { UsersIcon, ShieldAlert, LinkIcon, CopyIcon, RefreshCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
+import { useSession } from "next-auth/react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { apiEventTeams } from "@/app/api/http/EventTeams/event_teams"
+import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 
 interface EventTeamTabProps {
   team: any;
+  eventId: number;
   isPending: boolean;
   onRegisterClick: () => void;
 }
 
-export const EventTeamTab = ({ team, isPending, onRegisterClick }: EventTeamTabProps) => {
+export const EventTeamTab = ({ team, eventId, isPending, onRegisterClick }: EventTeamTabProps) => {
+  const { data: session } = useSession()
+  const queryClient = useQueryClient()
   const [copiedLink, setCopiedLink] = useState(false)
 
+  const RegenerateTokenMutation = useMutation({
+    mutationFn: () => apiEventTeams.regenerateInviteToken(eventId, team.team.id),
+    onSuccess: () => {
+       queryClient.invalidateQueries({ queryKey: ["team", String(eventId)] })
+       toast.success("Ссылка обновлена", {
+          description: "Предыдущая ссылка больше не действительна."
+       })
+    },
+    onError: () => {
+       toast.error("Ошибка при обновлении ссылки")
+    }
+  })
+
+  const inviteUrl = team?.team?.invite_token 
+    ? `${window.location.origin}/events/${eventId}?open=true&token=${team.team.invite_token}&team_name=${team.team.name}`
+    : ""
+
   const copyInviteLink = () => {
-     if (team?.token) {
-        // Construct the invite link depending on where we are
-        const url = `${window.location.origin}/events/${team.team.event_id}?open=true&token=${team.token}&team_name=${team.team.name}`
-        navigator.clipboard.writeText(url)
+     if (inviteUrl) {
+        navigator.clipboard.writeText(inviteUrl)
         setCopiedLink(true)
         setTimeout(() => setCopiedLink(false), 2000)
      }
@@ -49,6 +72,13 @@ export const EventTeamTab = ({ team, isPending, onRegisterClick }: EventTeamTabP
       </Card>
     )
   }
+
+  const currentUserMember = team?.members?.find((m: any) => 
+    (m.firstname === session?.user?.name?.split(' ')[0] && m.lastname === session?.user?.name?.split(' ')[1]) ||
+    // Fallback if name is combined or structured differently
+    m.firstname + " " + m.lastname === session?.user?.name
+  )
+  const isCurrentUserLeader = currentUserMember?.role === 'LEADER' || currentUserMember?.role === '1'
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -103,24 +133,55 @@ export const EventTeamTab = ({ team, isPending, onRegisterClick }: EventTeamTabP
                 <div className="p-5 md:p-6 space-y-5">
                    <h3 className="font-bold text-foreground text-lg border-b border-border/50 pb-3">Управление</h3>
                    <div className="space-y-4">
-                      {team.token ? (
-                         <div className="space-y-2">
-                            <label className="text-[13px] font-medium text-muted-foreground uppercase tracking-wider">Пригласить участников</label>
-                            <Button 
-                              onClick={copyInviteLink} 
-                              variant={copiedLink ? "default" : "outline"}
-                              className={`w-full justify-start h-11 text-[14px] shadow-sm transition-all ${
-                                copiedLink 
-                                 ? 'bg-green-600 text-white hover:bg-green-700 border-green-600' 
-                                 : 'bg-background hover:bg-muted font-semibold'
-                              }`}
-                            >
-                               {copiedLink ? <CopyIcon className="w-4 h-4 mr-2" /> : <LinkIcon className="w-4 h-4 mr-2" />}
-                               {copiedLink ? 'Ссылка скопирована' : 'Копировать ссылку'}
-                            </Button>
-                            <p className="text-[12.5px] text-muted-foreground leading-tight mt-2">
-                               Отправьте эту ссылку коллегам, чтобы они смогли присоединиться к вашей команде.
-                            </p>
+                      {isCurrentUserLeader && team.team ? (
+                         <div className="space-y-4">
+                            <div className="space-y-3">
+                               <label className="text-[12px] font-bold text-muted-foreground uppercase tracking-widest">Пригласительная ссылка</label>
+                               
+                               <div className="space-y-2">
+                                  <div className="relative group">
+                                     <Input 
+                                       readOnly 
+                                       value={inviteUrl}
+                                       className="pr-10 bg-background/50 border-border text-[13px] h-10 focus-visible:ring-green-500/30"
+                                     />
+                                     <div className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                                        <LinkIcon className="w-4 h-4" />
+                                     </div>
+                                  </div>
+
+                                  <div className="flex gap-2">
+                                     <Button 
+                                       onClick={copyInviteLink} 
+                                       variant={copiedLink ? "default" : "outline"}
+                                       className={`flex-1 h-10 text-[13px] shadow-sm transition-all ${
+                                         copiedLink 
+                                          ? 'bg-green-600 text-white hover:bg-green-700 border-green-600' 
+                                          : 'bg-background hover:bg-muted font-semibold'
+                                       }`}
+                                     >
+                                        {copiedLink ? <CopyIcon className="w-4 h-4 mr-2" /> : <CopyIcon className="w-4 h-4 mr-2" />}
+                                        {copiedLink ? 'Скопировано' : 'Копировать'}
+                                     </Button>
+                                     <Button
+                                       variant="outline"
+                                       size="icon"
+                                       className="h-10 w-10 shrink-0 border-border hover:bg-muted transition-colors"
+                                       onClick={() => RegenerateTokenMutation.mutate()}
+                                       disabled={RegenerateTokenMutation.isPending}
+                                       title="Обновить ссылку"
+                                     >
+                                        <RefreshCcw className={`w-4 h-4 ${RegenerateTokenMutation.isPending ? 'animate-spin' : ''}`} />
+                                     </Button>
+                                  </div>
+                               </div>
+                            </div>
+                            
+                            <div className="p-3 bg-blue-50/30 dark:bg-blue-500/5 rounded-md border border-blue-100/50 dark:border-blue-500/20">
+                               <p className="text-[12px] text-blue-700/80 dark:text-blue-400/80 leading-normal">
+                                  <span className="font-bold text-blue-800 dark:text-blue-300">Совет:</span> Обновите ссылку, если вы уже набрали команду, чтобы никто лишний не смог вступить.
+                               </p>
+                            </div>
                          </div>
                       ) : (
                          <div className="text-sm text-muted-foreground flex items-center gap-2">
