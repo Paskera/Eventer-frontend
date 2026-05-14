@@ -12,9 +12,11 @@ import {
   ClipboardListIcon,
   LandmarkIcon,
   Target,
+  X,
+  CheckCircleIcon,
 } from "lucide-react"
 import { apiEventTeams } from "@/app/api/http/EventTeams/event_teams"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { apiStages } from "@/app/api/http/stages/stages"
@@ -23,10 +25,71 @@ import { EventSidebar } from "./components/EventSidebar"
 import { EventHeaderBanner } from "./components/EventHeaderBanner"
 import { EventTimeline } from "./components/EventTimeline"
 import { EventTeamTab } from "./components/EventTeamTab"
+import { toast } from "sonner"
+
+
+interface ModalProps {
+  isOpen: boolean
+  onClose: () => void
+  children: React.ReactNode
+}
+
+function Modal({ isOpen, onClose, children }: ModalProps) {
+  const router = useRouter()
+  const { status } = useSession()
+
+  useEffect(() => {
+    if (isOpen && status === "unauthenticated") {
+      router.push("/")
+    }
+  }, [isOpen, status, router])
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop with heavy blur */}
+      <div 
+        className="absolute inset-0 bg-slate-950/40 backdrop-blur-md transition-all duration-500" 
+        onClick={onClose}
+      ></div>
+      
+      {/* Glass Card */}
+      <Card className="relative z-10 w-full max-w-lg bg-white/5 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 fade-in duration-300">
+        {/* Accent glow effect - matching main green */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-green-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-green-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="relative p-6 md:p-8">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center shadow-lg shadow-green-500/20">
+                <UsersIcon className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Регистрация</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Шаг к победе</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all hover:bg-slate-200 dark:hover:bg-white/10"
+              aria-label="Закрыть"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="space-y-6">{children}</div>
+        </div>
+      </Card>
+    </div>
+  )
+}
 
 export default function EventDetailsPage() {
   const params = useParams()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const eventId = params.id
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -53,25 +116,59 @@ export default function EventDetailsPage() {
     }
   }, [])
 
-  const CreateTeamMutation = useMutation<unknown, Error, { event_id: number; agree: File; name: string }>({
+  const CreateTeamMutation = useMutation<unknown, any, { event_id: number; agree: File; name: string }>({
     mutationFn: ({ event_id, agree, name }) => apiEventTeams.createTeam(event_id, agree, name),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team", eventId] })
       setShowSuccess(true)
-      setTimeout(() => setShowSuccess(false), 3000)
+      setTimeout(() => {
+        setShowSuccess(false)
+        setIsModalOpen(false)
+      }, 3000)
     },
     onError: (error) => {
-      console.log(error)
+      const detail = error.response?.data?.detail
+      if (detail === "User birth data not specified") {
+        toast.error("Дата рождения не указана", {
+          description: "Для участия в этом мероприятии необходимо указать дату рождения в профиле.",
+          action: {
+            label: "В профиль",
+            onClick: () => router.push("/profile"), // Или другой путь к профилю
+          },
+        })
+      } else {
+        toast.error("Ошибка при создании команды", {
+          description: typeof detail === "string" ? detail : "Не удалось подать заявку.",
+        })
+      }
     },
   })
 
-  const JoinTeamMutation = useMutation<unknown, Error, { event_id: number; invite_token: string }>({
+  const JoinTeamMutation = useMutation<unknown, any, { event_id: number; invite_token: string }>({
     mutationFn: ({ event_id, invite_token }) => apiEventTeams.joinTeam(event_id, invite_token),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team", eventId] })
       setShowSuccess(true)
-      setTimeout(() => setShowSuccess(false), 3000)
+      setTimeout(() => {
+        setShowSuccess(false)
+        setIsModalOpen(false)
+      }, 3000)
     },
     onError: (error) => {
-      console.log(error)
+      const detail = error.response?.data?.detail
+      if (detail === "User birth data not specified") {
+        toast.error("Дата рождения не указана", {
+          description: "Для участия в этом мероприятии необходимо указать дату рождения в профиле.",
+          action: {
+            label: "В профиль",
+            onClick: () => router.push("/profile"),
+          },
+        })
+      } else {
+        toast.error("Ошибка при вступлении в команду", {
+          description: typeof detail === "string" ? detail : "Не удалось вступить в команду.",
+        })
+      }
     },
   })
 
@@ -85,52 +182,8 @@ export default function EventDetailsPage() {
     }
   }
 
-  function Modal({
-    isOpen,
-    onClose,
-    children,
-  }: {
-    isOpen: boolean
-    onClose: () => void
-    children: React.ReactNode
-  }) {
-    const router = useRouter()
-    const { status } = useSession()
-
-    useEffect(() => {
-      if (isOpen && status === "unauthenticated") {
-        router.push("/")
-      }
-    }, [isOpen, status, router])
-    if (!isOpen) return null
-
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="absolute inset-0 backdrop-blur-sm" onClick={onClose}></div>
-        <Card className="relative z-10 w-full max-w-lg bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-800/90 border border-white/15 rounded-md shadow-2xl p-6 text-white">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-cyan-500 to-emerald-500 flex items-center justify-center">
-                <UsersIcon className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold">Регистрация</h2>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white text-3xl leading-none transition-colors"
-              aria-label="Закрыть"
-            >
-              &times;
-            </button>
-          </div>
-          <div className="space-y-4">{children}</div>
-        </Card>
-      </div>
-    )
-  }
-
   const { data: team, isPending: isTeamPending } = useQuery({
-    queryKey: ["team"],
+    queryKey: ["team", eventId],
     queryFn: () => apiEventTeams.getEventTeam(Number(eventId)),
   })
 
@@ -313,70 +366,44 @@ export default function EventDetailsPage() {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         {showSuccess && (
           <div
-            style={{
-              position: "fixed",
-              top: 20,
-              right: 20,
-              background: "#16A34A",
-              color: "white",
-              padding: "12px 20px",
-              borderRadius: "8px",
-              boxShadow: "0 4px 12px rgba(22, 163, 74, 0.3)",
-              zIndex: 9999,
-              fontWeight: 600,
-            }}
+            className="fixed top-6 right-6 bg-emerald-500 text-white px-6 py-4 rounded-xl shadow-2xl shadow-emerald-500/30 z-[9999] flex items-center gap-3 animate-in slide-in-from-right duration-300 font-bold"
           >
-            ✅ Заявка успешно подана!
+            <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+               <CheckCircleIcon className="w-4 h-4" />
+            </div>
+            Заявка успешно подана!
           </div>
         )}
 
         {token == null ? (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-white mb-2">Название команды <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                value={createTeamName}
-                onChange={(e) => setCreateTeamName(e.target.value)}
-                placeholder="Введите название команды"
-                className="w-full px-4 py-3 rounded-md bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all font-medium"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-white mb-2">Согласие <span className="text-red-400">*</span></label>
-              <label className="cursor-pointer block w-full px-4 py-3 rounded-md bg-white/10 border border-white/20 border-dashed hover:bg-white/20 transition-all text-slate-300 text-sm font-medium text-center">
-                {agree ? `✓ ${agree.name}` : '+ Прикрепить документ'}
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Название команды <span className="text-rose-500">*</span></label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-green-600 transition-colors">
+                   <UsersIcon className="w-5 h-5" />
+                </div>
                 <input
-                  type="file"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files.length > 0) {
-                      setAgree(e.target.files[0])
-                    }
-                  }}
+                  type="text"
+                  value={createTeamName}
+                  onChange={(e) => setCreateTeamName(e.target.value)}
+                  placeholder="Придумайте крутое название"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-green-600 transition-all font-medium"
                 />
-              </label>
+              </div>
             </div>
-            <button
-              onClick={handleClick}
-              className="w-full py-3.5 mt-2 bg-green-600 hover:bg-green-700 rounded-md font-bold text-white transition-all shadow-md flex justify-center items-center"
-            >
-              Отправить заявку
-            </button>
-          </div>
-        ) : (
-          <div>
-            <div className="bg-white/10 border border-white/10 rounded-md p-4 mb-5 text-center">
-              <p className="text-white text-[15px] font-medium leading-relaxed">
-                Вас пригласили участвовать в ивенте в составе команды<br />
-                <span className="text-green-400 font-bold text-lg mt-1 inline-block">{team_name}</span>
-              </p>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-white mb-2">Согласие <span className="text-red-400">*</span></label>
-                <label className="cursor-pointer block w-full px-4 py-3 rounded-md bg-white/10 border border-white/20 border-dashed hover:bg-white/20 transition-all text-slate-300 text-sm font-medium text-center">
-                  {agree ? `✓ ${agree.name}` : '+ Прикрепить документ'}
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Согласие <span className="text-rose-500">*</span></label>
+              <label className="cursor-pointer block group">
+                <div className={`relative flex flex-col items-center justify-center w-full p-8 rounded-2xl border-2 border-dashed transition-all ${agree ? 'border-green-600 bg-green-600/5' : 'border-slate-200 dark:border-white/10 hover:border-green-600/50 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10'}`}>
+                  <div className={`w-12 h-12 rounded-full mb-3 flex items-center justify-center transition-colors ${agree ? 'bg-green-600 text-white' : 'bg-slate-200 dark:bg-white/10 text-slate-400 group-hover:text-green-600'}`}>
+                    {agree ? <CheckCircleIcon className="w-6 h-6" /> : <ClipboardListIcon className="w-6 h-6" />}
+                  </div>
+                  <span className={`text-sm font-bold transition-colors ${agree ? 'text-green-600 dark:text-emerald-400' : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>
+                    {agree ? agree.name : 'Прикрепите документ согласия'}
+                  </span>
+                  <p className="text-[11px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">Нажмите, чтобы выбрать файл</p>
                   <input
                     type="file"
                     className="hidden"
@@ -386,13 +413,57 @@ export default function EventDetailsPage() {
                       }
                     }}
                   />
+                </div>
+              </label>
+            </div>
+
+            <button
+              onClick={handleClick}
+              className="w-full py-4 mt-2 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-green-600/20 active:scale-[0.98] flex justify-center items-center gap-2 group"
+            >
+              Отправить заявку
+              <TrophyIcon className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="bg-green-600/10 border border-green-600/20 rounded-2xl p-6 text-center">
+              <p className="text-slate-700 dark:text-slate-300 text-[15px] font-medium leading-relaxed">
+                Вас пригласили в команду<br />
+                <span className="text-green-600 font-black text-2xl mt-1 inline-block drop-shadow-sm">{team_name}</span>
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Согласие <span className="text-rose-500">*</span></label>
+                <label className="cursor-pointer block group">
+                  <div className={`relative flex flex-col items-center justify-center w-full p-8 rounded-2xl border-2 border-dashed transition-all ${agree ? 'border-green-600 bg-green-600/5' : 'border-slate-200 dark:border-white/10 hover:border-green-600/50 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10'}`}>
+                    <div className={`w-12 h-12 rounded-full mb-3 flex items-center justify-center transition-colors ${agree ? 'bg-green-600 text-white' : 'bg-slate-200 dark:bg-white/10 text-slate-400 group-hover:text-green-600'}`}>
+                      {agree ? <CheckCircleIcon className="w-6 h-6" /> : <ClipboardListIcon className="w-6 h-6" />}
+                    </div>
+                    <span className={`text-sm font-bold transition-colors ${agree ? 'text-green-600 dark:text-emerald-400' : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>
+                      {agree ? agree.name : 'Прикрепите документ согласия'}
+                    </span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          setAgree(e.target.files[0])
+                        }
+                      }}
+                    />
+                  </div>
                 </label>
               </div>
+
               <button
                 onClick={handleClick}
-                className="w-full py-3.5 mt-2 bg-green-600 hover:bg-green-700 rounded-md font-bold text-white transition-all shadow-md"
+                className="w-full py-4 mt-2 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-green-600/20 active:scale-[0.98] flex justify-center items-center gap-2 group"
               >
                 Присоединиться к команде
+                <CheckCircleIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />
               </button>
             </div>
           </div>

@@ -10,9 +10,9 @@ type User = {
   lastname: string
   email: string
   role: string
-  gender: string
-  age: number
-  city_id: number
+  gender: 'male' | 'female' | string
+  birth_date: string | null
+  city_id: number | null
 }
 
 export interface CurrentEvents {
@@ -61,6 +61,10 @@ export const apiUsers = {
 
   getProfile: async (): Promise<User> => {
     return (await restAxios.get(`/api/users/profile`)).data
+  },
+
+  updateProfile: async (id: number, data: Partial<Omit<User, 'id' | 'role' | 'email'>>): Promise<User> => {
+    return (await restAxios.patch(`/api/users/${id}/`, data)).data
   }
 }
 

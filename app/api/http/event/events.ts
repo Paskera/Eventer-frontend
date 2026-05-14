@@ -82,7 +82,7 @@ export interface EventCreateData {
   start_date: string;
   end_date: string;
   event_status?: 'active' | 'cancelled' | 'completed';
-  organizer_id: number;
+  organizer_id?: number;
   category_id: number;
   stages?: Array<{
     stage_name: string;

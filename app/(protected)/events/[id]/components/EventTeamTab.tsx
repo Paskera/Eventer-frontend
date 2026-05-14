@@ -69,7 +69,7 @@ export const EventTeamTab = ({ team, isPending, onRegisterClick }: EventTeamTabP
              <ul className="space-y-3">
                {team.members.map((u: any, idx: number) => {
                   const displayName = [u.firstname, u.lastname].filter(Boolean).join(' ') || `Участник ${idx + 1}`;
-                  const isLeader = u.is_event_leader;
+                  const isLeader = u.role === 'LEADER';
                   
                   return (
                     <li key={idx} className="flex items-center justify-between p-3.5 bg-card border border-border shadow-sm rounded-md transition-all hover:border-border/80">
