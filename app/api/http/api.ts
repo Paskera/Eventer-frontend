@@ -16,8 +16,9 @@ const keycloakAxios = axios.create({
 
 export const restAxios = axios.create({
   // baseURL: process.env.API_URL,
-  baseURL: '//127.0.0.1:8000',
-  // baseURL: '//146.103.49.237:8000',
+  // baseURL: '//127.0.0.1:8000',
+  baseURL: 'https://api.eventer-app.ru/'
+  // baseURL: '/'
 });
 
 restAxios.interceptors.request.use(async (config) => {

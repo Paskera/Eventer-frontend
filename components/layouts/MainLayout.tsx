@@ -25,7 +25,7 @@ export default function MainLayout({
         "/events/my": "Мои мероприятия",
         "/certificates": "Сертификаты",
         "/teams": "Команды",
-        "/events/create": "Создать мероприятие",
+        "/events/create ": "Создать мероприятие",
         "/events": "Детали мероприятия",
     }
     const matchKey = Object.keys(routeTitles).find((key) => pathname === key || pathname.startsWith(key + "/"))

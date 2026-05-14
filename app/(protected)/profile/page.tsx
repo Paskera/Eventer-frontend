@@ -6,7 +6,7 @@ import { ProfileTimer } from "@/app/(protected)/profile/components/ProfileTimer"
 
 export default function ProfilePage() {
   return (
-    <RoleGuard>
+    // <RoleGuard>
       <div className="min-h-screen bg-background">
         <div className="relative overflow-hidden bg-white border-b border-gray-200 dark:bg-neutral-900 dark:border-neutral-800">
           <div className="relative p-6 sm:p-8 md:p-10 max-w-7xl mx-auto">
@@ -43,6 +43,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-    </RoleGuard>
+    // {/* </RoleGuard> */}
   )
 }

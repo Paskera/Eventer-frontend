@@ -67,7 +67,8 @@ export default function StageBracketPage() {
                     })
                     window.location.reload()
                   } catch (e) {
-                    alert("Ошибка при генерации сетки")
+                    // alert("Ошибка при генерации сетки")
+                    alert(e.text, 'd')
                   }
                 }}
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg transition-all"
@@ -114,7 +115,8 @@ export default function StageBracketPage() {
                    })
                    window.location.reload()
                  } catch (e) {
-                   alert("Ошибка при генерации сетки")
+                  //  alert("Ошибка при генерации сетки")
+                   alert(e)
                  }
                }}
                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg transition-all"

@@ -69,11 +69,11 @@ const data = {
     //   url: "/teams",
     //   icon: Users,
     // },
-    // {
-    //   name: "Создать мероприятие",
-    //   url: "/createevent",
-    //   icon: PlusCircle,
-    // },
+    {
+      name: "Создать мероприятие",
+      url: "/events/create",
+      icon: PlusCircle,
+    },
     {
       name: "Сертификаты",
       url: "/certificates",
@@ -87,7 +87,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   let filteredProjects = data.projects;
   if (session?.role && session.role.toUpperCase() === ROLES.USER) {
     filteredProjects = data.projects.filter(
-      (item) => item.url !== "/events/dashboard/1" 
+      (item) => item.url !== "/events/dashboard/1"
     );
   } 
   // else if (session?.role && session.role.toUpperCase() === ROLES.ORGANAIZER) {
@@ -117,7 +117,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        {/* Удалена дублирующая кнопка SidebarTrigger */}
       </SidebarHeader>
       <SidebarContent>
         <NavProjects projects={filteredProjects} />
