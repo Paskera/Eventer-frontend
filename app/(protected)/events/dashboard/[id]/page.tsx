@@ -50,6 +50,7 @@ import { EventSettingsModal } from "@/app/(protected)/events/dashboard/component
 import { ArchiveConfirmationModal } from "@/app/(protected)/events/dashboard/components/ArchiveConfirmationModal";
 import { StageCriteriaModal } from "@/app/(protected)/events/dashboard/components/StageCriteriaModal";
 import { toast } from "sonner";
+import { restAxios } from "@/app/api/http/api";
 
 // Интерфейсы для типизации данных
 interface Event {
@@ -83,6 +84,23 @@ interface TeamMember {
   is_event_leader: boolean;
  isMinor: boolean;
   parentalConsent: string;
+}
+
+// Интерфейсы (дополняем Team полем id, если его нет)
+interface Team {
+  id: number; // добавлено
+  name: string;
+  status: string;
+  created_at: string;
+  members: TeamMember[];
+}
+
+// Тип для перехода
+interface StageTransition {
+  id: number;
+  team_id: number;
+  from_stage_id: number;
+  to_stage_id: number;
 }
 
 // Компонент для отображения статуса события
@@ -449,11 +467,127 @@ const EventDetailDashboard = () => {
   const [expandedStageId, setExpandedStageId] = useState<number | null>(null);
 
   // Обработчики-заглушки
-  const handleMovePrev = (teamId: number, stageId: number) => alert(`Вернуть команду ${teamId} на предыдущий этап (stage ${stageId})`);
-  const handleMoveNext = (teamId: number, stageId: number) => alert(`Перевести команду ${teamId} на следующий этап (stage ${stageId})`);
-  const handleDisqualify = (teamId: number, stageId: number) => alert(`Исключить команду ${teamId} из этапа ${stageId}`);
-  const handleViewFile = (teamId: number, stageId: number) => alert(`Показать файл ответов команды ${teamId} (этап ${stageId})`);
-  const handleViewScore = (teamId: number, stageId: number) => alert(`Показать баллы команды ${teamId} (этап ${stageId})`);
+  // const handleMovePrev = (teamId: number, stageId: number) => alert(`Вернуть команду ${teamId} на предыдущий этап (stage ${stageId})`);
+  // const handleMoveNext = (teamId: number, stageId: number) => alert(`Перевести команду ${teamId} на следующий этап (stage ${stageId})`);
+  // const handleDisqualify = (teamId: number, stageId: number) => alert(`Исключить команду ${teamId} из этапа ${stageId}`);
+  // const handleViewFile = (teamId: number, stageId: number) => alert(`Показать файл ответов команды ${teamId} (этап ${stageId})`);
+  // const handleViewScore = (teamId: number, stageId: number) => alert(`Показать баллы команды ${teamId} (этап ${stageId})`);
+
+const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, number>>({});
+  const [loadingTeamStage, setLoadingTeamStage] = useState<Record<number, boolean>>({});
+  const [transitioningTeam, setTransitioningTeam] = useState<Record<number, boolean>>({});
+
+  // Функция для получения отсортированного списка этапов по дате начала
+  const getSortedStages = () => {
+    if (!stages) return [];
+    return [...stages].sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+  };
+
+  // Получение текущего этапа команды (через API переходов)
+  const fetchTeamCurrentStage = async (teamId: number): Promise<number | null> => {
+    try {
+      const response = await restAxios.get<StageTransition[]>(`/api/teams/${teamId}/stage-transitions/`);
+      const transitions = response.data;
+      if (transitions.length === 0) {
+        // Нет переходов — команда на первом этапе (по порядку)
+        const sortedStages = getSortedStages();
+        return sortedStages.length > 0 ? sortedStages[0].id : null;
+      }
+      // Последний переход по id (или можно по дате, но id монотонен)
+      const lastTransition = transitions.reduce((prev, curr) => (curr.id > prev.id ? curr : prev));
+      return lastTransition.to_stage_id;
+    } catch (error) {
+      console.error(`Ошибка получения переходов для команды ${teamId}:`, error);
+      return null;
+    }
+  };
+
+  // Загрузка текущих этапов для всех команд (при раскрытии этапа)
+  const loadAllTeamsCurrentStage = async () => {
+    if (!teams?.teams) return;
+    const newMap: Record<number, number> = {};
+    const loadingState: Record<number, boolean> = {};
+    for (const team of teams.teams) {
+      loadingState[team.id] = true;
+    }
+    setLoadingTeamStage(loadingState);
+
+    for (const team of teams.teams) {
+      const stageId = await fetchTeamCurrentStage(team.id);
+      if (stageId !== null) {
+        newMap[team.id] = stageId;
+      }
+      setLoadingTeamStage(prev => ({ ...prev, [team.id]: false }));
+    }
+    setTeamCurrentStageMap(newMap);
+  };
+
+  // Сбрасываем загрузку при закрытии всех этапов
+  useEffect(() => {
+    if (expandedStageId === null) {
+      // По желанию можно очищать, но не обязательно
+    }
+  }, [expandedStageId]);
+
+  // При раскрытии этапа загружаем текущие этапы, если ещё не загружены
+  useEffect(() => {
+    if (expandedStageId !== null && teams?.teams && Object.keys(teamCurrentStageMap).length === 0) {
+      loadAllTeamsCurrentStage();
+    }
+  }, [expandedStageId, teams]);
+
+  // Создание перехода
+  const createTransition = async (teamId: number, fromStageId: number, toStageId: number) => {
+    setTransitioningTeam(prev => ({ ...prev, [teamId]: true }));
+    try {
+      await restAxios.post(`/api/teams/${teamId}/stage-transitions/`, {
+        from_stage_id: fromStageId,
+        to_stage_id: toStageId,
+      });
+      // Обновляем текущий этап команды
+      setTeamCurrentStageMap(prev => ({ ...prev, [teamId]: toStageId }));
+      // Можно также инвалидировать другие кеши, если нужно
+    } catch (error) {
+      console.error('Ошибка создания перехода:', error);
+      alert('Не удалось перевести команду. Проверьте соединение или попробуйте позже.');
+    } finally {
+      setTransitioningTeam(prev => ({ ...prev, [teamId]: false }));
+    }
+  };
+
+  // Обработчики переходов
+  const handleMovePrev = async (teamId: number, currentStageId: number) => {
+    const sortedStages = getSortedStages();
+    const currentIndex = sortedStages.findIndex(s => s.id === currentStageId);
+    if (currentIndex <= 0) {
+      alert('Это первый этап, нельзя вернуться назад');
+      return;
+    }
+    const prevStage = sortedStages[currentIndex - 1];
+    await createTransition(teamId, currentStageId, prevStage.id);
+  };
+
+  const handleMoveNext = async (teamId: number, currentStageId: number) => {
+    const sortedStages = getSortedStages();
+    const currentIndex = sortedStages.findIndex(s => s.id === currentStageId);
+    if (currentIndex === -1 || currentIndex === sortedStages.length - 1) {
+      alert('Это последний этап, нельзя перейти дальше');
+      return;
+    }
+    const nextStage = sortedStages[currentIndex + 1];
+    await createTransition(teamId, currentStageId, nextStage.id);
+  };
+
+  // Заглушки для остальных кнопок (оставляем как есть или показываем уведомление)
+  const handleDisqualify = (teamId: number, stageId: number) => {
+    alert(`Исключить команду ${teamId} из этапа ${stageId}`);
+  };
+  const handleViewFile = (teamId: number, stageId: number) => {
+    alert(`Показать файл ответов команды ${teamId} (этап ${stageId})`);
+  };
+  const handleViewScore = (teamId: number, stageId: number) => {
+    alert(`Показать баллы команды ${teamId} (этап ${stageId})`);
+  };
 
   if (eventLoading) {
     return (
@@ -809,165 +943,182 @@ const EventDetailDashboard = () => {
             </TabsContent>
 
             <TabsContent value="stages" className="space-y-4">
-                  <Card className="border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg text-slate-900 dark:text-slate-100">Этапы события</CardTitle>
-                        <Button variant="outline" size="sm" onClick={() => openStageModal()}>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Добавить этап
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {stages && stages.length > 0 ? (
-                        <div className="space-y-3">
-                          {stages.map((stage: any) => (
-                            <div
-                              key={stage.id}
-                              className="rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
-                            >
-                              {/* Кликабельный заголовок этапа */}
-                              <div
-                                className="flex cursor-pointer items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-neutral-800/50"
-                                onClick={() => setExpandedStageId(expandedStageId === stage.id ? null : stage.id)}
-                              >
-                                <div className="flex items-center gap-4">
-                                  <div className="rounded-lg bg-slate-100 p-2 text-emerald-700 dark:bg-neutral-800 dark:text-emerald-100">
-                                    <CheckCircle className="h-5 w-5" />
-                                  </div>
-                                  <div>
-                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{stage.stage_name}</h3>
-                                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                                      {formatDate(stage.start_date)} — {formatDate(stage.end_date)}
-                                    </p>
-                                  </div>
-                                  <Badge
-                                    className={
-                                      stage.stage_status === "active"
-                                        ? "rounded-full border border-emerald-400/40 bg-emerald-500/20 text-xs text-emerald-100"
-                                        : stage.stage_status === "upcoming"
-                                        ? "rounded-full border border-cyan-400/40 bg-cyan-500/20 text-xs text-cyan-100"
-                                        : "rounded-full border border-slate-400/40 bg-slate-600/40 text-xs text-white"
-                                    }
-                                  >
-                                    {stage.stage_status}
-                                  </Badge>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {/* Кнопки редактирования и критериев (существующие) */}
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 border-gray-300 text-slate-800 hover:bg-gray-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedStageForCriteria(stage);
-                                      setIsStageCriteriaModalOpen(true);
-                                    }}
-                                    title="Критерии оценивания"
-                                  >
-                                    <BarChart4 className="h-4 w-4 mr-2" />
-                                    Критерии
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 w-9 border-gray-300 text-slate-800 hover:bg-gray-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openStageModal(stage);
-                                    }}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  {/* Иконка раскрытия */}
-                                  {expandedStageId === stage.id ? (
-                                    <ChevronUp className="h-5 w-5 text-slate-500" />
-                                  ) : (
-                                    <ChevronDown className="h-5 w-5 text-slate-500" />
-                                  )}
-                                </div>
+              <Card className="border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg text-slate-900 dark:text-slate-100">Этапы события</CardTitle>
+                    <Button variant="outline" size="sm" onClick={() => openStageModal()}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Добавить этап
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {stages && stages.length > 0 ? (
+                    <div className="space-y-3">
+                      {stages.map((stage: any) => (
+                        <div
+                          key={stage.id}
+                          className="rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+                        >
+                          {/* Кликабельный заголовок этапа */}
+                          <div
+                            className="flex cursor-pointer items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-neutral-800/50"
+                            onClick={() => setExpandedStageId(expandedStageId === stage.id ? null : stage.id)}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="rounded-lg bg-slate-100 p-2 text-emerald-700 dark:bg-neutral-800 dark:text-emerald-100">
+                                <CheckCircle className="h-5 w-5" />
                               </div>
-
-                              {/* Раскрывающийся блок с командами (показывается только для выбранного этапа) */}
-                              {expandedStageId === stage.id && (
-                                <div className="border-t border-gray-200 p-4 dark:border-neutral-800">
-                                  <h4 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">Команды на этапе</h4>
-                                  <div className="space-y-2">
-                                    {teams?.teams?.map((team: any) => (
-                                      <div
-                                        key={team.id}
-                                        className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-800"
-                                      >
-                                        <span className="font-medium text-slate-800 dark:text-slate-100">{team.name}</span>
-                                        <div className="flex gap-2">
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-8 w-8 p-0"
-                                            // onClick={() => handleMovePrev(team.id, stage.id)}
-                                            title="Вернуть на предыдущий этап"
-                                          >
-                                            <ArrowLeft className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-8 w-8 p-0"
-                                            // onClick={() => handleMoveNext(team.id, stage.id)}
-                                            title="Перевести на следующий этап"
-                                          >
-                                            <ArrowRight className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-8 w-8 p-0"
-                                            // onClick={() => handleDisqualify(team.id, stage.id)}
-                                            title="Исключить"
-                                          >
-                                            <Ban className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-8 w-8 p-0"
-                                            // onClick={() => handleViewFile(team.id, stage.id)}
-                                            title="Файл ответов"
-                                          >
-                                            <FileText className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-8 w-8 p-0"
-                                            // onClick={() => handleViewScore(team.id, stage.id)}
-                                            title="Баллы"
-                                          >
-                                            <Star className="h-4 w-4" />
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    ))} 
-                                  </div>
-                                </div>
+                              <div>
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{stage.stage_name}</h3>
+                                <p className="text-sm text-slate-600 dark:text-slate-300">
+                                  {formatDate(stage.start_date)} — {formatDate(stage.end_date)}
+                                </p>
+                              </div>
+                              <Badge
+                                className={
+                                  stage.stage_status === "active"
+                                    ? "rounded-full border border-emerald-400/40 bg-emerald-500/20 text-xs text-emerald-100"
+                                    : stage.stage_status === "upcoming"
+                                    ? "rounded-full border border-cyan-400/40 bg-cyan-500/20 text-xs text-cyan-100"
+                                    : "rounded-full border border-slate-400/40 bg-slate-600/40 text-xs text-white"
+                                }
+                              >
+                                {stage.stage_status}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {/* Кнопки редактирования и критериев (существующие) */}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 border-gray-300 text-slate-800 hover:bg-gray-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedStageForCriteria(stage);
+                                  setIsStageCriteriaModalOpen(true);
+                                }}
+                                title="Критерии оценивания"
+                              >
+                                <BarChart4 className="h-4 w-4 mr-2" />
+                                Критерии
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 w-9 border-gray-300 text-slate-800 hover:bg-gray-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openStageModal(stage);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              {/* Иконка раскрытия */}
+                              {expandedStageId === stage.id ? (
+                                <ChevronUp className="h-5 w-5 text-slate-500" />
+                              ) : (
+                                <ChevronDown className="h-5 w-5 text-slate-500" />
                               )}
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-neutral-700 dark:bg-neutral-900">
-                          <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">Этапы будут добавлены позже</p>
-                          <Button variant="outline" onClick={() => openStageModal()}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Создать первый этап
-                          </Button>
+                          </div>
+
+                          {/* Раскрывающийся блок с командами (показывается только для выбранного этапа) */}
+                          {expandedStageId === stage.id && (
+                        <div className="border-t border-gray-200 p-4 dark:border-neutral-800">
+                          <h4 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">Команды на этапе</h4>
+                          <div className="space-y-2">
+                            {teams?.teams
+                              .filter(team => teamCurrentStageMap[team.id] === stage.id)
+                              .map(team => {
+                                const isLoading = loadingTeamStage[team.id];
+                                const isTransitioning = transitioningTeam[team.id];
+                                const currentStageId = teamCurrentStageMap[team.id];
+                                const sortedStages = getSortedStages();
+                                const currentIndex = sortedStages.findIndex(s => s.id === currentStageId);
+                                const hasPrev = currentIndex > 0;
+                                const hasNext = currentIndex !== -1 && currentIndex < sortedStages.length - 1;
+
+                                return (
+                                  <div
+                                    key={team.id}
+                                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-800"
+                                  >
+                                    <span className="font-medium text-slate-800 dark:text-slate-100">{team.name}</span>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 w-8 p-0"
+                                        onClick={() => handleMovePrev(team.id, currentStageId)}
+                                        disabled={!hasPrev || isTransitioning || isLoading}
+                                        title="Вернуть на предыдущий этап"
+                                      >
+                                        <ArrowLeft className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 w-8 p-0"
+                                        onClick={() => handleMoveNext(team.id, currentStageId)}
+                                        disabled={!hasNext || isTransitioning || isLoading}
+                                        title="Перевести на следующий этап"
+                                      >
+                                        <ArrowRight className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 w-8 p-0"
+                                        onClick={() => handleDisqualify(team.id, stage.id)}
+                                        title="Исключить"
+                                      >
+                                        <Ban className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 w-8 p-0"
+                                        onClick={() => handleViewFile(team.id, stage.id)}
+                                        title="Файл ответов"
+                                      >
+                                        <FileText className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 w-8 p-0"
+                                        onClick={() => handleViewScore(team.id, stage.id)}
+                                        title="Баллы"
+                                      >
+                                        <Star className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            {teams?.teams && teams.teams.filter(team => teamCurrentStageMap[team.id] === stage.id).length === 0 && (
+                              <div className="py-4 text-center text-sm text-slate-500">На этом этапе нет команд</div>
+                            )}
+                          </div>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center dark:border-neutral-700 dark:bg-neutral-900">
+                      <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">Этапы будут добавлены позже</p>
+                      <Button variant="outline" onClick={() => openStageModal()}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Создать первый этап
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="analytics" className="space-y-4">
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
