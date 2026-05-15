@@ -1,6 +1,7 @@
 "use client"
 
 import { StageResource } from "@/app/api/http/stages/stages"
+import { apiResources } from "@/app/api/http/stages/resources"
 import { Button } from "@/components/ui/button"
 import { Download, ExternalLink, FileIcon, Link as LinkIcon } from "lucide-react"
 
@@ -19,11 +20,14 @@ export function StageResources({ stageId, resources }: StageResourcesProps) {
       // Если это ссылка, открываем в новой вкладке
       window.open(resource.url_path, "_blank")
     } else {
-      // Если это файл, скачиваем через API
-      // API возвращает RedirectResponse, поэтому просто открываем URL
-      // Используем полный URL с протоколом
-      const downloadUrl = `http://127.0.0.1:8000/api/stages/${stageId}/resources/${resource.id}/download`
-      window.open(downloadUrl, "_blank")
+      // Если это файл, скачиваем через API (получаем подписанную ссылку)
+      try {
+        const downloadUrl = await apiResources.getDownloadUrl(stageId, resource.id);
+        window.open(downloadUrl, "_blank");
+      } catch (error) {
+        console.error("Ошибка при получении ссылки на скачивание:", error);
+        alert("Не удалось скачать файл. Попробуйте позже.");
+      }
     }
   }
 

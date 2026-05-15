@@ -144,8 +144,8 @@ export default function EventDetailsPage() {
     },
   })
 
-  const JoinTeamMutation = useMutation<unknown, any, { event_id: number; invite_token: string }>({
-    mutationFn: ({ event_id, invite_token }) => apiEventTeams.joinTeam(event_id, invite_token),
+  const JoinTeamMutation = useMutation<unknown, any, { event_id: number; invite_token: string; agree?: File | null }>({
+    mutationFn: ({ event_id, invite_token, agree }) => apiEventTeams.joinTeam(event_id, invite_token, agree),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["team", eventId] })
       setShowSuccess(true)
@@ -174,7 +174,7 @@ export default function EventDetailsPage() {
 
   const handleClick = () => {
     if (token != null) {
-      JoinTeamMutation.mutate({ event_id: Number(eventId), invite_token: token })
+      JoinTeamMutation.mutate({ event_id: Number(eventId), invite_token: token, agree: agree })
     } else {
       if (createTeamName !== "" && agree) {
         CreateTeamMutation.mutate({ event_id: Number(eventId), agree: agree, name: createTeamName })

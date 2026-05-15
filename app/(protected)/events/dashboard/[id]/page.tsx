@@ -40,7 +40,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { apiEvents } from "@/app/api/http/event/events";
-import { apiEventTeams } from "@/app/api/http/EventTeams/event_teams";
+import { apiEventTeams, Team, TeamMember } from "@/app/api/http/EventTeams/event_teams";
 import { apiStages, Stages } from "@/app/api/http/stages/stages";
 import { apiResources } from "@/app/api/http/stages/resources";
 import { StatusControl } from "@/app/(protected)/events/create/components/StatusControl";
@@ -49,37 +49,9 @@ import { NotificationModal } from "@/app/(protected)/events/dashboard/components
 import { EventSettingsModal } from "@/app/(protected)/events/dashboard/components/EventSettingsModal";
 import { ArchiveConfirmationModal } from "@/app/(protected)/events/dashboard/components/ArchiveConfirmationModal";
 import { StageCriteriaModal } from "@/app/(protected)/events/dashboard/components/StageCriteriaModal";
+import { EventAnalytics } from "@/app/(protected)/events/dashboard/components/EventAnalytics";
 import { toast } from "sonner";
 import { restAxios } from "@/app/api/http/api";
-
-
-interface Team {
-  id: number;
-  name: string;
-  status: string;
-  created_at: string;
-  members: TeamMember[];
-}
-
-interface TeamMember {
-  id: number;
-  firstname: string;
-  lastname: string;
-  email: string;
-  phone: string;
-  is_event_leader: boolean;
-  isMinor: boolean;
-  parentalConsent: string;
-}
-
-// Интерфейсы (дополняем Team полем id, если его нет)
-interface Team {
-  id: number; // добавлено
-  name: string;
-  status: string;
-  created_at: string;
-  members: TeamMember[];
-}
 
 // Тип для перехода
 interface StageTransition {
@@ -640,7 +612,9 @@ const EventDetailDashboard = () => {
                     </div>
                     <div className="text-sm text-slate-700 dark:text-slate-200">
                       <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Формат</p>
-                      <p className="font-semibold text-slate-900 capitalize dark:text-slate-50">{event.format}</p>
+                      <div className="mt-1">
+                        <EventFormatBadge format={event.format} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -698,14 +672,13 @@ const EventDetailDashboard = () => {
                 <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-900">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Текущий статус</p>
-                      <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                        {currentEventStatus || event.event_status}
-                      </p>
+                      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">Текущий статус</p>
+                      <EventStatusBadge status={currentEventStatus || event.event_status} />
                     </div>
-                    <Badge className="rounded-full border border-gray-200 bg-white px-3 py-1 text-slate-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-100">
-                      {event.format}
-                    </Badge>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1 text-right">Формат</p>
+                      <EventFormatBadge format={event.format} />
+                    </div>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-slate-700 dark:text-slate-200">
                     <div className="flex items-center gap-2">
@@ -819,7 +792,7 @@ const EventDetailDashboard = () => {
                           <th className="p-3 text-left font-semibold">Капитан</th>
                           <th className="p-3 text-left font-semibold">Участники</th>
                           <th className="p-3 text-left font-semibold">Статус</th>
-                          <th className="p-3 text-left font-semibold">Действия</th>
+                          <th className="p-3 text-right font-semibold">Действия</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -830,7 +803,10 @@ const EventDetailDashboard = () => {
                           >
                             <td className="p-3 text-sm font-medium text-slate-900 dark:text-slate-100">{team.name}</td>
                             <td className="p-3 text-sm text-slate-700 dark:text-slate-200">
-                              {team.members?.find((m: any) => m.is_event_leader)?.firstname || "Не указан"}
+                              {(() => {
+                                const leader = team.members?.find((m: any) => m.role === "LEADER");
+                                return leader ? `${leader.firstname} ${leader.lastname}` : "Не указан";
+                              })()}
                             </td>
                             <td className="p-3 text-sm text-slate-700 dark:text-slate-200">{team.members?.length || 0}</td>
                             <td className="p-3 text-sm">
@@ -849,7 +825,7 @@ const EventDetailDashboard = () => {
                               )}
                             </td>
                             <td className="p-3 text-sm">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center justify-end gap-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -1084,7 +1060,7 @@ const EventDetailDashboard = () => {
                                       </div>
                                     );
                                   })}
-                                {teams?.teams && teams.teams.filter(team => teamCurrentStageMap[team.id] === stage.id).length === 0 && (
+                                {teams?.teams && teams.teams.filter((team: Team) => teamCurrentStageMap[team.id] === stage.id).length === 0 && (
                                   <div className="py-4 text-center text-sm text-slate-500">На этом этапе нет команд</div>
                                 )}
                               </div>
@@ -1107,67 +1083,10 @@ const EventDetailDashboard = () => {
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-4">
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                <Card className="border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 lg:col-span-2">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-slate-900 dark:text-slate-100">Статистика участников</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-700/50 dark:bg-emerald-900/30">
-                        <p className="text-sm text-emerald-700 dark:text-emerald-100">Зарегистрировано</p>
-                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">{event.users_count || 0}</p>
-                      </div>
-                      <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-700/50 dark:bg-cyan-900/30">
-                        <p className="text-sm text-cyan-700 dark:text-cyan-100">Команд</p>
-                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">{teamStats.total}</p>
-                      </div>
-                      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-700/50 dark:bg-amber-900/30">
-                        <p className="text-sm text-amber-700 dark:text-amber-100">Одобрено</p>
-                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">{teamStats.approved}</p>
-                      </div>
-                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-neutral-700 dark:bg-neutral-800">
-                        <p className="text-sm text-slate-700 dark:text-slate-200">Ожидает</p>
-                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">{teamStats.pending}</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 dark:border-neutral-800 dark:bg-neutral-900">
-                      <p className="text-sm text-slate-600 dark:text-slate-300">График участников по дням (макет)</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-slate-900 dark:text-slate-100">Сводка</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-600 dark:text-slate-300">Статус мероприятия</span>
-                        <EventStatusBadge status={event.event_status} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-600 dark:text-slate-300">Формат</span>
-                        <EventFormatBadge format={event.format} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-600 dark:text-slate-300">Место проведения</span>
-                        <span className="text-slate-900 dark:text-slate-100">{event.venue}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-600 dark:text-slate-300">Дата начала</span>
-                        <span className="text-slate-900 dark:text-slate-100">{formatDate(event.start_date)}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-600 dark:text-slate-300">Дата окончания</span>
-                        <span className="text-slate-900 dark:text-slate-100">{formatDate(event.end_date)}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <EventAnalytics
+                usersCount={event.users_count || 0}
+                teamStats={teamStats}
+              />
             </TabsContent>
 
             <TabsContent value="notifications" className="space-y-4">
@@ -1268,9 +1187,10 @@ const EventDetailDashboard = () => {
       {/* Модальное окно для просмотра деталей команды */}
       {selectedTeam && (
         <TeamDetailsModal
-          team={selectedTeam}
+          team={teams?.teams?.find((t: any) => t.id === selectedTeam.id) || selectedTeam}
           open={isDetailsModalOpen}
           onOpenChange={handleToggleTeamModal}
+          eventId={eventId}
         />
       )}
 
@@ -1324,13 +1244,44 @@ const TeamDetailsModal = ({
   team,
   open,
   onOpenChange,
+  eventId,
 }: {
   team: Team;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  eventId: number;
 }) => {
-  const minorMembers = team.members?.filter((member) => member.isMinor) || [];
-  const captain = team.members?.find((member) => member.is_event_leader);
+  const membersWithConsent = team.members?.filter((member) => member.has_consent_document || member.consent_status !== 'not_required') || [];
+  const captain = team.members?.find((member) => member.role === 'LEADER');
+
+  const queryClient = useQueryClient();
+
+  // Мутация для подтверждения родительского согласия
+  const updateConsentStatusMutation = useMutation({
+    mutationFn: ({ memberId, status }: { memberId: number; status: string }) => {
+      return apiEventTeams.updateConsentStatus(eventId, team.id, memberId, status as any);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["eventTeams", eventId] });
+      toast.success("Статус согласия обновлен");
+    },
+    onError: () => {
+      toast.error("Не удалось обновить статус согласия");
+    }
+  });
+
+  const handleDownloadConsent = async (memberId: number) => {
+    try {
+      const { url } = await apiEventTeams.getConsentUrl(eventId, team.id, memberId);
+      window.open(url, '_blank');
+    } catch (error) {
+      toast.error("Не удалось получить ссылку на файл");
+    }
+  };
+
+  const handleApproveConsent = (memberId: number) => {
+    updateConsentStatusMutation.mutate({ memberId, status: 'verified' });
+  };
 
   const statusBadge = (status: string) => {
     const map: Record<string, { text: string; className: string }> = {
@@ -1419,10 +1370,7 @@ const TeamDetailsModal = ({
                     <tr>
                       <th className="p-2.5 text-left text-xs font-semibold whitespace-normal break-words">Имя</th>
                       <th className="p-2.5 text-left text-xs font-semibold whitespace-normal break-words">Фамилия</th>
-                      <th className="p-2.5 text-left text-xs font-semibold whitespace-normal break-words">Email</th>
-                      <th className="p-2.5 text-left text-xs font-semibold whitespace-normal break-words">Телефон</th>
-                      <th className="p-2.5 text-left text-xs font-semibold whitespace-normal break-words">Капитан</th>
-                      <th className="p-2.5 text-left text-xs font-semibold whitespace-normal break-words">Несовершеннолетний</th>
+                      <th className="p-2.5 text-left text-xs font-semibold whitespace-normal break-words">Роль</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
@@ -1430,20 +1378,11 @@ const TeamDetailsModal = ({
                       <tr key={member.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800/70">
                         <td className="p-2.5 text-slate-900 dark:text-slate-100 whitespace-normal break-words">{member.firstname}</td>
                         <td className="p-2.5 text-slate-900 dark:text-slate-100 whitespace-normal break-words">{member.lastname}</td>
-                        <td className="p-2.5 text-slate-700 dark:text-slate-200 whitespace-normal break-words">{member.email}</td>
-                        <td className="p-2.5 text-slate-700 dark:text-slate-200 whitespace-normal break-words">{member.phone}</td>
                         <td className="p-2.5">
-                          {member.is_event_leader ? (
-                            <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100">Да</span>
+                          {member.role === 'LEADER' ? (
+                            <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100">Капитан</span>
                           ) : (
-                            <span className="text-slate-500 dark:text-slate-400">-</span>
-                          )}
-                        </td>
-                        <td className="p-2.5">
-                          {member.isMinor ? (
-                            <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">Да</span>
-                          ) : (
-                            <span className="text-slate-500 dark:text-slate-400">-</span>
+                            <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-800 dark:bg-neutral-800 dark:text-slate-200">Участник</span>
                           )}
                         </td>
                       </tr>
@@ -1455,7 +1394,7 @@ const TeamDetailsModal = ({
 
             <TabsContent value="agreements" className="space-y-3">
               <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                {minorMembers.length > 0 ? (
+                {membersWithConsent.length > 0 ? (
                   <table className="w-full table-auto text-sm">
                     <thead className="bg-gray-50 text-slate-600 dark:bg-neutral-900 dark:text-slate-300">
                       <tr>
@@ -1466,28 +1405,45 @@ const TeamDetailsModal = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-neutral-800">
-                      {minorMembers.map((member) => (
+                      {membersWithConsent.map((member) => (
                         <tr key={member.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800/70">
                           <td className="p-2.5 text-slate-900 dark:text-slate-100 whitespace-normal break-words">{member.firstname}</td>
                           <td className="p-2.5 text-slate-900 dark:text-slate-100 whitespace-normal break-words">{member.lastname}</td>
                           <td className="p-2.5">
-                            {member.parentalConsent === "approved" ? (
+                            {member.consent_status === "verified" ? (
                               <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100">Одобрено</span>
-                            ) : member.parentalConsent === "rejected" ? (
-                              <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-100">Отклонено</span>
-                            ) : (
+                            ) : member.consent_status === "unverified" ? (
                               <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-100">Ожидает</span>
+                            ) : (
+                              <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-800 dark:bg-neutral-800 dark:text-slate-200">Не требуется</span>
                             )}
                           </td>
                           <td className="p-2.5">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="border-gray-300 text-slate-800 hover:bg-gray-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800"
-                            >
-                              <Download className="mr-2 h-4 w-4" />
-                              Скачать
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              {member.has_consent_document && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-gray-300 text-slate-800 hover:bg-gray-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800"
+                                  onClick={() => handleDownloadConsent(member.id)}
+                                >
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Скачать
+                                </Button>
+                              )}
+                              {member.consent_status === 'unverified' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700/60 dark:text-emerald-100 dark:hover:bg-emerald-900/30"
+                                  onClick={() => handleApproveConsent(member.id)}
+                                  disabled={updateConsentStatusMutation.isPending}
+                                >
+                                  <Check className="mr-2 h-4 w-4" />
+                                  {updateConsentStatusMutation.isPending ? "..." : "Подтвердить"}
+                                </Button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1495,8 +1451,7 @@ const TeamDetailsModal = ({
                   </table>
                 ) : (
                   <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-                    <p className="text-sm text-slate-700 dark:text-slate-300">Нет несовершеннолетних участников</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Добавьте участников, чтобы увидеть соглашения</p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300">Нет участников, требующих согласия</p>
                   </div>
                 )}
               </div>

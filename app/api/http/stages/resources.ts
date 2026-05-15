@@ -45,7 +45,7 @@ export const apiResources = {
     const response = await restAxios.get(
       `/api/stages/${stageId}/resources/${resourceId}/download`
     );
-    return response.request?.responseURL || response.data;
+    return response.data.url;
   },
 
   /** Удалить ресурс */

@@ -10,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Badge } from "@/components/ui/badge"
-import { Plus, X, FileUp, FileText, Trophy, Upload, Info, ChevronDown, CalendarIcon } from "lucide-react"
+import { Plus, X, FileUp, FileText, Trophy, Upload, Info, ChevronDown, CalendarIcon, Download } from "lucide-react"
 import { format as formatDate } from "date-fns"
 import { ru } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+import { apiResources } from "@/app/api/http/stages/resources"
 
 // ─── Types ───────────────────────────────────────────────────────────
 export interface Stage {
@@ -550,6 +551,23 @@ export function StageModal({ isOpen, onOpenChange, stageId, onSave, onDeleteReso
                                         <FileText className="w-4 h-4 text-slate-500 flex-shrink-0" />
                                         <span className="text-sm flex-1 truncate">{res.title}</span>
                                         <div className="flex items-center gap-1">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-6 w-6 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                onClick={async () => {
+                                                    try {
+                                                        const url = await apiResources.getDownloadUrl(stageId!, res.id);
+                                                        window.open(url, '_blank');
+                                                    } catch (error) {
+                                                        console.error("Ошибка скачивания:", error);
+                                                    }
+                                                }}
+                                                title="Скачать"
+                                            >
+                                                <Download className="w-3 h-3" />
+                                            </Button>
                                             <Badge variant="outline" className="text-[10px] h-4">ID: {res.id}</Badge>
                                             {onDeleteResource && (
                                                 <Button

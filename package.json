@@ -52,6 +52,7 @@
     "react-day-picker": "^9.11.2",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
+    "recharts": "^3.8.1",
     "shadcn-ui": "^0.9.5",
     "sonner": "^2.0.4",
     "tailwind-merge": "^3.4.0",
