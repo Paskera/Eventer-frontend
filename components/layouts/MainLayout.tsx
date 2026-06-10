@@ -10,6 +10,7 @@ import { UserRound } from "lucide-react";
 import { useSession } from "next-auth/react"
 import { Toaster } from "@/components/ui/sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { NotificationBell } from "@/components/notification-bell"
 
 export default function MainLayout({
     children,
@@ -42,6 +43,7 @@ export default function MainLayout({
                             <Separator orientation="vertical" className="mr-2 h-4" />
                         </div>
                         <div className="ml-auto flex items-center gap-3 px-4">
+                            <NotificationBell />
                             <Avatar className="h-10 w-10 border border-gray-200 bg-gradient-to-br from-slate-100 to-gray-200 text-slate-900 shadow-sm dark:border-slate-700 dark:from-slate-800 dark:to-slate-700 dark:text-slate-100">
                                 {session?.user?.image ? (
                                   <AvatarImage src={session.user.image} alt={session.user.name || "profile"} />

@@ -49,6 +49,7 @@ import { NotificationModal } from "@/app/(protected)/events/dashboard/components
 import { EventSettingsModal } from "@/app/(protected)/events/dashboard/components/EventSettingsModal";
 import { ArchiveConfirmationModal } from "@/app/(protected)/events/dashboard/components/ArchiveConfirmationModal";
 import { StageCriteriaModal } from "@/app/(protected)/events/dashboard/components/StageCriteriaModal";
+import { TeamScoresModal } from "@/app/(protected)/events/dashboard/components/TeamScoresModal";
 import { EventAnalytics } from "@/app/(protected)/events/dashboard/components/EventAnalytics";
 import { toast } from "sonner";
 import { restAxios } from "@/app/api/http/api";
@@ -205,6 +206,13 @@ const EventDetailDashboard = () => {
   const [isStageCriteriaModalOpen, setIsStageCriteriaModalOpen] = useState(false);
   const [selectedStageForCriteria, setSelectedStageForCriteria] = useState<any>(null);
   const [editingStage, setEditingStage] = useState<any>(null);
+
+  // Состояния для модального окна баллов
+  const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
+  const [selectedScoreTeamId, setSelectedScoreTeamId] = useState<number | null>(null);
+  const [selectedScoreStageId, setSelectedScoreStageId] = useState<number | null>(null);
+  const [selectedScoreTeamName, setSelectedScoreTeamName] = useState<string>("");
+  const [selectedScoreStageName, setSelectedScoreStageName] = useState<string>("");
 
   useEffect(() => {
     if (event) {
@@ -544,7 +552,13 @@ const EventDetailDashboard = () => {
     alert(`Показать файл ответов команды ${teamId} (этап ${stageId})`);
   };
   const handleViewScore = (teamId: number, stageId: number) => {
-    alert(`Показать баллы команды ${teamId} (этап ${stageId})`);
+    const team = teams?.teams?.find((t: any) => t.id === teamId);
+    const stage = stages?.find((s: any) => s.id === stageId);
+    setSelectedScoreTeamId(teamId);
+    setSelectedScoreStageId(stageId);
+    setSelectedScoreTeamName(team?.name || "");
+    setSelectedScoreStageName(stage?.stage_name || "");
+    setIsScoreModalOpen(true);
   };
 
   if (eventLoading) {
@@ -1234,6 +1248,17 @@ const EventDetailDashboard = () => {
         stageId={selectedStageForCriteria?.id || 0}
         stageName={selectedStageForCriteria?.stage_name}
         availableStages={stages?.map((s: any) => ({ id: s.id, stage_name: s.stage_name })) || []}
+      />
+
+      {/* Модальное окно баллов команды */}
+      <TeamScoresModal
+        isOpen={isScoreModalOpen}
+        onOpenChange={setIsScoreModalOpen}
+        teamId={selectedScoreTeamId}
+        stageId={selectedScoreStageId}
+        teamName={selectedScoreTeamName}
+        stageName={selectedScoreStageName}
+        isJudgeOrOrganizer={true} // TODO: validate role if needed
       />
     </div>
   );
