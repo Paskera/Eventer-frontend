@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { TextLayer, TEMPLATES } from "../data";
+import { TextLayer, Layer, TEMPLATES } from "../data";
 
 interface UseCertificateDesignerReturn {
-  layers: TextLayer[];
-  setLayers: React.Dispatch<React.SetStateAction<TextLayer[]>>;
+  layers: Layer[];
+  setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
   selectedLayerId: string | null;
   setSelectedLayerId: React.Dispatch<React.SetStateAction<string | null>>;
   backgroundImage: string | null;
@@ -32,7 +32,7 @@ interface UseCertificateDesignerReturn {
   >;
   showFloatingPanel: boolean;
   setShowFloatingPanel: React.Dispatch<React.SetStateAction<boolean>>;
-  handleUpdateLayer: (id: string, updates: Partial<TextLayer>) => void;
+  handleUpdateLayer: (id: string, updates: any) => void;
   handleLayerMouseDown: (
     e: React.MouseEvent,
     layerId: string
@@ -52,7 +52,7 @@ interface UseCertificateDesignerReturn {
 }
 
 export const useCertificateDesigner = (): UseCertificateDesignerReturn => {
-  const [layers, setLayers] = useState<TextLayer[]>(TEMPLATES[0].layers);
+  const [layers, setLayers] = useState<Layer[]>(TEMPLATES[0].layers);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>("1");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -76,7 +76,7 @@ export const useCertificateDesigner = (): UseCertificateDesignerReturn => {
   const draggedLayerId = useRef<string | null>(null);
 
   const handleUpdateLayer = useCallback(
-    (id: string, updates: Partial<TextLayer>) => {
+    (id: string, updates: any) => {
       setLayers((prevLayers) =>
         prevLayers.map((l) => (l.id === id ? { ...l, ...updates } : l))
       );
@@ -167,6 +167,7 @@ export const useCertificateDesigner = (): UseCertificateDesignerReturn => {
     const newId = Date.now().toString();
     const newLayer: TextLayer = {
       id: newId,
+      type: "text",
       text: varLabel,
       x: 105, // центрировано по ширине A4 (210/2)
       y: 20, // смещение сверху
@@ -234,6 +235,7 @@ export const useCertificateDesigner = (): UseCertificateDesignerReturn => {
         const newId = Date.now().toString();
         const newLayer: TextLayer = {
           id: newId,
+          type: "text",
           text: varLabel,
           x: x,
           y: y,

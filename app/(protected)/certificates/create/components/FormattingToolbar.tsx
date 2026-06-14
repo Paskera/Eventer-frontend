@@ -220,13 +220,12 @@ export default function FormattingToolbar({ selectedLayer, onUpdateLayer }: Form
 
       <div className="flex gap-1">
         <Button
-          variant={selectedLayer.listType === "bulleted" ? "default" : "ghost"}
+          variant={selectedLayer.listType === "bullet" ? "default" : "ghost"}
           size="sm"
           onClick={() =>
             onUpdateLayer(selectedLayer.id, {
-              listType: selectedLayer.listType === "bulleted" ? "none" : "bulleted",
-              listLevel: 0,
-            })
+              listType: selectedLayer.listType === "bullet" ? "none" : "bullet",
+            } as any)
           }
           className="h-9 w-9 p-0"
           title="Маркированный список"
@@ -234,13 +233,12 @@ export default function FormattingToolbar({ selectedLayer, onUpdateLayer }: Form
           <List className="h-4 w-4" />
         </Button>
         <Button
-          variant={selectedLayer.listType === "numbered" ? "default" : "ghost"}
+          variant={selectedLayer.listType === "number" ? "default" : "ghost"}
           size="sm"
           onClick={() =>
             onUpdateLayer(selectedLayer.id, {
-              listType: selectedLayer.listType === "numbered" ? "none" : "numbered",
-              listLevel: 0,
-            })
+              listType: selectedLayer.listType === "number" ? "none" : "number",
+            } as any)
           }
           className="h-9 w-9 p-0"
           title="Нумерованный список"
@@ -253,12 +251,12 @@ export default function FormattingToolbar({ selectedLayer, onUpdateLayer }: Form
 
       <div className="flex gap-1 flex-shrink-0">
         <Button
-          variant={selectedLayer.paragraphStyle === "quote" ? "default" : "ghost"}
+          variant={(selectedLayer as any).paragraphStyle === "quote" ? "default" : "ghost"}
           size="sm"
           onClick={() =>
             onUpdateLayer(selectedLayer.id, {
-              paragraphStyle: selectedLayer.paragraphStyle === "quote" ? "normal" : "quote",
-            })
+              paragraphStyle: (selectedLayer as any).paragraphStyle === "quote" ? "normal" : "quote",
+            } as any)
           }
           className="h-9 w-9 p-0"
           title="Цитата"
@@ -266,12 +264,12 @@ export default function FormattingToolbar({ selectedLayer, onUpdateLayer }: Form
           <Quote className="h-4 w-4" />
         </Button>
         <Button
-          variant={selectedLayer.paragraphStyle === "code" ? "default" : "ghost"}
+          variant={(selectedLayer as any).paragraphStyle === "code" ? "default" : "ghost"}
           size="sm"
           onClick={() =>
             onUpdateLayer(selectedLayer.id, {
-              paragraphStyle: selectedLayer.paragraphStyle === "code" ? "normal" : "code",
-            })
+              paragraphStyle: (selectedLayer as any).paragraphStyle === "code" ? "normal" : "code",
+            } as any)
           }
           className="h-9 w-9 p-0"
           title="Код"

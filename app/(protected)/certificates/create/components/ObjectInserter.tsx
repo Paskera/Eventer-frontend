@@ -17,12 +17,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ImageIcon, TableIcon, LinkIcon } from "lucide-react"
 import { toast } from "sonner"
-import type { ImageLayer, TableLayer, HyperlinkLayer } from "../data"
+import type { ImageLayer } from "../data"
 
 interface ObjectInserterProps {
   onInsertImage: (image: Omit<ImageLayer, "id">) => void
-  onInsertTable: (table: Omit<TableLayer, "id">) => void
-  onInsertHyperlink: (link: Omit<HyperlinkLayer, "id">) => void
+  onInsertTable: (table: any) => void
+  onInsertHyperlink: (link: any) => void
   pageWidth: number
   pageHeight: number
 }

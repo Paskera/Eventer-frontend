@@ -98,7 +98,7 @@ function parseStyleAttr(style: string): Partial<DocxExportRun> {
     if (hex) patch.colorHex = hex
   }
   const fw = style.match(/font-weight\s*:\s*([^;]+)/i)?.[1]?.trim()
-  if (fw === "bold" || fw === "bolder" || fw === "700" || (parseInt(fw, 10) || 0) >= 600) {
+  if (fw === "bold" || fw === "bolder" || fw === "700" || (parseInt(fw || "", 10) || 0) >= 600) {
     patch.bold = true
   }
   const td = style.match(/text-decoration(?:-line)?\s*:\s*([^;]+)/i)?.[1] || ""

@@ -352,10 +352,10 @@ export function CertificateDesigner({ initialState, persistence, onSave }: Certi
         if (
           isTextLayer(l) &&
           !l.isBackground &&
-          updates.alignment !== undefined &&
-          updates.positionAnchor === undefined &&
+          (updates as any).alignment !== undefined &&
+          (updates as any).positionAnchor === undefined &&
           (l as TextLayer).positionAnchor === undefined &&
-          updates.alignment !== (l as TextLayer).alignment
+          (updates as any).alignment !== (l as TextLayer).alignment
         ) {
           const tl = l as TextLayer
           return { ...l, positionAnchor: tl.alignment, ...updates } as Layer
@@ -762,7 +762,7 @@ export function CertificateDesigner({ initialState, persistence, onSave }: Certi
       format: "Custom",
       width,
       height,
-      orientation: (width >= height ? "landscape" : "portrait") as const,
+      orientation: (width >= height ? "landscape" : "portrait") as "landscape" | "portrait",
     })
     scaleLayersToPageSize(oldWidth, oldHeight, width, height)
     setBackgroundFitChoice(null)
@@ -843,6 +843,7 @@ export function CertificateDesigner({ initialState, persistence, onSave }: Certi
 
       const newLayer: TextLayer = {
         id: newId,
+        type: "text",
         text: layerText,
         x: x,
         y: y,
@@ -981,7 +982,7 @@ export function CertificateDesigner({ initialState, persistence, onSave }: Certi
       const nextPageIndex = pageIndex + 1
       const nextLayerId = `page-${nextPageIndex}-text`
       const nextLayer = prevLayers.find(
-        (l) => (l.pageIndex || 0) === nextPageIndex && l.isBackground,
+        (l) => (l.pageIndex || 0) === nextPageIndex && (l as any).isBackground,
       ) as TextLayer | undefined
 
       let newLayers: Layer[]
@@ -1328,7 +1329,7 @@ export function CertificateDesigner({ initialState, persistence, onSave }: Certi
             setRotation(0)
             setSelectedLayerId("main-text-layer")
             setEditingLayerId("main-text-layer")
-            setEditingText(blank[0].text)
+            setEditingText((blank[0] as any).text)
             setShowInitialChoice(false)
           }}
           onChooseTemplate={() => {

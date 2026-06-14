@@ -11,8 +11,8 @@ import { normalizeListMarkerFontSizes } from "../normalizeListMarkerFontSizes"
 import { List, ListOrdered } from "lucide-react"
 
 interface FloatingPropertiesPanelProps {
-  selectedLayer: TextLayer
-  onUpdateLayer: (id: string, updates: Partial<TextLayer>) => void
+  selectedLayer: any
+  onUpdateLayer: (id: string, updates: any) => void
   onDeleteLayer: (id: string) => void
   onClose: () => void
   position: { x: number; y: number }
@@ -308,7 +308,7 @@ export default function FloatingPropertiesPanel({
       [field]: String(finalValue),
     }))
 
-    const updateData: Partial<TextLayer> = {}
+    const updateData: any = {}
     switch (field) {
       case "fontSize":
         updateData.fontSize = finalValue

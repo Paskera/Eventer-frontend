@@ -194,7 +194,7 @@ export default function ExportButton({
       if (pageNodes.length > 0) {
         try {
           const html2canvas = (await import("html2canvas")).default
-          const { jsPDF } = await import("jspdf")
+          const jsPDF = (await import("jspdf")).default
 
           const orientation = pageWidth > pageHeight ? "landscape" : "portrait"
           const doc = new jsPDF({
@@ -241,7 +241,7 @@ export default function ExportButton({
         return
       }
 
-      const { jsPDF } = await import("jspdf")
+      const jsPDF = (await import("jspdf")).default
       const doc = new jsPDF({
         orientation: pageWidth > pageHeight ? "landscape" : "portrait",
         unit: "mm",
@@ -522,13 +522,14 @@ export default function ExportButton({
               }),
             )
           } else if (isTableLayer(layer)) {
-            if (!layer.rows || layer.rows.length === 0) continue
+            const tableLayer = layer as any;
+            if (!tableLayer.rows || tableLayer.rows.length === 0) continue
             try {
-              const tableRows = layer.rows.map(
-                (row) =>
+              const tableRows = tableLayer.rows.map(
+                (row: any) =>
                   new TableRow({
                     children: (row || []).map(
-                      (cell) =>
+                      (cell: any) =>
                         new TableCell({
                           children: [new Paragraph(cell?.text || "")],
                         }),
@@ -542,18 +543,19 @@ export default function ExportButton({
               errorCount++
             }
           } else if (isHyperlinkLayer(layer)) {
-            if (!layer.text || !layer.url) continue
+            const linkLayer = layer as any;
+            if (!linkLayer.text || !linkLayer.url) continue
             try {
-              new URL(layer.url)
+              new URL(linkLayer.url)
               children.push(
                 new Paragraph({
                   children: [
                     new ExternalHyperlink({
-                      link: layer.url,
+                      link: linkLayer.url,
                       children: [
                         new TextRun({
-                          text: layer.text,
-                          color: (layer.color || "#0563C1").replace(/^#/, ""),
+                          text: linkLayer.text,
+                          color: (linkLayer.color || "#0563C1").replace(/^#/, ""),
                           underline: { type: UnderlineType.SINGLE },
                         }),
                       ],
@@ -562,7 +564,7 @@ export default function ExportButton({
                 }),
               )
             } catch {
-              children.push(new Paragraph({ text: layer.text }))
+              children.push(new Paragraph({ text: (layer as any).text }))
               errorCount++
             }
           }
