@@ -13,7 +13,7 @@ import { toast } from "sonner"
 import { apiTeams, CreateTeam, CreateTeamResponse } from "@/app/api/http/teams/teams"
 import { useMutation } from "@tanstack/react-query"
 
-export default function CreateTeamForm() {
+export default function CreateTeamForm({ onTeamCreated }: { onTeamCreated?: () => void }) {
     const [teamData, setTeamData] = useState<CreateTeam>({
         team_name: '',
         logo: '',
@@ -28,6 +28,7 @@ export default function CreateTeamForm() {
             setShowSuccess(true);
             setTimeout(() => setShowSuccess(false), 3000); // Убрать через 3 сек
             setTeamData({ team_name: '', logo: '', description: '' });
+            onTeamCreated?.();
         },
         onError: () => {
             toast.error("Ошибка при создании команды");

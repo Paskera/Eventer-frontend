@@ -222,7 +222,6 @@ export default function HackathonBoard() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="active">Активные</SelectItem>
-                                    <SelectItem value="waiting">Предстоящие</SelectItem>
                                     <SelectItem value="closed">Завершённые</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -358,7 +357,6 @@ export default function HackathonBoard() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="active">Активные</SelectItem>
-                                <SelectItem value="waiting">Предстоящие</SelectItem>
                                 <SelectItem value="closed">Завершённые</SelectItem>
                             </SelectContent>
                         </Select>

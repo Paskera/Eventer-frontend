@@ -48,56 +48,56 @@ const data = {
       name: "Профиль",
       url: "/profile",
       icon: UserRound,
+      allowedRoles: [ROLES.USER, ROLES.ORGANAIZER, ROLES.ADMIN],
     },
     {
       name: "Дашборд",
-      url: "/events/dashboard",
+      url: "/events/dashboard", // Using this for organizer dashboard
       icon: ClipboardList,
+      allowedRoles: [ROLES.ORGANAIZER, ROLES.ADMIN],
     },
     {
       name: "Все мероприятия",
       url: "/events/all",
       icon: GalleryVerticalEnd,
+      allowedRoles: [ROLES.USER, ROLES.ORGANAIZER, ROLES.ADMIN],
     },
     {
       name: "Мои мероприятия",
       url: "/events/my",
       icon: GraduationCap,
+      allowedRoles: [ROLES.USER, ROLES.ORGANAIZER, ROLES.ADMIN],
     },
-    // {
-    //   name: "Команды",
-    //   url: "/teams",
-    //   icon: Users,
-    // },
     {
       name: "Создать мероприятие",
       url: "/events/create",
       icon: PlusCircle,
+      allowedRoles: [ROLES.ORGANAIZER, ROLES.ADMIN],
     },
     {
       name: "Сертификаты",
       url: "/certificates",
       icon: File,
+      allowedRoles: [ROLES.USER, ROLES.ORGANAIZER, ROLES.ADMIN],
+    },
+    {
+      name: "Модерация ивентов",
+      url: "/admin/events",
+      icon: ClipboardList,
+      allowedRoles: [ROLES.ADMIN],
     },
   ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession();
-  let filteredProjects = data.projects;
-  if (session?.role && session.role.toUpperCase() === ROLES.USER) {
-    filteredProjects = data.projects.filter(
-      (item) => item.url !== "/events/dashboard"
-    );
-  } 
-  // else if (session?.role && session.role.toUpperCase() === ROLES.ORGANAIZER) {
-  //   filteredProjects = data.projects.filter(
-  //     (item) =>
-  //       item.url !== "/events/my" &&
-  //       item.url !== "/allevents" &&
-  //       item.url !== "/certificates"
-  //   );
-  // }
+  
+  const userRole = session?.role?.toUpperCase() || ROLES.USER;
+
+  const filteredProjects = data.projects.filter(project => {
+    return project.allowedRoles.includes(userRole as keyof typeof ROLES | "ADMIN" | "USER" | "ORGANAIZER");
+  });
+
   return (
     // <Sidebar variant="inset" collapsible="icon" className="transition-all duration-200 ease-linear" {...props}>
     <Sidebar variant="inset" collapsible="icon" className="transition-all duration-200 ease-linear" {...props}>

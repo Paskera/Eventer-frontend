@@ -49,6 +49,21 @@ export interface DrawMatchRequest {
   score_data?: Record<string, any>;
 }
 
+export interface StandingsEntry {
+  team_id: number;
+  team_name: string;
+  points: number;
+  matches_played: number;
+  wins: number;
+  losses: number;
+  draws: number;
+}
+
+export interface StandingsRead {
+  stage_id: number;
+  entries: StandingsEntry[];
+}
+
 export const apiBracket = {
   getBracket: async (event_id: number, stage_id: number): Promise<BracketRead> => {
     return (await restAxios.get(`/api/events/${event_id}/stages/${stage_id}/bracket/`)).data;
@@ -68,5 +83,9 @@ export const apiBracket = {
 
   drawMatch: async (event_id: number, stage_id: number, match_id: number, data: DrawMatchRequest): Promise<BracketRead> => {
     return (await restAxios.patch(`/api/events/${event_id}/stages/${stage_id}/bracket/matches/${match_id}/draw`, data)).data;
+  },
+
+  getStandings: async (event_id: number, stage_id: number): Promise<StandingsRead> => {
+    return (await restAxios.get(`/api/events/${event_id}/stages/${stage_id}/bracket/standings`)).data;
   },
 };

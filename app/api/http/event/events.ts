@@ -5,6 +5,15 @@ interface Category {
   name: string;
 }
 
+export interface EventModerationLog {
+  id: number;
+  event_id: number;
+  admin_id: number | null;
+  action: string;
+  reason: string | null;
+  created_at: string;
+}
+
 export interface Events {
   event_name: string;
   description: string;
@@ -14,7 +23,8 @@ export interface Events {
   venue: string;
   start_date: string;
   end_date: string;
-  event_status: 'active' | 'cancelled' | 'completed';
+  event_status: 'validated' | 'rejected' | 'active' | 'waiting' | 'closed' | 'archived' | 'on_moderation';
+  is_approved?: boolean;
   id: number;
   organizer_id: number;
   category: Category;
@@ -25,7 +35,7 @@ export interface EventStage {
   description: string
   type: string
   users_on_stage: number
-  stage_status: string
+  stage_status: 'validated' | 'rejected' | 'active' | 'waiting' | 'closed';
   id: number
   start_date: string
   end_date: string
@@ -41,11 +51,31 @@ export interface Event {
   venue: string;
   start_date: string;
   end_date: string;
-  event_status: 'active' | 'inactive' | string;
+  event_status: 'validated' | 'rejected' | 'active' | 'waiting' | 'closed' | 'archived' | 'on_moderation';
+  is_approved: boolean;
   id: number;
   organizer_id: number;
   category_id: number;
   stages: EventStage[];
+}
+
+export interface StageScoreBreakdown {
+  stage_id: number;
+  stage_name: string;
+  score: number;
+}
+
+export interface LeaderboardEntry {
+  team_id: number;
+  team_name: string;
+  total_score: number;
+  stage_scores: StageScoreBreakdown[];
+  rank: number | null;
+}
+
+export interface EventResults {
+  event_id: number;
+  score_leaderboard: LeaderboardEntry[];
 }
 
 export interface CurrentEvents {
@@ -81,7 +111,8 @@ export interface EventCreateData {
   venue: string;
   start_date: string;
   end_date: string;
-  event_status?: 'active' | 'cancelled' | 'completed';
+  event_status?: 'validated' | 'rejected' | 'active' | 'waiting' | 'closed' | 'archived' | 'on_moderation';
+  is_approved?: boolean;
   organizer_id?: number;
   category_id: number;
   stages?: Array<{
@@ -141,6 +172,10 @@ export const apiEvents = {
     return (await restAxios.get(`api/events/${id}`)).data
   },
 
+  getEventResults: async (id: number): Promise<EventResults> => {
+    return (await restAxios.get(`api/events/${id}/results`)).data;
+  },
+
   // slavik // переделать
   getMyEvents: async (): Promise<{ events: Event[], total: number, count: number, offset: number }> => {
     const res = await restAxios.get(`api/events/my/participations/?page=1&page_size=10`);
@@ -155,7 +190,15 @@ export const apiEvents = {
   },
 
   updateEvent: async (id: number, data: Partial<Event>): Promise<Event> => {
-    return (await restAxios.patch(`api/events/${id}`, data)).data;
+    return (await restAxios.patch(`api/events/${id}/`, data)).data;
+  },
+
+  moderateEvent: async (id: number, data: { event_status: string, rejection_reason?: string | null }): Promise<Event> => {
+    return (await restAxios.patch(`api/events/${id}/moderate`, data)).data;
+  },
+
+  getEventModerationLogs: async (id: number): Promise<EventModerationLog[]> => {
+    return (await restAxios.get(`api/events/${id}/moderation-logs`)).data;
   },
 
   uploadEventImage: async (id: number, imageFile: File): Promise<void> => {

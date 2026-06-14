@@ -11,8 +11,8 @@ import { StatusBadge, FormatBadge } from "@/app/(protected)/events/[id]/componen
 
 export default function MyEventsPage() {
     const { data, isPending, error } = useQuery({
-        queryKey: ["myCreatedEvents", { page: 1, page_size: 12 }],
-        queryFn: () => apiEvents.getMyCreatedEvents({ page: 1, page_size: 12 }),
+        queryKey: ["myParticipatedEvents", { page: 1, page_size: 12 }],
+        queryFn: () => apiEvents.getParticipationsEvents({ page: 1, page_size: 12 }),
     })
 
     const events: Events[] = data?.events ?? []
@@ -65,9 +65,9 @@ export default function MyEventsPage() {
                 <div className="relative flex flex-col gap-3">
                     <div className="flex items-center gap-2 text-sm uppercase tracking-wide text-gray-600 dark:text-gray-400">
                         <CalendarCheck2 className="h-4 w-4" />
-                        Организация
+                        Участие
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Мероприятия, созданные мной</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Мои мероприятия</h1>
                     <div className="flex flex-wrap gap-2">
                         <Badge className="bg-gray-100 dark:bg-neutral-800 border-gray-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300">
                             Всего: {events.length}
@@ -86,7 +86,7 @@ export default function MyEventsPage() {
                     <CardContent className="p-12 text-center">
                         <CalendarCheck2 className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
                         <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                            У вас пока нет мероприятий
+                            Вы пока не участвуете ни в одном мероприятии
                         </h3>
                         <p className="text-muted-foreground">
                             Найдите интересные события и присоединитесь к участию

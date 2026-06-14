@@ -1,23 +1,23 @@
 import { Badge } from "@/components/ui/badge"
+import { CheckCircle2, Clock, Archive } from "lucide-react"
 
 export const StatusBadge = ({ status }: { status: string }) => {
-    const lower = status?.toLowerCase() || '';
-    
-    let displayStatus = status;
-    if (lower === 'active' || lower === 'активный') displayStatus = 'Активно';
-    else if (lower === 'upcoming' || lower === 'предстоящий' || lower === 'скоро') displayStatus = 'Скоро';
-    else if (lower === 'completed' || lower === 'closed' || lower === 'завершен' || lower === 'завершено') displayStatus = 'Завершено';
-
-    if (lower === 'active' || lower === 'активный') {
-      return <Badge className="text-[13px] leading-none h-[28px] px-3 py-0 bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-500/20 dark:text-green-400 border border-green-200 dark:border-green-500/30 shadow-none font-medium rounded-md">{displayStatus}</Badge>
+    switch (status) {
+        case 'active':
+            return <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 border-none"><CheckCircle2 className="w-3 h-3 mr-1" />Опубликовано</Badge>
+        case 'waiting':
+            return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 border-none"><Clock className="w-3 h-3 mr-1" />Черновик</Badge>
+        case 'closed':
+            return <Badge className="bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border-none"><CheckCircle2 className="w-3 h-3 mr-1" />Завершено</Badge>
+        case 'archived':
+            return <Badge className="bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border-none"><Archive className="w-3 h-3 mr-1" />В архиве</Badge>
+        case 'on_moderation':
+            return <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/30 border-none"><Clock className="w-3 h-3 mr-1" />На модерации</Badge>
+        case 'rejected':
+            return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 border-none"><Clock className="w-3 h-3 mr-1" />Отклонено</Badge>
+        default:
+            return <Badge variant="secondary" className="border-none">{status}</Badge>
     }
-    if (lower === 'upcoming' || lower === 'предстоящий' || lower === 'скоро') {
-      return <Badge className="text-[13px] leading-none h-[28px] px-3 py-0 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 shadow-none font-medium rounded-md">{displayStatus}</Badge>
-    }
-    if (lower === 'completed' || lower === 'closed' || lower === 'завершен' || lower === 'завершено') {
-      return <Badge className="text-[13px] leading-none h-[28px] px-3 py-0 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-none font-medium rounded-md">{displayStatus}</Badge>
-    }
-    return <Badge variant="secondary" className="text-[13px] leading-none h-[28px] px-3 py-0 shadow-none font-medium rounded-md">{displayStatus}</Badge>
 }
 
 export const FormatBadge = ({ format }: { format: string }) => {

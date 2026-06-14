@@ -34,6 +34,7 @@ export interface TeamsResponse {
 interface MyTeam {
   name: string;
   invite_token: string;
+  status: 'pending' | 'approved' | 'rejected';
 }
 
 interface MyMember {
@@ -58,10 +59,12 @@ export const apiEventTeams = {
       throw error;
     }
   },
-  createTeam: async (event_id: number, file: File, name: string) => {
+  createTeam: async (event_id: number, file: File | null, name: string) => {
     const formData = new FormData();
     formData.append("name", name);
-    formData.append("consent_document", file);
+    if (file) {
+      formData.append("consent_document", file);
+    }
     return (await restAxios.post(`/api/events/${event_id}/event-teams/`, formData, {
       headers: {
         "Content-Type": "multipart/form-data"

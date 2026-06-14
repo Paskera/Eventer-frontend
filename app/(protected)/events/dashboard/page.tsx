@@ -14,8 +14,8 @@ import { StatusBadge, FormatBadge } from "@/app/(protected)/events/[id]/componen
 export default function EventsPage() {
     const router = useRouter()
     const { data, isPending, error } = useQuery({
-        queryKey: ["Events", { page: 1, page_size: 12 }],
-        queryFn: () => apiEvents.getAllEvents({ page: 1, page_size: 12 }),
+        queryKey: ["myCreatedEvents", { page: 1, page_size: 12 }],
+        queryFn: () => apiEvents.getMyCreatedEvents({ page: 1, page_size: 12 }),
     })
 
     const events: Events[] = data?.events ?? []
@@ -65,9 +65,9 @@ export default function EventsPage() {
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center gap-2 text-sm uppercase tracking-wide text-gray-600 dark:text-gray-400">
                                 <Globe2Icon className="h-4 w-4" />
-                                Дашборд мероприятий
+                                Организация
                             </div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Обзор активных и будущих событий</h1>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Созданные мероприятия</h1>
                             <div className="flex flex-wrap gap-2">
                                 <Badge className="bg-gray-100 dark:bg-neutral-800 border-gray-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300">Всего: {events.length}</Badge>
                                 <Badge className="bg-gray-100 dark:bg-neutral-800 border-gray-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300">Страница 1</Badge>

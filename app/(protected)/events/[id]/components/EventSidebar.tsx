@@ -1,17 +1,20 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
-import { UsersIcon, CheckIcon, Share2, MapPinIcon, CalendarIcon } from "lucide-react"
+import { UsersIcon, CheckIcon, Share2, MapPinIcon, CalendarIcon, Gavel } from "lucide-react"
 import { formatEventDate } from "./utils"
 
 interface EventSidebarProps {
    event: any;
    team: any;
    onRegisterClick: () => void;
+   isJudge?: boolean;
 }
 
-export const EventSidebar = ({ event, team, onRegisterClick }: EventSidebarProps) => {
+export const EventSidebar = ({ event, team, onRegisterClick, isJudge }: EventSidebarProps) => {
    const [copied, setCopied] = useState(false)
+   const router = useRouter()
 
    const handleShare = () => {
       navigator.clipboard.writeText(window.location.href)
@@ -20,10 +23,29 @@ export const EventSidebar = ({ event, team, onRegisterClick }: EventSidebarProps
    }
 
    const isEventClosed = event.event_status?.toLowerCase() === 'closed' || event.event_status?.toLowerCase() === 'завершен';
+   const hasEventStarted = event.start_date && new Date() >= new Date(event.start_date);
 
    return (
       <div className="w-full lg:w-1/3 space-y-6">
-         {/* Registration CTA Card */}
+         {/* Кнопка судьи */}
+         {isJudge && (
+            <Card className="border-amber-200 dark:border-amber-800/50 shadow-sm overflow-hidden bg-white dark:bg-neutral-900 rounded-md relative">
+               <div className="absolute top-0 left-0 w-full h-1 bg-amber-500" />
+               <CardContent className="p-6 text-center">
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                     <Gavel className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                     <span className="font-bold text-amber-700 dark:text-amber-400">Вы судья</span>
+                  </div>
+                  <button
+                     onClick={() => router.push(`/events/${event.id}/judging`)}
+                     className="w-full py-3 px-6 bg-amber-500 hover:bg-amber-600 active:scale-[0.98] rounded-md font-bold text-white transition-all shadow-md flex justify-center items-center gap-2"
+                  >
+                     <Gavel className="w-4 h-4" />
+                     Открыть панель судьи
+                  </button>
+               </CardContent>
+            </Card>
+         )}
          <Card className="border-border shadow-sm overflow-hidden bg-white dark:bg-neutral-900 rounded-md relative group">
             <div className="absolute top-0 left-0 w-full h-1 bg-green-500" />
             <CardContent className="p-6 md:p-8 text-center">
@@ -34,9 +56,25 @@ export const EventSidebar = ({ event, team, onRegisterClick }: EventSidebarProps
                         <div className="w-full py-4 px-6 bg-slate-100 dark:bg-slate-800/50 rounded-md font-bold text-slate-500 dark:text-slate-400 text-center flex justify-center items-center gap-2 border border-slate-200/50 dark:border-slate-700/50 shadow-sm cursor-default">
                            Событие завершено
                         </div>
+                     ) : team?.team?.status === 'pending' ? (
+                        <div className="w-full py-4 px-6 bg-amber-50 dark:bg-amber-500/10 rounded-md font-bold text-amber-700 dark:text-amber-400 text-center flex justify-center items-center gap-2 border border-amber-200 dark:border-amber-500/30 shadow-sm cursor-default">
+                           <CalendarIcon className="w-5 h-5" /> Заявка на рассмотрении
+                        </div>
+                     ) : team?.team?.status === 'rejected' ? (
+                        <div className="w-full py-4 px-6 bg-rose-50 dark:bg-rose-500/10 rounded-md font-bold text-rose-700 dark:text-rose-400 text-center flex justify-center items-center gap-2 border border-rose-200 dark:border-rose-500/30 shadow-sm cursor-default">
+                           <CheckIcon className="w-5 h-5 hidden" /> ✕ Заявка отклонена
+                        </div>
+                     ) : team?.team?.status === 'approved' ? (
+                        <div className="w-full py-4 px-6 bg-green-50 dark:bg-green-500/10 rounded-md font-bold text-green-700 dark:text-green-400 text-center flex justify-center items-center gap-2 border border-green-200 dark:border-green-500/30 shadow-sm cursor-default">
+                           <CheckIcon className="w-5 h-5" /> Участие подтверждено
+                        </div>
                      ) : team ? (
                         <div className="w-full py-4 px-6 bg-green-50 dark:bg-green-500/10 rounded-md font-bold text-green-700 dark:text-green-400 text-center flex justify-center items-center gap-2 border border-green-200 dark:border-green-500/30 shadow-sm cursor-default">
                            <CheckIcon className="w-5 h-5" /> Вы зарегистрированы
+                        </div>
+                     ) : hasEventStarted ? (
+                        <div className="w-full py-4 px-6 bg-slate-100 dark:bg-slate-800/50 rounded-md font-bold text-slate-500 dark:text-slate-400 text-center flex justify-center items-center gap-2 border border-slate-200/50 dark:border-slate-700/50 shadow-sm cursor-default">
+                           Регистрация закрыта
                         </div>
                      ) : (
                         <>

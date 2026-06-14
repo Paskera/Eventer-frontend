@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiEventTeams } from '@/app/api/http/EventTeams/event_teams';
 import { apiStages } from '@/app/api/http/stages/stages';
 import { apiStageCriteria } from '@/app/api/http/stage-criteria/stage_criteria';
-import { Target, BarChart3 } from 'lucide-react';
+import { Target, BarChart3, LockIcon } from 'lucide-react';
 
 const team = [
     { name: 'Сергей Орлов', email: 'olivia.martin@email.com', role: 'Тимлид', avatar: '/avatars/01.png' },
@@ -120,6 +120,7 @@ export default function MyEventDetailsPage() {
                         ) : stages && stages.length > 0 ? (
                             stages.map((stage: any) => {
                                 const stageCriteria = allStageCriteria?.[stage.id] || [];
+                                const isUpcoming = stage.start_date && new Date() < new Date(stage.start_date);
                                 return (
                                     <Card key={stage.id} className="bg-white dark:bg-neutral-900 border-gray-200 dark:border-neutral-800">
                                         <CardHeader>
@@ -129,20 +130,26 @@ export default function MyEventDetailsPage() {
                                                     {stage.stage_name}
                                                 </CardTitle>
                                                 <Badge
-                                                    className={`${
-                                                        stage.stage_status === "active"
-                                                            ? "bg-emerald-500 text-white"
-                                                            : stage.stage_status === "upcoming"
-                                                            ? "bg-cyan-500 text-white"
-                                                            : "bg-slate-600 text-white"
-                                                    }`}
+                                                    className={`${isUpcoming
+                                                            ? "bg-slate-500 text-white"
+                                                            : stage.stage_status === "active"
+                                                                ? "bg-emerald-500 text-white"
+                                                                : stage.stage_status === "waiting"
+                                                                    ? "bg-cyan-500 text-white"
+                                                                    : "bg-slate-600 text-white"
+                                                        }`}
                                                 >
-                                                    {stage.stage_status}
+                                                    {isUpcoming ? "ожидается" : stage.stage_status}
                                                 </Badge>
                                             </div>
                                         </CardHeader>
                                         <CardContent>
-                                            {stageCriteria.length > 0 ? (
+                                            {isUpcoming ? (
+                                                <div className="text-center py-6 text-muted-foreground">
+                                                    <LockIcon className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                                                    <p className="text-sm">Критерии скрыты до начала этапа</p>
+                                                </div>
+                                            ) : stageCriteria.length > 0 ? (
                                                 <div className="space-y-4">
                                                     <div className="grid gap-3">
                                                         {stageCriteria
@@ -179,7 +186,7 @@ export default function MyEventDetailsPage() {
                                                         <div className="flex items-center gap-2 text-xs text-blue-900 dark:text-blue-100">
                                                             <BarChart3 className="w-4 h-4" />
                                                             <span className="font-medium">
-                                                                Критериев: {stageCriteria.length} | 
+                                                                Критериев: {stageCriteria.length} |
                                                                 Макс. балл: {stageCriteria.reduce((sum: number, c: any) => sum + (c.max_score || 0), 0)}
                                                             </span>
                                                         </div>

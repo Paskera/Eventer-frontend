@@ -1,6 +1,6 @@
 "use client"
 
-import { ClockIcon, CheckCircleIcon, CalendarClock, NetworkIcon } from "lucide-react"
+import { ClockIcon, CheckCircleIcon, CalendarClock, NetworkIcon, LockIcon } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { formatEventDate } from "./utils"
@@ -10,9 +10,10 @@ import { StageResources } from "./StageResources"
 interface EventTimelineProps {
   stages: any[]
   hasTeam?: boolean
+  teamStatus?: string
 }
 
-export const EventTimeline = ({ stages, hasTeam }: EventTimelineProps) => {
+export const EventTimeline = ({ stages, hasTeam, teamStatus }: EventTimelineProps) => {
   const router = useRouter()
   const params = useParams()
   const eventId = params.id as string
@@ -44,6 +45,7 @@ export const EventTimeline = ({ stages, hasTeam }: EventTimelineProps) => {
           let statusColor = "border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400";
           let isActive = false;
           let isPassed = false;
+          let isUpcoming = false;
 
           if (startDate && endDate) {
             if (now >= startDate && now <= endDate) {
@@ -52,11 +54,14 @@ export const EventTimeline = ({ stages, hasTeam }: EventTimelineProps) => {
             } else if (now > endDate) {
               isPassed = true;
               statusColor = "border-green-500 bg-white dark:bg-zinc-950 text-green-500";
+            } else if (now < startDate) {
+              isUpcoming = true;
+              statusColor = "border-slate-300 bg-slate-50 dark:bg-slate-900 text-slate-400";
             }
           }
 
           // Fallback if no dates logic or standard stage statuses
-          if (stage.stage_status === "active") {
+          if (stage.stage_status === "active" && !isUpcoming) {
             isActive = true;
             statusColor = "border-green-500 bg-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.4)]";
           }
@@ -86,6 +91,8 @@ export const EventTimeline = ({ stages, hasTeam }: EventTimelineProps) => {
                     <Badge className="bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400 border border-green-200 dark:border-green-500/30 shadow-none font-semibold">Активно</Badge>
                   ) : isPassed ? (
                     <Badge variant="outline" className="border-border text-muted-foreground shadow-none">Завершено</Badge>
+                  ) : isUpcoming ? (
+                    <Badge variant="secondary" className="bg-muted text-muted-foreground shadow-none">Ожидается</Badge>
                   ) : (
                     <Badge variant="secondary" className="bg-muted text-muted-foreground shadow-none">{stage.stage_status}</Badge>
                   )}
@@ -103,7 +110,17 @@ export const EventTimeline = ({ stages, hasTeam }: EventTimelineProps) => {
                 )}
 
                 {/* Subcomponents for Requirements & Resources */}
-                {((stage.stage_type === "submission" && stage.requirements && stage.requirements.length > 0) ||
+                {teamStatus === "rejected" ? (
+                  <div className="mt-2 py-4 px-3 bg-rose-50/50 dark:bg-rose-950/20 border border-dashed border-rose-200 dark:border-rose-900/40 rounded-lg text-sm text-rose-600 dark:text-rose-400 flex flex-col items-center justify-center gap-2 text-center">
+                    <LockIcon className="w-6 h-6 opacity-40 mb-1" />
+                    <span>Ваша заявка отклонена. Доступ к заданиям закрыт.</span>
+                  </div>
+                ) : isUpcoming ? (
+                  <div className="mt-2 py-4 px-3 bg-muted/30 border border-dashed border-border rounded-lg text-sm text-muted-foreground flex flex-col items-center justify-center gap-2 text-center">
+                    <LockIcon className="w-6 h-6 opacity-40 mb-1" />
+                    <span>Задания и материалы будут доступны после начала этапа</span>
+                  </div>
+                ) : ((stage.stage_type === "submission" && stage.requirements && stage.requirements.length > 0) ||
                   (stage.resources && Array.isArray(stage.resources) && stage.resources.length > 0) ||
                   (stage.stage_type === "bracket")) && (
                     <div className="flex flex-col gap-4 mt-2 pt-4 border-t border-border/50">

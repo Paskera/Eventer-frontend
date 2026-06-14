@@ -71,7 +71,7 @@ export default function CreateEvent() {
       venue: venue,
       start_date: startDate ? startDate.toISOString() : '',
       end_date: endDate ? endDate.toISOString() : '',
-      event_status: 'active' as const,
+      event_status: 'waiting' as const,
       category_id: Number(category),
       stages: []
     };

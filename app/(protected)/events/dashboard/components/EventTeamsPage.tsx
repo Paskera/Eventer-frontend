@@ -325,7 +325,7 @@ export default function EventTeamsPage() {
 
   const teams = teamsData?.teams || []
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: 'pending' | 'approved' | 'rejected') => {
     const statusConfig = {
       pending: { label: "Ожидает", variant: "secondary", icon: Clock },
       approved: { label: "Одобрено", variant: "default", icon: CheckCircle },
@@ -343,8 +343,8 @@ export default function EventTeamsPage() {
     )
   }
 
-  const getParentalConsentBadge = (status) => {
-    const statusConfig = {
+  const getParentalConsentBadge = (status: 'pending' | 'approved' | 'rejected') => {
+    const statusConfig: Record<string, { label: string; variant: "secondary" | "default" | "destructive" | "outline"; icon: any }> = {
       pending: { label: "Ожидает", variant: "secondary", icon: Clock },
       approved: { label: "Одобрено", variant: "default", icon: UserCheck },
       rejected: { label: "Отклонено", variant: "destructive", icon: UserX },
@@ -376,8 +376,10 @@ export default function EventTeamsPage() {
   });
 
   const handleTeamAction = (teamId: number, action: 'approve' | 'reject') => {
-    if (action === 'approve' || action === 'reject') {
-      updateTeamStatusMutation.mutate({ teamId, status: action });
+    if (action === 'approve') {
+      updateTeamStatusMutation.mutate({ teamId, status: 'approved' });
+    } else if (action === 'reject') {
+      updateTeamStatusMutation.mutate({ teamId, status: 'rejected' });
     }
   }
 
@@ -423,7 +425,7 @@ export default function EventTeamsPage() {
     return matchesStatus && matchesSearch
   })
 
-  const openTeamDetails = (team) => {
+  const openTeamDetails = (team: any) => {
     setSelectedTeam(team)
     setIsDetailModalOpen(true)
   }

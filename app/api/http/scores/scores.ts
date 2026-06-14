@@ -42,6 +42,10 @@ export const apiScores = {
     return (await restAxios.get(`/api/stage-scores/by-team/${teamId}/stage/${stageId}/detailed`)).data;
   },
 
+  getDetailedScoresByEvent: async (eventId: number): Promise<DetailedStageScore[]> => {
+    return (await restAxios.get(`/api/stage-scores/by-event/${eventId}/detailed`)).data;
+  },
+
   createScore: async (data: StageScoreCreate): Promise<StageScore> => {
     return (await restAxios.post(`/api/stage-scores/`, data)).data;
   },

@@ -33,6 +33,9 @@ export interface Stage {
     settings?: Record<string, any>
     requirements?: any[]
     resources?: any[]
+    is_auto_transition?: boolean
+    auto_transition_at?: string
+    top_n_teams?: number | null
 }
 
 export interface ResourceFile {
@@ -88,6 +91,10 @@ export function StageModal({ isOpen, onOpenChange, stageId, onSave, onDeleteReso
     const [stageFormat, setStageFormat] = useState('online')
     const [maxSlots, setMaxSlots] = useState(0)
 
+    // Auto-transition
+    const [isAutoTransition, setIsAutoTransition] = useState(false)
+    const [topNTeams, setTopNTeams] = useState<number | ''>('')
+
     // Content-specific
     const [content, setContent] = useState('')
 
@@ -121,6 +128,8 @@ export function StageModal({ isOpen, onOpenChange, stageId, onSave, onDeleteReso
             setContent(stageData.content || (stageData as any).content_config?.content || '')
             setRequirements(stageData.requirements || (stageData as any).submission_config?.requirements || [])
             setResourceFiles([])
+            setIsAutoTransition(stageData.is_auto_transition || false)
+            setTopNTeams(stageData.top_n_teams || '')
         } else {
             setName('');        setDescription('')
             setStartDate(undefined); setEndDate(undefined)
@@ -129,6 +138,8 @@ export function StageModal({ isOpen, onOpenChange, stageId, onSave, onDeleteReso
             setStageFormat('online'); setMaxSlots(0)
             setContent('');     setRequirements([])
             setResourceFiles([])
+            setIsAutoTransition(false)
+            setTopNTeams('')
         }
     }, [stageId, stageData, isOpen])
 
@@ -174,6 +185,8 @@ export function StageModal({ isOpen, onOpenChange, stageId, onSave, onDeleteReso
             stage_type: stageType,
             stage_format: stageFormat,
             max_slots: maxSlots,
+            is_auto_transition: isAutoTransition,
+            top_n_teams: isAutoTransition && topNTeams !== '' ? Number(topNTeams) : null,
         }
 
         let payload: any
@@ -336,6 +349,35 @@ export function StageModal({ isOpen, onOpenChange, stageId, onSave, onDeleteReso
                                 className="text-base"
                             />
                         </div>
+                    </div>
+
+                    {/* ── Auto Transition ──────────────────────────── */}
+                    <div className="space-y-3 p-4 bg-slate-50 dark:bg-neutral-800/50 rounded-lg border border-slate-200 dark:border-neutral-700">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="autoTransition"
+                                checked={isAutoTransition}
+                                onChange={e => setIsAutoTransition(e.target.checked)}
+                                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <Label htmlFor="autoTransition" className="text-base font-semibold cursor-pointer">
+                                Автоматический переход участников
+                            </Label>
+                        </div>
+                        {isAutoTransition && (
+                            <div className="pl-6 space-y-2 animate-in slide-in-from-top-2 fade-in duration-200">
+                                <Label className="text-sm text-slate-600 dark:text-slate-400">Количество лучших (Top K), которые пройдут дальше</Label>
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    placeholder="Например: 10"
+                                    value={topNTeams}
+                                    onChange={e => setTopNTeams(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                    className="max-w-[200px]"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* ── Description ──────────────────────────────── */}

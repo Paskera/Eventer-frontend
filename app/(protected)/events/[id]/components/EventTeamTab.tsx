@@ -38,12 +38,13 @@ import {
 
 interface EventTeamTabProps {
    team: any;
+   event: any;
    eventId: number;
    isPending: boolean;
    onRegisterClick: () => void;
 }
 
-export const EventTeamTab = ({ team, eventId, isPending, onRegisterClick }: EventTeamTabProps) => {
+export const EventTeamTab = ({ team, event, eventId, isPending, onRegisterClick }: EventTeamTabProps) => {
    const { data: session } = useSession()
    const queryClient = useQueryClient()
    const [copiedLink, setCopiedLink] = useState(false)
@@ -120,6 +121,10 @@ export const EventTeamTab = ({ team, eventId, isPending, onRegisterClick }: Even
       )
    }
 
+   const isEventClosed = event?.event_status?.toLowerCase() === 'closed' || event?.event_status?.toLowerCase() === 'завершен';
+   const hasEventStarted = event?.start_date && new Date() >= new Date(event.start_date);
+   const registrationDisabled = isEventClosed || hasEventStarted;
+
    if (!team) {
       return (
          <Card className="border-dashed border-2 border-border shadow-none bg-background/50 flex flex-col items-center justify-center p-12 py-16 text-center animate-in fade-in duration-500 rounded-md">
@@ -130,8 +135,8 @@ export const EventTeamTab = ({ team, eventId, isPending, onRegisterClick }: Even
             <p className="text-[15px] text-muted-foreground max-w-md mx-auto mb-6">
                Для участия в мероприятии необходимо создать свою команду или принять приглашение капитана.
             </p>
-            <Button onClick={onRegisterClick} className="bg-green-600 hover:bg-green-700 text-white shadow-sm font-semibold h-11 px-6 rounded-md">
-               Создать команду
+            <Button disabled={registrationDisabled} onClick={onRegisterClick} className="bg-green-600 hover:bg-green-700 text-white shadow-sm font-semibold h-11 px-6 rounded-md disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500">
+               {registrationDisabled ? 'Регистрация закрыта' : 'Создать команду'}
             </Button>
          </Card>
       )
@@ -189,7 +194,7 @@ export const EventTeamTab = ({ team, eventId, isPending, onRegisterClick }: Even
                            </div>
 
                            <div className="flex items-center gap-2">
-                              {isCurrentUserLeader && !isMe && (
+                              {team?.team?.status !== 'rejected' && isCurrentUserLeader && !isMe && (
                                  <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -229,7 +234,46 @@ export const EventTeamTab = ({ team, eventId, isPending, onRegisterClick }: Even
                   <div className="p-5 md:p-6 space-y-5">
                      <h3 className="font-bold text-foreground text-lg border-b border-border/50 pb-3">Управление</h3>
                      <div className="space-y-4">
-                        {isCurrentUserLeader && team.team ? (
+                        {team?.team?.status === 'rejected' ? (
+                           <div className="space-y-4">
+                              <div className="text-[13px] text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 p-4 rounded-md border border-rose-200 dark:border-rose-900/50 flex flex-col gap-2">
+                                 <div className="flex items-center gap-2 font-semibold">
+                                    <ShieldAlert className="w-4 h-4" /> Заявка отклонена
+                                 </div>
+                                 <span>Управление составом и приглашение участников заблокировано. Вы можете расформировать команду и попробовать снова.</span>
+                              </div>
+                              {isCurrentUserLeader && (
+                                 <div className="pt-2">
+                                    <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+                                       <DialogTrigger asChild>
+                                          <Button
+                                             variant="outline"
+                                             className="w-full justify-center h-auto min-h-[40px] py-2 px-3 text-[12px] sm:text-[13px] font-semibold rounded-md border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-500 dark:hover:bg-rose-600 dark:hover:text-white transition-all duration-300 shadow-sm group"
+                                             disabled={DeleteTeamMutation.isPending}
+                                          >
+                                             <Trash2 className="w-4 h-4 mr-2 shrink-0 transition-transform group-hover:scale-110" />
+                                             <span className="whitespace-normal text-center leading-tight">Расформировать команду</span>
+                                          </Button>
+                                       </DialogTrigger>
+                                       <DialogContent className="sm:max-w-[425px] rounded-xl border-border">
+                                          <DialogHeader>
+                                             <DialogTitle className="text-xl font-bold text-foreground">Расформировать команду?</DialogTitle>
+                                             <DialogDescription className="text-[14px] text-muted-foreground pt-2">
+                                                Это действие необратимо. Ваша команда «{team.team.name}» будет удалена, а все участники будут исключены.
+                                             </DialogDescription>
+                                          </DialogHeader>
+                                          <DialogFooter className="mt-6 flex flex-col-reverse sm:flex-row gap-3">
+                                             <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} className="rounded-md h-11">Отмена</Button>
+                                             <Button variant="destructive" onClick={() => DeleteTeamMutation.mutate()} disabled={DeleteTeamMutation.isPending} className="rounded-md h-11 px-6 bg-rose-600 hover:bg-rose-700">
+                                                {DeleteTeamMutation.isPending ? "Удаление..." : "Да, расформировать"}
+                                             </Button>
+                                          </DialogFooter>
+                                       </DialogContent>
+                                    </Dialog>
+                                 </div>
+                              )}
+                           </div>
+                        ) : isCurrentUserLeader && team.team ? (
                            <div className="space-y-4">
                               <div className="space-y-3">
                                  <label className="text-[12px] font-bold text-muted-foreground uppercase tracking-widest">Пригласительная ссылка</label>

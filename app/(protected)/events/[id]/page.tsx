@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { apiEvents } from "../../../api/http/event/events"
 import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   UsersIcon,
   TrophyIcon,
@@ -14,6 +15,7 @@ import {
   Target,
   X,
   CheckCircleIcon,
+  LockIcon,
 } from "lucide-react"
 import { apiEventTeams } from "@/app/api/http/EventTeams/event_teams"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -21,11 +23,14 @@ import { useSession } from "next-auth/react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { apiStages } from "@/app/api/http/stages/stages"
 import { apiStageCriteria } from "@/app/api/http/stage-criteria/stage_criteria"
+import { apiEventJudges } from "@/app/api/http/event-judges/event_judges"
 import { EventSidebar } from "./components/EventSidebar"
 import { EventHeaderBanner } from "./components/EventHeaderBanner"
 import { EventTimeline } from "./components/EventTimeline"
 import { EventTeamTab } from "./components/EventTeamTab"
+import { EventResultsTab } from "./components/EventResultsTab"
 import { toast } from "sonner"
+import { apiUsers } from "@/app/api/http/users/users"
 
 
 interface ModalProps {
@@ -47,33 +52,24 @@ function Modal({ isOpen, onClose, children }: ModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop with heavy blur */}
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-slate-950/40 backdrop-blur-md transition-all duration-500" 
+        className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm transition-all duration-500" 
         onClick={onClose}
       ></div>
       
-      {/* Glass Card */}
-      <Card className="relative z-10 w-full max-w-lg bg-white/5 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 fade-in duration-300">
-        {/* Accent glow effect - matching main green */}
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-green-500/20 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-green-500/20 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div className="relative p-6 md:p-8">
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center shadow-lg shadow-green-500/20">
-                <UsersIcon className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Регистрация</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Шаг к победе</p>
-              </div>
-            </div>
+      {/* Modal Card */}
+      <div className="relative z-10 w-full max-w-md bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+        <div className="p-6 md:p-8">
+          <div className="flex justify-between items-center mb-6 border-b border-slate-100 dark:border-neutral-800 pb-4">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <UsersIcon className="w-5 h-5 text-green-600 dark:text-green-500" />
+              Регистрация
+            </h2>
             <button
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all hover:bg-slate-200 dark:hover:bg-white/10"
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
               aria-label="Закрыть"
             >
               <X className="w-5 h-5" />
@@ -81,7 +77,7 @@ function Modal({ isOpen, onClose, children }: ModalProps) {
           </div>
           <div className="space-y-6">{children}</div>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }
@@ -91,6 +87,7 @@ export default function EventDetailsPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const eventId = params.id
+  const { data: session } = useSession()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [team_name, setTeam_name] = useState<string | null>(null)
@@ -116,7 +113,7 @@ export default function EventDetailsPage() {
     }
   }, [])
 
-  const CreateTeamMutation = useMutation<unknown, any, { event_id: number; agree: File; name: string }>({
+  const CreateTeamMutation = useMutation<unknown, any, { event_id: number; agree: File | null; name: string }>({
     mutationFn: ({ event_id, agree, name }) => apiEventTeams.createTeam(event_id, agree, name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["team", eventId] })
@@ -176,7 +173,11 @@ export default function EventDetailsPage() {
     if (token != null) {
       JoinTeamMutation.mutate({ event_id: Number(eventId), invite_token: token, agree: agree })
     } else {
-      if (createTeamName !== "" && agree) {
+      if (createTeamName !== "") {
+        if (isMinor && !agree) {
+          toast.error("Необходимо прикрепить согласие");
+          return;
+        }
         CreateTeamMutation.mutate({ event_id: Number(eventId), agree: agree, name: createTeamName })
       }
     }
@@ -187,6 +188,16 @@ export default function EventDetailsPage() {
     queryFn: () => apiEventTeams.getEventTeam(Number(eventId)),
   })
 
+  const { data: userProfile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: () => apiUsers.getProfile(),
+  })
+
+  // Calculate age, if minor return true
+  const isMinor = userProfile?.birth_date
+    ? new Date().getFullYear() - new Date(userProfile.birth_date).getFullYear() < 18
+    : true;
+
   const { data: event, isPending: isEventPending } = useQuery({
     queryKey: ["events", eventId],
     queryFn: () => apiEvents.getEventDetail(Number(eventId)),
@@ -195,6 +206,12 @@ export default function EventDetailsPage() {
   const { data: stages, isPending: isStagePending } = useQuery({
     queryKey: ["stages", eventId],
     queryFn: () => apiStages.getAllStages(Number(eventId)),
+  })
+
+  const { data: eventJudges } = useQuery({
+    queryKey: ["event_judges_detailed", Number(eventId)],
+    queryFn: () => apiEventJudges.getDetailedEventJudges(Number(eventId)),
+    enabled: !!eventId,
   })
 
   // Загружаем критерии для всех этапов
@@ -294,7 +311,7 @@ export default function EventDetailsPage() {
 
                 <TabsContent value="stages" className="space-y-6 mt-0 focus-visible:outline-none focus:outline-none">
                   <div className="w-full">
-                    <EventTimeline stages={stages || event.stages || []} hasTeam={!!team} />
+                    <EventTimeline stages={stages || event.stages || []} hasTeam={!!team} teamStatus={team?.team?.status} />
                   </div>
                 </TabsContent>
 
@@ -304,13 +321,20 @@ export default function EventDetailsPage() {
                     {stages && stages.length > 0 ? (
                       stages.map((stage: any) => {
                         const stageCriteria = allStageCriteria?.[stage.id] || []
+                        const isUpcoming = stage.start_date && new Date() < new Date(stage.start_date)
                         return (
                           <div key={stage.id} className="space-y-5 rounded-md border border-border bg-card overflow-hidden">
                             <div className="flex flex-wrap items-center justify-between gap-3 bg-muted/40 p-5 md:px-6 border-b border-border">
                               <h3 className="text-xl font-bold text-foreground">{stage.stage_name}</h3>
+                              {isUpcoming && <Badge variant="secondary">Ожидается</Badge>}
                             </div>
                             <div className="p-5 md:p-6 pt-0">
-                              {stageCriteria.length > 0 ? (
+                              {isUpcoming ? (
+                                <div className="text-center py-6 text-muted-foreground bg-muted/20 border border-dashed border-border rounded-md">
+                                  <LockIcon className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                                  <p className="text-[15px]">Критерии скрыты до начала этапа</p>
+                                </div>
+                              ) : stageCriteria.length > 0 ? (
                                 <div className="grid gap-4 sm:grid-cols-2">
                                   {stageCriteria.sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).map((criterion: any) => (
                                     <div key={criterion.id} className="border border-border p-5 rounded-md hover:shadow-sm hover:border-green-500/30 transition-all bg-background">
@@ -339,20 +363,13 @@ export default function EventDetailsPage() {
                 </TabsContent>
 
                 <TabsContent value="results" className="space-y-6 mt-0 focus-visible:outline-none focus:outline-none">
-                  <div className="p-10 md:p-16 border border-border bg-gradient-to-b from-muted/30 to-background rounded-md text-center space-y-6 shadow-sm">
-                    <div className="w-20 h-20 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm border border-green-200 dark:border-green-500/20">
-                      <TrophyIcon className="w-10 h-10 text-green-600 dark:text-green-400" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-foreground tracking-tight">Итоговые результаты</h2>
-                    <p className="text-[17px] text-muted-foreground max-w-lg mx-auto leading-relaxed">
-                      Результаты будут опубликованы здесь после проведения финального этапа и проверки жюри. Ожидайте уведомления на платформе!
-                    </p>
-                  </div>
+                  <EventResultsTab eventId={Number(eventId)} stages={stages || event.stages || []} eventStatus={event.event_status} />
                 </TabsContent>
 
                 <TabsContent value="team" className="space-y-6 mt-0 focus-visible:outline-none focus:outline-none">
                   <EventTeamTab 
                     team={team} 
+                    event={event}
                     eventId={Number(eventId)}
                     isPending={isTeamPending} 
                     onRegisterClick={() => setIsModalOpen(true)} 
@@ -362,7 +379,12 @@ export default function EventDetailsPage() {
             </div>
 
             {/* Right Column: Sidebar Sticky CTA */}
-            <EventSidebar event={event} team={team} onRegisterClick={() => setIsModalOpen(true)} />
+            <EventSidebar
+              event={event}
+              team={team}
+              onRegisterClick={() => setIsModalOpen(true)}
+              isJudge={eventJudges?.some((j) => j.judge.email === session?.user?.email)}
+            />
           </div>
         </div>
       )}
@@ -398,29 +420,31 @@ export default function EventDetailsPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Согласие <span className="text-rose-500">*</span></label>
-              <label className="cursor-pointer block group">
-                <div className={`relative flex flex-col items-center justify-center w-full p-8 rounded-2xl border-2 border-dashed transition-all ${agree ? 'border-green-600 bg-green-600/5' : 'border-slate-200 dark:border-white/10 hover:border-green-600/50 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10'}`}>
-                  <div className={`w-12 h-12 rounded-full mb-3 flex items-center justify-center transition-colors ${agree ? 'bg-green-600 text-white' : 'bg-slate-200 dark:bg-white/10 text-slate-400 group-hover:text-green-600'}`}>
-                    {agree ? <CheckCircleIcon className="w-6 h-6" /> : <ClipboardListIcon className="w-6 h-6" />}
+            {isMinor && (
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Согласие <span className="text-rose-500">*</span></label>
+                <label className="cursor-pointer block group">
+                  <div className={`relative flex flex-col items-center justify-center w-full p-8 rounded-2xl border-2 border-dashed transition-all ${agree ? 'border-green-600 bg-green-600/5' : 'border-slate-200 dark:border-neutral-800 hover:border-green-600/50 bg-slate-50 dark:bg-neutral-800/50 hover:bg-slate-100 dark:hover:bg-neutral-800'}`}>
+                    <div className={`w-12 h-12 rounded-full mb-3 flex items-center justify-center transition-colors ${agree ? 'bg-green-600 text-white' : 'bg-slate-200 dark:bg-neutral-800 text-slate-400 group-hover:text-green-600'}`}>
+                      {agree ? <CheckCircleIcon className="w-6 h-6" /> : <ClipboardListIcon className="w-6 h-6" />}
+                    </div>
+                    <span className={`text-sm font-bold transition-colors ${agree ? 'text-green-600 dark:text-emerald-400' : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>
+                      {agree ? agree.name : 'Прикрепите документ согласия'}
+                    </span>
+                    <p className="text-[11px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">Нажмите, чтобы выбрать файл</p>
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          setAgree(e.target.files[0])
+                        }
+                      }}
+                    />
                   </div>
-                  <span className={`text-sm font-bold transition-colors ${agree ? 'text-green-600 dark:text-emerald-400' : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>
-                    {agree ? agree.name : 'Прикрепите документ согласия'}
-                  </span>
-                  <p className="text-[11px] text-slate-400 mt-1 uppercase tracking-widest font-semibold">Нажмите, чтобы выбрать файл</p>
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        setAgree(e.target.files[0])
-                      }
-                    }}
-                  />
-                </div>
-              </label>
-            </div>
+                </label>
+              </div>
+            )}
 
             <button
               onClick={handleClick}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,6 +31,7 @@ import {
   Plus,
   ChevronDown,
   ChevronUp,
+  AlertCircle,
   Ban,
   ArrowLeft,
   ArrowRight,
@@ -38,7 +40,7 @@ import {
   Trash2
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { apiEvents } from "@/app/api/http/event/events";
 import { apiEventTeams, Team, TeamMember } from "@/app/api/http/EventTeams/event_teams";
@@ -85,18 +87,32 @@ const EventStatusBadge = ({ status }: { status: string }) => {
           Скоро
         </Badge>
       );
-    case "completed":
+    case "closed":
       return (
         <Badge className={baseClasses}>
           {dot("bg-slate-500")}
           Завершено
         </Badge>
       );
-    case "draft":
+    case "waiting":
       return (
         <Badge className={baseClasses}>
           {dot("bg-amber-500")}
           Черновик
+        </Badge>
+      );
+    case "on_moderation":
+      return (
+        <Badge className={baseClasses}>
+          {dot("bg-orange-500")}
+          На модерации
+        </Badge>
+      );
+    case "rejected":
+      return (
+        <Badge className={baseClasses}>
+          {dot("bg-red-500")}
+          Отклонено
         </Badge>
       );
     case "archived":
@@ -166,6 +182,8 @@ const EventDetailDashboard = () => {
   const eventId = Array.isArray(id) ? parseInt(id[0], 10) : id ? parseInt(id, 10) : 0;
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { data: session } = useSession();
+  const isAdmin = session?.role === "Admin";
 
   const handleDeleteEvent = async () => {
     try {
@@ -194,13 +212,39 @@ const EventDetailDashboard = () => {
     queryFn: () => apiStages.getAllStages(eventId),
   });
 
+  const { data: moderationLogs } = useQuery<any[]>({
+    queryKey: ["eventModerationLogs", eventId],
+    queryFn: () => apiEvents.getEventModerationLogs(eventId),
+    enabled: !!eventId,
+  });
+
   // Мутация для обновления статуса мероприятия
   const updateEventStatusMutation = useMutation({
     mutationFn: ({ eventId, status }: { eventId: number; status: string }) => {
-      return apiEvents.updateEvent(eventId, { event_status: status });
+      return apiEvents.updateEvent(eventId, { event_status: status as any });
     },
     onSuccess: () => {
+      toast.success("Статус мероприятия успешно изменен");
       queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+    },
+    onError: () => {
+      toast.error("Ошибка при изменении статуса");
+    }
+  });
+
+  const moderateEventMutation = useMutation({
+    mutationFn: ({ eventId, status, reason }: { eventId: number; status: string; reason?: string }) => {
+      return apiEvents.moderateEvent(eventId, { event_status: status, rejection_reason: reason });
+    },
+    onSuccess: () => {
+      toast.success("Решение сохранено");
+      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["eventModerationLogs", eventId] });
+      setIsRejectModalOpen(false);
+      setRejectionReasonText("");
+    },
+    onError: () => {
+      toast.error("Ошибка при модерации");
     }
   });
 
@@ -208,6 +252,8 @@ const EventDetailDashboard = () => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectionReasonText, setRejectionReasonText] = useState("");
   const [approvalAction, setApprovalAction] = useState<"approved" | "rejected" | null>(null);
   const [teamToModify, setTeamToModify] = useState<number | null>(null);
   const [currentEventStatus, setCurrentEventStatus] = useState<string>("");
@@ -275,10 +321,21 @@ const EventDetailDashboard = () => {
     }
   };
 
-  // Обработчик изменения статуса мероприятия
+  // Обработчик изменения статуса мероприятия (только локально)
   const handleStatusChange = (status: string) => {
     setCurrentEventStatus(status);
-    updateEventStatusMutation.mutate({ eventId, status });
+  };
+
+  const saveStatus = () => {
+    if (isAdmin && currentEventStatus === 'rejected') {
+      setIsRejectModalOpen(true);
+      return;
+    }
+    if (isAdmin && currentEventStatus === 'active') {
+      moderateEventMutation.mutate({ eventId, status: currentEventStatus });
+      return;
+    }
+    updateEventStatusMutation.mutate({ eventId, status: currentEventStatus });
   };
 
   // Функции для работы с модальными окнами
@@ -444,14 +501,6 @@ const EventDetailDashboard = () => {
   // DEV
   // Состояние для раскрытого этапа
   const [expandedStageId, setExpandedStageId] = useState<number | null>(null);
-
-  // Обработчики-заглушки
-  // const handleMovePrev = (teamId: number, stageId: number) => alert(`Вернуть команду ${teamId} на предыдущий этап (stage ${stageId})`);
-  // const handleMoveNext = (teamId: number, stageId: number) => alert(`Перевести команду ${teamId} на следующий этап (stage ${stageId})`);
-  // const handleDisqualify = (teamId: number, stageId: number) => alert(`Исключить команду ${teamId} из этапа ${stageId}`);
-  // const handleViewFile = (teamId: number, stageId: number) => alert(`Показать файл ответов команды ${teamId} (этап ${stageId})`);
-  // const handleViewScore = (teamId: number, stageId: number) => alert(`Показать баллы команды ${teamId} (этап ${stageId})`);
-
   const [teamCurrentStageMap, setTeamCurrentStageMap] = useState<Record<number, number>>({});
   const [loadingTeamStage, setLoadingTeamStage] = useState<Record<number, boolean>>({});
   const [transitioningTeam, setTransitioningTeam] = useState<Record<number, boolean>>({});
@@ -589,8 +638,29 @@ const EventDetailDashboard = () => {
     );
   }
 
+  const latestRejection = moderationLogs
+    ?.filter((log: any) => log.action === "rejected")
+    ?.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+
   return (
     <div className="container mx-auto px-4 py-8">
+      {event?.event_status === "rejected" && latestRejection && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
+          <div className="flex gap-3">
+            <div className="text-red-600 dark:text-red-400">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-300">
+                Мероприятие отклонено модератором
+              </h3>
+              <p className="mt-1 text-sm text-red-700 dark:text-red-400">
+                Причина: {latestRejection.reason || "не указана"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       {event && (
         <div className="space-y-8">
           <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
@@ -605,13 +675,19 @@ const EventDetailDashboard = () => {
                   <EventStatusBadge status={event.event_status} />
                   <EventFormatBadge format={event.format} />
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <h1 className="text-3xl font-bold leading-tight text-slate-900 dark:text-slate-50 md:text-4xl">
                     {event.event_name}
                   </h1>
-                  <p className="max-w-3xl text-base leading-relaxed text-slate-700 dark:text-slate-300">
-                    {event.description}
-                  </p>
+                  <div className="space-y-2 mt-4">
+                    <h3 className="text-sm uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Описание
+                    </h3>
+                    <p className="max-w-3xl text-base leading-relaxed text-slate-700 dark:text-slate-300 bg-slate-50/50 dark:bg-neutral-800/50 p-4 rounded-xl border border-slate-100 dark:border-neutral-800/80">
+                      {event.description || "Описание отсутствует."}
+                    </p>
+                  </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
@@ -659,62 +735,67 @@ const EventDetailDashboard = () => {
                 <StatusControl
                   currentStatus={currentEventStatus}
                   onStatusChange={handleStatusChange}
+                  isAdmin={isAdmin}
+                  isApproved={event?.is_approved}
                 />
 
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Button
                     variant="outline"
-                    className="flex items-center gap-2 border-gray-300 text-slate-800 hover:bg-slate-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800"
+                    className="flex items-center gap-2 border-gray-300 text-slate-800 hover:bg-slate-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800 text-base py-6"
                     onClick={openEventSettingsModal}
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-5 w-5" />
                     Настроить событие
                   </Button>
                   <Button
                     variant="outline"
-                    className="flex items-center gap-2 border-gray-300 text-slate-800 hover:bg-slate-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800"
+                    className="flex items-center gap-2 border-gray-300 text-slate-800 hover:bg-slate-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800 text-base py-6"
                     onClick={() => openStageModal()}
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-5 w-5" />
                     Добавить этап
                   </Button>
                   <Button
                     variant="outline"
-                    className="flex items-center gap-2 border-gray-300 text-slate-800 hover:bg-slate-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800"
-                    onClick={openNotificationModal}
+                    className="flex items-center gap-2 border-gray-300 text-slate-800 hover:bg-slate-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800 text-base py-6"
+                    onClick={() => router.push(`/events/dashboard/${eventId}/judges`)}
                   >
-                    <Bell className="h-4 w-4" />
-                    Уведомления
+                    <UsersRound className="h-5 w-5" />
+                    Судьи
                   </Button>
                   <Button
-                    variant="destructive"
-                    className="flex items-center gap-2"
-                    onClick={openArchiveModal}
+                    variant="outline"
+                    className="flex items-center gap-2 border-gray-300 text-slate-800 hover:bg-slate-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800 text-base py-6"
+                    onClick={openNotificationModal}
                   >
-                    <Archive className="h-4 w-4" />
-                    Архивировать
+                    <Bell className="h-5 w-5" />
+                    Уведомления
+                  </Button>
+
+                  <Button
+                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-base py-6"
+                    onClick={saveStatus}
+                    disabled={updateEventStatusMutation.isPending || currentEventStatus === event?.event_status}
+                  >
+                    <CheckCircle className="h-5 w-5" />
+                    {updateEventStatusMutation.isPending ? "Сохранение..." : "Сохранить статус"}
                   </Button>
                 </div>
 
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 dark:border-neutral-800 dark:bg-neutral-900">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">Текущий статус</p>
-                      <EventStatusBadge status={currentEventStatus || event.event_status} />
+                      <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2 font-semibold">Текущий статус</p>
+                      <div className="scale-110 origin-left">
+                        <EventStatusBadge status={currentEventStatus || event.event_status} />
+                      </div>
                     </div>
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1 text-right">Формат</p>
-                      <EventFormatBadge format={event.format} />
-                    </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-slate-700 dark:text-slate-200">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                      <span>{event.users_count || 0} участников</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <UsersRound className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                      <span>{teamStats.total} команд</span>
+                      <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2 font-semibold text-right">Формат</p>
+                      <div className="scale-110 origin-right">
+                        <EventFormatBadge format={event.format} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -743,25 +824,25 @@ const EventDetailDashboard = () => {
 
           {/* Вкладки */}
           <Tabs defaultValue="teams" className="w-full space-y-4">
-            <TabsList className="flex w-full flex-wrap justify-start gap-2 rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-neutral-800 dark:bg-neutral-900">
-              <TabsTrigger value="teams" className="flex items-center gap-2 rounded-lg px-4 py-2 text-slate-700 data-[state=active]:border data-[state=active]:border-gray-200 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:border-neutral-700 dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50">
-                <Users className="h-4 w-4" />
+            <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2 dark:border-neutral-800 dark:bg-neutral-900">
+              <TabsTrigger value="teams" className="flex items-center gap-2 rounded-lg px-6 py-3 text-base text-slate-700 data-[state=active]:border data-[state=active]:border-gray-200 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:border-neutral-700 dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50">
+                <Users className="h-5 w-5" />
                 Команды
               </TabsTrigger>
-              <TabsTrigger value="stages" className="flex items-center gap-2 rounded-lg px-4 py-2 text-slate-700 data-[state=active]:border data-[state=active]:border-gray-200 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:border-neutral-700 dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50">
-                <CheckCircle className="h-4 w-4" />
+              <TabsTrigger value="stages" className="flex items-center gap-2 rounded-lg px-6 py-3 text-base text-slate-700 data-[state=active]:border data-[state=active]:border-gray-200 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:border-neutral-700 dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50">
+                <CheckCircle className="h-5 w-5" />
                 Этапы
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-2 rounded-lg px-4 py-2 text-slate-700 data-[state=active]:border data-[state=active]:border-gray-200 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:border-neutral-700 dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50">
-                <BarChart4 className="h-4 w-4" />
+              <TabsTrigger value="analytics" className="flex items-center gap-2 rounded-lg px-6 py-3 text-base text-slate-700 data-[state=active]:border data-[state=active]:border-gray-200 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:border-neutral-700 dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50">
+                <BarChart4 className="h-5 w-5" />
                 Аналитика
               </TabsTrigger>
-              <TabsTrigger value="notifications" className="flex items-center gap-2 rounded-lg px-4 py-2 text-slate-700 data-[state=active]:border data-[state=active]:border-gray-200 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:border-neutral-700 dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50">
-                <Bell className="h-4 w-4" />
+              <TabsTrigger value="notifications" className="flex items-center gap-2 rounded-lg px-6 py-3 text-base text-slate-700 data-[state=active]:border data-[state=active]:border-gray-200 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:border-neutral-700 dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50">
+                <Bell className="h-5 w-5" />
                 Уведомления
               </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center gap-2 rounded-lg px-4 py-2 text-slate-700 data-[state=active]:border data-[state=active]:border-gray-200 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:border-neutral-700 dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50">
-                <Settings className="h-4 w-4" />
+              <TabsTrigger value="settings" className="flex items-center gap-2 rounded-lg px-6 py-3 text-base text-slate-700 data-[state=active]:border data-[state=active]:border-gray-200 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:text-slate-300 dark:data-[state=active]:border-neutral-700 dark:data-[state=active]:bg-neutral-800 dark:data-[state=active]:text-slate-50">
+                <Settings className="h-5 w-5" />
                 Настройки
               </TabsTrigger>
             </TabsList>
@@ -969,7 +1050,7 @@ const EventDetailDashboard = () => {
                                 className={
                                   stage.stage_status === "active"
                                     ? "rounded-full border border-emerald-400/40 bg-emerald-500/20 text-xs text-emerald-100"
-                                    : stage.stage_status === "upcoming"
+                                    : stage.stage_status === "waiting"
                                       ? "rounded-full border border-cyan-400/40 bg-cyan-500/20 text-xs text-cyan-100"
                                       : "rounded-full border border-slate-400/40 bg-slate-600/40 text-xs text-white"
                                 }
@@ -1197,7 +1278,7 @@ const EventDetailDashboard = () => {
                       <Button variant="outline" size="sm" className="border-gray-300 text-slate-800 hover:bg-gray-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800" onClick={openEventSettingsModal}>Настроить</Button>
                     </div>
 
-                    <div className="pt-4 space-y-3">
+                    <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <Button variant="destructive" className="w-full" onClick={openArchiveModal}>
                         <Archive className="mr-2 h-4 w-4" />
                         Архивировать мероприятие
@@ -1260,13 +1341,45 @@ const EventDetailDashboard = () => {
         onSave={sendNotification}
       />
 
-      {/* Модальное окно для настройки параметров мероприятия */}
+      {/* Модальное окно настройки параметров мероприятия */}
       <EventSettingsModal
         isOpen={isEventSettingsModalOpen}
         onOpenChange={setIsEventSettingsModalOpen}
         event={event}
         onSave={saveEventSettings}
       />
+
+      {/* Модальное окно причины отклонения */}
+      <Dialog open={isRejectModalOpen} onOpenChange={setIsRejectModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Укажите причину отклонения</DialogTitle>
+            <DialogDescription>
+              Эта причина будет показана организатору мероприятия.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <textarea
+              className="w-full min-h-[100px] p-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-100"
+              placeholder="Опишите, что нужно исправить..."
+              value={rejectionReasonText}
+              onChange={(e) => setRejectionReasonText(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRejectModalOpen(false)}>
+              Отмена
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => moderateEventMutation.mutate({ eventId, status: "rejected", reason: rejectionReasonText })}
+              disabled={moderateEventMutation.isPending || !rejectionReasonText.trim()}
+            >
+              {moderateEventMutation.isPending ? "Сохранение..." : "Отклонить"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Модальное окно подтверждения архивации мероприятия */}
       <ArchiveConfirmationModal
