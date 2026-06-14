@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,7 +34,8 @@ import {
   ArrowLeft,
   ArrowRight,
   FileText,
-  Star
+  Star,
+  Trash2
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -164,6 +165,18 @@ const EventDetailDashboard = () => {
   const { id } = useParams();
   const eventId = Array.isArray(id) ? parseInt(id[0], 10) : id ? parseInt(id, 10) : 0;
   const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const handleDeleteEvent = async () => {
+    try {
+      await apiEvents.deleteEvent(eventId);
+      toast.success("Мероприятие удалено");
+      router.push("/events/dashboard");
+    } catch (error) {
+      toast.error("Ошибка при удалении мероприятия");
+      console.error(error);
+    }
+  };
 
   // Запросы к API
   const { data: event, isLoading: eventLoading } = useQuery<any>({
@@ -1184,11 +1197,33 @@ const EventDetailDashboard = () => {
                       <Button variant="outline" size="sm" className="border-gray-300 text-slate-800 hover:bg-gray-100 dark:border-neutral-700 dark:text-slate-100 dark:hover:bg-neutral-800" onClick={openEventSettingsModal}>Настроить</Button>
                     </div>
 
-                    <div className="pt-4">
+                    <div className="pt-4 space-y-3">
                       <Button variant="destructive" className="w-full" onClick={openArchiveModal}>
                         <Archive className="mr-2 h-4 w-4" />
                         Архивировать мероприятие
                       </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" className="w-full bg-red-600 hover:bg-red-700 text-white">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Удалить мероприятие
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Удалить мероприятие?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Это действие нельзя отменить. Мероприятие и все связанные с ним данные будут безвозвратно удалены.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Отмена</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteEvent} className="bg-red-600 hover:bg-red-700">
+                              Удалить
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </CardContent>

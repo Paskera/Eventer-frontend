@@ -24,9 +24,9 @@ export default function EventsPage() {
         const date = new Date(dateStr); // автоматически парсит ISO строку
         const year = date.getUTCFullYear();
         // const month = date.getUTCMonth() + 1; // месяцы от 0 до 11
-        const month = date.toLocaleString('default', {month: 'long'})
+        const month = date.toLocaleString('default', { month: 'long' })
         const day = date.getUTCDate();
-        
+
         return `${day} ${month} ${year}`
     }
 
@@ -73,7 +73,7 @@ export default function EventsPage() {
                                 <Badge className="bg-gray-100 dark:bg-neutral-800 border-gray-300 dark:border-neutral-700 text-slate-700 dark:text-slate-300">Страница 1</Badge>
                             </div>
                         </div>
-                        <Button 
+                        <Button
                             onClick={() => router.push('/events/create')}
                             className="flex items-center gap-2"
                             size="lg"

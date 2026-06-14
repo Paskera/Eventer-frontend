@@ -60,14 +60,14 @@ export default function DashboardPage() {
   const [events, setEvents] = useState<Event[]>([])
   const [isStageModalOpen, setIsStageModalOpen] = useState(false)
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null)
-  
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['organizerEvents'],
     queryFn: async () => {
       const response = await apiEvents.getMyCreatedEvents()
       return response.events
     },
-    refetchInterval: 30000, 
+    refetchInterval: 30000,
   })
 
   useEffect(() => {
@@ -228,7 +228,7 @@ export default function DashboardPage() {
                             Обновлено только что
                           </Badge>
                         </div>
-                        
+
                         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                           <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg h-full min-h-[100px] flex flex-col justify-between">
                             <div className="flex items-center gap-2">
