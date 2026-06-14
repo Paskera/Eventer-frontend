@@ -8,7 +8,6 @@ import { ImageUpload } from "@/app/(protected)/events/create/components/ImageUpl
 import { Stepper } from "@/app/(protected)/events/create/components/Stepper";
 import { StepControl } from "@/app/(protected)/events/create/components/StepControl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { apiEvents } from "@/app/api/http/event/events";
 import { CheckCircle2, CalendarDays, Settings, Info } from "lucide-react";
@@ -39,9 +38,9 @@ export default function CreateEvent() {
   ];
 
   const handleNext = () => {
-    if (currentStep === 1 && (!eventName || !description || !venue || !startDate || !endDate)) {
+    if (currentStep === 1 && (!eventName || !description || !venue || !startDate || !endDate || !eventImage)) {
       toast.error("Ошибка валидации", {
-        description: "Пожалуйста, заполните все обязательные поля (Название, Описание, Место, Даты).",
+        description: "Пожалуйста, заполните все обязательные поля и загрузите обложку.",
       });
       return;
     }
@@ -57,17 +56,23 @@ export default function CreateEvent() {
   };
 
   const handleSave = async () => {
+    if (!eventImage) {
+      toast.error("Ошибка валидации", {
+        description: "Пожалуйста, загрузите обложку.",
+      });
+      return;
+    }
     const eventData = {
       event_name: eventName,
       description: description,
-      users_count: usersCount,
+      users_count: Number(usersCount),
       participation_type: participationType,
       format: format,
       venue: venue,
       start_date: startDate ? startDate.toISOString() : '',
       end_date: endDate ? endDate.toISOString() : '',
       event_status: 'active' as const,
-      category_id: category,
+      category_id: Number(category),
       stages: []
     };
 
