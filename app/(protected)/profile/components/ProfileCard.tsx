@@ -38,6 +38,7 @@ export function ProfileCard() {
     lastname: "",
     gender: "",
     birth_date: "",
+    role: ""
   })
 
   const handleEditClick = () => {
@@ -47,6 +48,7 @@ export function ProfileCard() {
         lastname: profile.lastname || "",
         gender: profile.gender || "",
         birth_date: profile.birth_date || "",
+        role: profile.role || "",
       })
     }
     setIsEditing(true)

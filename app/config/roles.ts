@@ -10,8 +10,6 @@ export const ROLE_ACCESS = {
         '/events/all',
         '/events/my',
         '/certificates',
-        '/events/dashboard', // del
-        '/events/create' // del
     ],
     [ROLES.ADMIN]: [
         '/profile',

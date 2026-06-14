@@ -87,7 +87,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   let filteredProjects = data.projects;
   if (session?.role && session.role.toUpperCase() === ROLES.USER) {
     filteredProjects = data.projects.filter(
-      (item) => item.url !== "/events/dashboard/1"
+      (item) => item.url !== "/events/dashboard"
     );
   } 
   // else if (session?.role && session.role.toUpperCase() === ROLES.ORGANAIZER) {
